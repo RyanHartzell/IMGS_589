@@ -4,7 +4,7 @@ import gi
 gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 
-def metadatagrabber(filename):
+def metadataGrabber(filename):
     sampleimage = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
 
     imagemetadata = GExiv2.Metadata(sampleimage)
@@ -50,8 +50,9 @@ def metadatagrabber(filename):
     return(metadatadict)
     
 if __name__ == '__main__':
-    import metadatareader
+    import metadataReader
     filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
-    metadatadict = metadatareader.metadatagrabber(filename)
+    metadatadict = metadataReader.metadataGrabber(filename)
     print(metadatadict)
 
+    print(metadatadict['Exif.Photo.ExposureTime'])

@@ -122,7 +122,7 @@ def register(im1, im2):
 		#Puts the thresholded matches into the good matches
 		#goodMatches = [m for m in matches if m.distance < thres_dist]
 
-	feature = "sift"
+	feature = "orb"
 	startTime = time.time()
 	kp1, kp2, matches = computeMatches(im1, im2, feature)
 	print("The matches were computed using the {0} feature detector".format(feature) + 
@@ -143,7 +143,8 @@ def register(im1, im2):
 									interpolation=cv2.INTER_AREA))
 
 	#Warp the second image so that it registers with the first
-	registerIm = cv2.warpPerspective(im2, homography, (im_size[1],im_size[0]))
+	#registerIm = cv2.warpPerspective(im2, homography, (im_size[1],im_size[0]))
+	registerIm = cv2.warpAffine(im2, homography, (im_size[1], im_size[0]))
 	#Show the images stacked ontop of each other with 0.5 opacity
 	#blendIm = cv2.addWeighted(registerIm, 0.5, im1, 0.5, 0, None)
 	#cv2.imshow('blendIm', cv2.resize(blendIm, None, fx=0.5, fy=0.5, 

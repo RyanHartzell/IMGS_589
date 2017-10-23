@@ -41,7 +41,7 @@ matplotlib.use("TkAgg")
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from os.path import splitext, basename
+from os.path import splitext, basename, dirname
 
 def openAndReadSPD():
 	"""
@@ -160,6 +160,8 @@ def findBrightestPointMean(tiffList, verbose=False):
 	root.update()
 	root.withdraw()
 
+	meanDCArray = np.subtract(meanDCArray, 16)
+
 	return meanDCArray
 
 def normalizeMeanDC(meanDC, spdArray):
@@ -179,11 +181,12 @@ def normalizeMeanDC(meanDC, spdArray):
 	
 	return peakNormalized, normSP
 
-def plotSpectralResponse(spdArray, meanDC, normDC, peakNorm):
+def plotSpectralResponse(spdArray, meanDC, normDC, peakNorm, tiffList):
 	"""
 	Show's each of the graphs using matplotlib
 	"""
-	plt.ion()
+	#plt.ion()
+	folder = os.path.dirname(tiffList[0])
 
 	figure1 = plt.figure('Spectral Power Distribution')
 	x = spdArray[0:,0]
@@ -194,6 +197,7 @@ def plotSpectralResponse(spdArray, meanDC, normDC, peakNorm):
 	SPD.set_ylim([0,max(spdArray[0:,1])+.25*max(spdArray[0:,1])])
 	SPD.set_xlim([min(x),max(x)]) 
 	SPD.plot(x, spdArray[0:,1], color = 'black') 
+	figure1.savefig(folder+'/SPD.eps', format='eps', dpi=1000, bbox_inches='tight')
 	
 	figure2 = plt.figure('RAW Sensor Spectral Response')
 	RAW = figure2.add_subplot(1,1,1)
@@ -204,7 +208,8 @@ def plotSpectralResponse(spdArray, meanDC, normDC, peakNorm):
 	RAW.set_xlim([min(x),max(x)]) 
 	RAW.plot(x, meanDC[0:,0], color = 'blue') 
 	RAW.plot(x, meanDC[0:,1], color = 'green') 
-	RAW.plot(x, meanDC[0:,2], color = 'red') 
+	RAW.plot(x, meanDC[0:,2], color = 'red')
+	figure2.savefig(folder+'/RAW.eps', format='eps', dpi=1000)
 
 	figure3 = plt.figure('Relative Sensor Spectral Response')
 	RSR = figure3.add_subplot(1,1,1)
@@ -216,6 +221,7 @@ def plotSpectralResponse(spdArray, meanDC, normDC, peakNorm):
 	RSR.plot(x, normDC[0:,0], color = 'blue')
 	RSR.plot(x, normDC[0:,1], color = 'green') 
 	RSR.plot(x, normDC[0:,2], color = 'red') 
+	figure3.savefig(folder+'/RSR.eps', format='eps', dpi=1000)
 	
 	figure4 = plt.figure('Peak Normalized Relative Sensor Spectral Response')
 	PRSR = figure4.add_subplot(1,1,1)
@@ -226,11 +232,12 @@ def plotSpectralResponse(spdArray, meanDC, normDC, peakNorm):
 	PRSR.set_xlim([min(x),max(x)])
 	PRSR.plot(x, peakNorm[0:,0], color = 'blue') 
 	PRSR.plot(x, peakNorm[0:,1], color = 'green') 
-	PRSR.plot(x, peakNorm[0:,2], color = 'red') 
+	PRSR.plot(x, peakNorm[0:,2], color = 'red')
+	figure4.savefig(folder+'/PRSR.eps', format='eps', dpi=1000)
 	
-	plt.draw()
-	plt.pause(.001)
-	plt.show()
+	#plt.draw()
+	#plt.pause(.001)
+	#plt.show()
 
 def saveData(spdArray, meanDC, normDC, peakNorm, tiffList):
 	"""
@@ -299,7 +306,7 @@ if __name__ == '__main__':
 	root = tkinter.Tk()
 	root.withdraw()
 	root.geometry('{0}x{1}'.format(400,100))
-	verbose = True
+	verbose = False
 
 	root.update()
 	spdArray, spdPath = openAndReadSPD()
@@ -313,7 +320,7 @@ if __name__ == '__main__':
 
 	peakNormalized, normSP = normalizeMeanDC(meanDC, spdArray)
 
-	plotSpectralResponse(spdArray, meanDC, normSP, peakNormalized)
+	plotSpectralResponse(spdArray, meanDC, normSP, peakNormalized, tiffList)
 	
 	saveData(spdArray, meanDC, normSP, peakNormalized, tiffList)
 
@@ -322,6 +329,6 @@ if __name__ == '__main__':
 
 	#print("The run time is: {0}".format(time.time()-startTime))
 
-	action = flush()
+	#action = flush()
 	
 	root.destroy()

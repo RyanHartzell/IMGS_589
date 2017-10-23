@@ -1,6 +1,6 @@
 from metadataReader import metadataGrabber
 
-def normalizeIntegrationTime(im, filename):
+def normalizeISOShutter(im, filename):
 
     #gets the metadata for the given filename/image
     metadataDictionary = metadataGrabber(filename)
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     cv2.imshow('sampleImage', displaySampleImage)
 	
     startTime = time.time()
-    normalizedImage = normalizeIntegrationTime(sampleImage, sampleFileName)
+    normalizedImage = normalizeISOShutter(sampleImage, sampleFileName)
     print("Elapsed Time = {0} [s]".format(time.time()-startTime))
     print("The image's integration time was {0} [s]".format(sampleImage[0][0]/
 		    					normalizedImage[0][0]))

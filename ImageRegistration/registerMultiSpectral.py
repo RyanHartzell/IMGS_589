@@ -37,6 +37,7 @@ def computeMatches(im1, im2, feature="orb"):
 
 		matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
 		matches = matcher.match(des1, des2)
+		matches = sorted(matches, key = lambda x:x.distance)
 		#Calculates the distance between matches
 		dist = [m.distance for m in matches]
 		#Finds the threshold distance between matches
@@ -89,9 +90,10 @@ def register(im1, im2, corCoef):
 	kp1, kp2, goodMatches = computeMatches(im1, im2, feature)
 	
 	#Gets the matches out of the DMatch object into coordinates
-	match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches])
-	match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches])
+	match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype='float32')
+	match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype='float32')
 
+	#M = cv2.getAffineTransform(match2[:3], match1[:3])
 	#Compute the homography of the matches
 	homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
 
@@ -103,7 +105,7 @@ def register(im1, im2, corCoef):
 	#cv2.waitKey(0)
 
 	#Warp the second image so that it registers with the first
-	#registerIm = cv2.warpAffine(im2, homography[0:-1], (im1.shape[1], im1.shape[0]))
+	#registerIm = cv2.warpAffine(im2, M, (im1.shape[1], im1.shape[0]))
 	registerIm = cv2.warpPerspective(im2, homography, (im_size[1],im_size[0]))
 
 
@@ -139,7 +141,7 @@ if __name__ == '__main__':
 	imageStack = np.zeros((height, width, len(imageList)))
 	im1 = images + "IMG_0058_{0}.tif".format(int(matchOrder[0,0]))
 	imageStack[:,:,0] = cv2.imread(im1, cv2.IMREAD_GRAYSCALE)
-	for p in range(1, matchOrder.shape[1]):
+	for p in range(0, matchOrder.shape[0]):
 		correlationCoef = matchOrder[p,2]
 		im1 = imageStack[:,:,int(matchOrder[p,0])-1]
 		im2 = images + "IMG_0058_{0}.tif".format(int(matchOrder[p,1]))

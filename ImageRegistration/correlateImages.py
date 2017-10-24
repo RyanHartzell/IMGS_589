@@ -75,7 +75,7 @@ def findPairs(maxIndices, correlationMatrix):
 		elif max1[pair] not in flatMatch and max2[pair] in flatMatch:
 			#Asks if the current y has already been matched and 
 			#that current x not matched if true, adds the pair.
-			matchOrder.append([max1[pair], max2[pair], 
+			matchOrder.append([max2[pair], max1[pair], 
 								correlationMatrix[max1[pair],max2[pair]]])
 	#Returns an array of matched images and their correlation coefficents
 	#[ [ 0.0          2.0          0.8395225 ]

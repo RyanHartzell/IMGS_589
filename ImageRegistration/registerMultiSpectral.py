@@ -116,8 +116,7 @@ if __name__ == '__main__':
 	import correlateImages
 	import cv2
 	import numpy as np
-
-
+	import dimensions
 
 	#home = os.path.expanduser('~')
 	#baseDirectory = 'src/python/modules/sUAS'
@@ -125,7 +124,7 @@ if __name__ == '__main__':
 	images = '/cis/otherstu/gvs6104/DIRS/20170928/150flight/000/'
 
 	im1 = cv2.imread(images + 'IMG_0058_1.tif', cv2.IMREAD_UNCHANGED)
-	height, width, bands, dType = ipcv.dimensions(im1)
+	height, width, bands, dType = dimensions.dimensions(im1)
 
 	im1 = images + 'IMG_0058_1.tif'
 	im2 = images + 'IMG_0058_2.tif'

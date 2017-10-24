@@ -4,3 +4,4 @@ from .correlateImages import OrderImagePairs
 from .registerMultiSpectral import computeMatches
 from .registerMultiSpectral import reversePolarityCheck
 from .registerMultiSpectral import register
+from .dimensions import dimensions

@@ -141,18 +141,29 @@ if __name__ == '__main__':
 	imageStack = np.zeros((height, width, len(imageList)))
 	im1 = images + "IMG_0058_{0}.tif".format(int(matchOrder[0,0]))
 	imageStack[:,:,0] = cv2.imread(im1, cv2.IMREAD_GRAYSCALE)
+	mask = np.full((height, width), 255, dtype=np.uint8)
 	for p in range(0, matchOrder.shape[0]):
 		correlationCoef = matchOrder[p,2]
 		im1 = imageStack[:,:,int(matchOrder[p,0])-1]
 		im2 = images + "IMG_0058_{0}.tif".format(int(matchOrder[p,1]))
 		im2 = cv2.imread(im2, cv2.IMREAD_GRAYSCALE)
 		warped = register(im1, im2, correlationCoef)
+		mask[np.where(warped == 0)] = 0
 		imageStack[:,:,int(matchOrder[p,1])-1] = warped
+
+	im, contours, heir, = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	x, y, w, h = cv2.boundingRect(contours[0])
+	print(imageStack.shape)
+	
+	imageStack = np.asarray([imageStack[y:y+h, x:x+w, im] for im in range(len(imageStack[0,0,:]))])
+	imageStack = np.moveaxis(imageStack,0, -1)
+	print(np.asarray(imageStack).shape)
 
 	fullStack = cv2.addWeighted(imageStack[:,:,0], .2, 
 								imageStack[:,:,1], .2, 0, None)
 	for ind in range(2,len(imageList)):
 		fullStack = cv2.addWeighted(fullStack, 1, imageStack[:,:,ind], .2, 0, None)
+	fullStack = fullStack[y:y+h, x:x+w]
 	fullStack = ipcv.histogram_enhancement(fullStack.astype(np.uint8), etype='linear2')
 	cv2.imshow('Stacked Image', cv2.resize(fullStack, None, fx=0.5, fy=0.5, 
 							interpolation=cv2.INTER_AREA).astype(np.uint8))

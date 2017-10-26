@@ -22,19 +22,24 @@ import cv2
 def createCorrelation(images):
 	flatImageList = []
 	#Creates a flat image list to hold all of the images
-	if type(images) == list:
-		#If the input is a list then it simply adds it to the list
-		if type(images[0]) == str:
-			#If the input is a list of strings then it reads in the images
-			for ind in range(len(images)):
-				#Reads in every image string as an image array
-				images[ind] = cv2.imread(images[ind], cv2.IMREAD_UNCHANGED)
-		for image in images:
-			flatImageList.append(np.ravel(image))
-	elif type(images) is np.ndarray and images.shape[2] > 1:
-		#If the typ eof the input is an array then it adds the images
-		for i in range(images.shape[2]):
-			flatImageList.append(np.ravel(images[:,:,i]))
+
+	if type(images) == list and type(images[0]) == str:
+		#If the input is a list and each element is a string
+		for imStr in images:
+			flatImArr = np.ravel(cv2.imread(imStr, cv2.IMREAD_UNCHANGED))
+			#Reads in every image string as a flat image array
+			flatImageList.append(flatImArr)
+			#Adds the flat images to the flat image list
+	elif type(images) == list and type(images[0]) == np.array:
+		#If the input is a list and each element is an image array
+		for imArr in images:
+			flatImageList.append(np.ravel(imArr))
+			#Adds the flat images to the flat image list
+	elif type(imagesCopy) is np.ndarray and imagesCopy.shape[2] > 1:
+		#If the type of the input is an array then it adds the images
+		for i in range(imagesCopy.shape[2]):
+			flatImageList.append(np.ravel(imagesCopy[:,:,i]))
+
 	#Creates the correlation matrix of correlation coefficents
 	correlationMatrix = np.corrcoef(flatImageList)
 	#Creates an absolute value of the correlation matrix to find the maximum

@@ -1,5 +1,5 @@
 
-def normalizeISOShutter(im, filename):
+def normalizeISOShutter(image, filename):
     from metadataReader import metadataGrabber
 
     #gets the metadata for the given filename/image
@@ -9,7 +9,16 @@ def normalizeISOShutter(im, filename):
     #pulls the EXIF:ISO from the metadata dictionary
     iso = metadataDictionary['Exif.Photo.ISOSpeed']
     #normalizes the image by the exposuretime and the ISO
-    normalizedImage = im/float(exposureTime*iso)
+    bitDepth = metadataDictionary['Exif.Image.BitsPerSample']
+    maxCount = float(2**bitDepth)
+
+    #floatIm = image/maxCount
+    #normalizedImage = floatIm/float(exposureTime*iso)
+    #print(exposureTime)
+    #print(iso)
+    #print(exposureTime*iso)
+    normalizedImage = image/float(exposureTime*iso*maxCount)
+    #normalizedImage = normalizedImage/maxCount
 
     return normalizedImage
 
@@ -25,18 +34,14 @@ if __name__ == '__main__':
     sampleImage = cv2.imread(sampleFileName, cv2.IMREAD_UNCHANGED)
     displaySampleImage = cv2.resize(sampleImage, None, fx=.5, fy=.5, 
 				    interpolation=cv2.INTER_AREA)
-    
-    cv2.imshow('sampleImage', displaySampleImage)
+
+    cv2.imshow('sampleImage', ((displaySampleImage/65536)*255).astype('uint8'))
 	
-    startTime = time.time()
     normalizedImage = normalizeISOShutter(sampleImage, sampleFileName)
-    print("Elapsed Time = {0} [s]".format(time.time()-startTime))
-    print("The image's integration time was {0} [s]".format(sampleImage[0][0]/
-		    					normalizedImage[0][0]))
 	
     displayNormalizedImage = cv2.resize(normalizedImage, None, 
 				    fx=.5, fy=.5,interpolation=cv2.INTER_AREA)
     cv2.imshow('normalizedImage', 
-                displayNormalizedImage.astype(sampleImage.dtype))
+                (displayNormalizedImage*255).astype('uint8'))
 
     action = ipcv.flush()

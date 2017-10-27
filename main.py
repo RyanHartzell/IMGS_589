@@ -32,11 +32,11 @@ else:
 root = tkinter.Tk()
 root.withdraw()
 root.update()
-flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
-#initialdir = os.getcwd()
-#flightDirectory = filedialog.askdirectory(initialdir=initialdir)
+#flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
+initialdir = os.getcwd()
+flightDirectory = filedialog.askdirectory(initialdir=initialdir)
 #print(flightDirectory)
-#fixNamingStructure(flightDirectory)
+fixNamingStructure(flightDirectory)
 tiffList = sorted(glob.glob(flightDirectory + '/*.tif'))
 imageName = os.path.basename(tiffList[0])
 

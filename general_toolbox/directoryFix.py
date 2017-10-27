@@ -48,6 +48,8 @@ from os.path import basename, dirname
 
 
 def fixNamingStructure(directory):
+	import os, glob
+	from os.path import basename, dirname
 
 	if len(glob.glob(directory+'/*/')) == 0:
 		msg = "No subdirectories were found in the specified directory."

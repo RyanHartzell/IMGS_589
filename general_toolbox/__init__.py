@@ -8,5 +8,5 @@ from .MonochrometerSpectralResponse import saveData
 from .directoryFix import fixNamingStructure
 from .directoryFix import groupBands
 from .normalizeDC import normalizeISOShutter
-from ..ImageRegistration import *
+#from ..ImageRegistration import *
 

@@ -35,10 +35,10 @@ def createCorrelation(images):
 		for imArr in images:
 			flatImageList.append(np.ravel(imArr))
 			#Adds the flat images to the flat image list
-	elif type(imagesCopy) is np.ndarray and imagesCopy.shape[2] > 1:
+	elif type(images) is np.ndarray and images.shape[2] > 1:
 		#If the type of the input is an array then it adds the images
-		for i in range(imagesCopy.shape[2]):
-			flatImageList.append(np.ravel(imagesCopy[:,:,i]))
+		for i in range(images.shape[2]):
+			flatImageList.append(np.ravel(images[:,:,i]))
 
 	#Creates the correlation matrix of correlation coefficents
 	correlationMatrix = np.corrcoef(flatImageList)

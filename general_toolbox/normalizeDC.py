@@ -1,6 +1,6 @@
-from metadataReader import metadataGrabber
 
 def normalizeISOShutter(im, filename):
+    from metadataReader import metadataGrabber
 
     #gets the metadata for the given filename/image
     metadataDictionary = metadataGrabber(filename)

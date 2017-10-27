@@ -42,10 +42,12 @@ def computeMatches(im1, im2, feature="orb"):
 		matches = sorted(matches, key = lambda x:x.distance)
 		#Calculates the distance between matches
 		dist = [m.distance for m in matches]
-		#Finds the threshold distance between matches
-		thres_dist = (np.sum(dist)/len(dist))*.50
-		#Puts the thresholded matches into the good matches
-		goodMatches = [m for m in matches if m.distance < thres_dist]
+		goodMatches = []
+		if len(dist) != 0:
+			#Finds the threshold distance between matches
+			thres_dist = (np.sum(dist)/len(dist))*.70
+			#Puts the thresholded matches into the good matches
+			goodMatches = [m for m in matches if m.distance < thres_dist]
 
 	elif feature == "sift":
 		#SIFT
@@ -54,8 +56,8 @@ def computeMatches(im1, im2, feature="orb"):
 		#Edge Threshold = Filter out edge like features, > Thresh > Features
 		#Sigma = The sigma of the Gaussian applied to input image at 0 octave
 		sift = cv2.xfeatures2d.SIFT_create(nfeatures=500, nOctaveLayers=3,
-										contrastThreshold=.03,
-										edgeThreshold=33, sigma=3)
+										contrastThreshold=.01,
+										edgeThreshold=50, sigma=3)
 		#Computes the Keypoints and Descriptors at the Same Time
 		kp1, des1 = sift.detectAndCompute(im1.astype(np.uint8), None)
 		kp2, des2 = sift.detectAndCompute(im2.astype(np.uint8), None)
@@ -66,16 +68,18 @@ def computeMatches(im1, im2, feature="orb"):
 		#Lowe Ratio Test Matches 
 		goodMatches = []
 		for m,n in matches:
-			if m.distance < (.8 * n.distance):
+			if m.distance < (.7 * n.distance):
 				goodMatches.append(m)
 
-	if len(matches) == 0:
-		msg = "No matches were able to be found between the two images"
-		raise ValueError(msg)
+	if len(matches) == 0 or len(goodMatches) == 0:
+		#msg = "No matches were able to be found between the two images"
+		#raise ValueError(msg)
+		goodMatches = None
+
 
 	return kp1, kp2, goodMatches
 
-def register(im1, im2, corCoef):
+def register(im1, im2, corCoef, feature):
 	import cv2
 	import numpy as np
 
@@ -88,36 +92,52 @@ def register(im1, im2, corCoef):
 	if len(im1.shape) > 2:
 		im1 = im1[:,:,0]
 
-	im_size = (im1.shape[0], im1.shape[1])
-
-	feature = "orb"
+	#im_size = (im1.shape[0], im1.shape[1])
 	kp1, kp2, goodMatches = computeMatches(im1, im2, feature)
-	
-	#Gets the matches out of the DMatch object into coordinates
-	match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype='float32')
-	match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype='float32')
 
-	#M = cv2.getAffineTransform(match2[:3], match1[:3])
-	#Compute the homography of the matches
-	homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
+	registerIm = im2
+	if goodMatches is not None:
+		match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
+		match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
+		homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
+		#matchIm = cv2.drawMatches(im1.astype(np.uint8), kp1, im2, kp2, goodMatches, None, 
+		#							matchesMask=mask.ravel().tolist(),flags=2)
+		#cv2.imshow('matchIm', cv2.resize(matchIm, None, fx=0.5, fy=0.5, 
+		#								interpolation=cv2.INTER_AREA))
+		#cv2.waitKey(0)
+		if homography is not None:
+			warpedIm = cv2.warpPerspective(im2, homography, (im1.shape[1], im1.shape[0]))
+		
+			warpedCorCoef = np.absolute(np.corrcoef(np.ravel(im1), np.ravel(warpedIm)))[0,1]
+			if warpedCorCoef > 0.2:
+				registerIm = warpedIm
 
-	#Create an image that draws the matching points
-	#matchIm = cv2.drawMatches(im1, kp1, im2, kp2, matches, None, 
-	#							matchesMask=mask.ravel().tolist(),flags=2)
-	#cv2.imshow('matchIm', cv2.resize(matchIm, None, fx=0.5, fy=0.5, 
-	#								interpolation=cv2.INTER_AREA))
-	#cv2.waitKey(0)
+		#Gets the matches out of the DMatch object into coordinates
+		#match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype='float32')
+		#match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype='float32')
+		
 
-	#Warp the second image so that it registers with the first
-	#registerIm = cv2.warpAffine(im2, M, (im1.shape[1], im1.shape[0]))
-	registerIm = cv2.warpPerspective(im2, homography, (im_size[1],im_size[0]))
+		#M = cv2.getAffineTransform(match2[:3], match1[:3])
+		#match2 = match2[:]
+		#match1 = match1[:]
+		#M = cv2.estimateRigidTransform(((match2/match2.max())*255).astype(np.uint8), ((match1/match1.max())*255).astype(np.uint8), False).astype(np.float64)
 
-	return registerIm
+		#Compute the homography of the matches
+		#print(homography.shape)
+		#Create an image that draws the matching points
+		
 
-def stackImages(imageList, matchOrder):
+		#Warp the second image so that it registers with the first
+		#registerIm = cv2.warpAffine(im2, M, (im1.shape[1], im1.shape[0]))
+
+	return np.reshape(registerIm, im1.shape)
+
+def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	import cv2
 	import numpy as np
-	#from ..dimensions import dimensions
+	from ImageRegistration.correlateImages import createCorrelation
+	from ImageRegistration.correlateImages import findPairs
+
 
 	for image in imageList:
 		if int(image[-5]) == int(matchOrder[0,0]):
@@ -125,29 +145,53 @@ def stackImages(imageList, matchOrder):
 	#height, width, bands, dType = dimensions.dimensions(im1)
 	height, width = im1.shape
 	imageStack = np.zeros((height, width, len(imageList)))
-	imageStack[:,:,0] = im1
+	imageStack[:,:,int(matchOrder[0,0])-1] = im1
 
-	mask = np.full((height, width), 255, dtype=np.uint8)
+	mask = np.ones((height, width), dtype=np.uint8)
 
-	for pair in range(0, matchOrder.shape[0]):
+	for pair in range(matchOrder.shape[0]):
 		correlationCoef = matchOrder[pair,2]
 		im1 = imageStack[:,:,int(matchOrder[pair,0])-1]
 		im2 = image[:-5] + str(int(matchOrder[pair,1])) + image[-4:]
 		im2 = cv2.imread(im2, cv2.IMREAD_GRAYSCALE)
+		
+		warped = register(im1, im2, correlationCoef, feature)		
 
-		warped = register(im1, im2, correlationCoef)
 		mask[np.where(warped == 0)] = 0
 		imageStack[:,:,int(matchOrder[pair,1])-1] = warped
 
-	_, contours, _, = cv2.findContours(mask, cv2.RETR_EXTERNAL, 
-												cv2.CHAIN_APPROX_SIMPLE)
-	x, y, w, h = cv2.boundingRect(contours[0])
+	goodCorr = True
+	maxIndices, correlationMatrix = createCorrelation(imageStack)
+	matchOrder = findPairs(maxIndices, correlationMatrix)
+	bestCorrelation = matchOrder[:,-1]
 
-	imageStack = np.asarray([imageStack[y:y+h, x:x+w, im] \
-								for im in range(len(imageStack[0,0,:]))])
-	imageStack = np.moveaxis(imageStack, 0, -1)
+	if (bestCorrelation< .2).sum() != bestCorrelation.size:
+		goodCorr = False
 
-	return imageStack
+	if goodCorr is True and crop is True:
+		borderPix = 0
+		while True:
+			possTotal = (height-2*borderPix)*(width-2*borderPix)
+			curTot = np.sum(mask[borderPix:height-borderPix,
+								borderPix:width-borderPix])
+			if curTot == possTotal:
+				break
+			borderPix += 1
+		imageStack = np.asarray([imageStack[borderPix:height-borderPix, 
+										borderPix:width-borderPix, im]
+									for im in range(len(imageStack[0,0,:]))])
+		imageStack = np.moveaxis(imageStack, 0, -1)	
+
+	#_, contours, _, = cv2.findContours(mask, cv2.RETR_EXTERNAL, 
+	#											cv2.CHAIN_APPROX_SIMPLE)
+	#print(contours)
+	#x, y, w, h = cv2.boundingRect(contours[0])
+
+	#imageStack = np.asarray([imageStack[y:y+h, x:x+w, im] \
+	#							for im in range(len(imageStack[0,0,:]))])
+	#imageStack = np.moveaxis(imageStack, 0, -1)
+
+	return imageStack, goodCorr
 
 if __name__ == '__main__':
 
@@ -161,27 +205,29 @@ if __name__ == '__main__':
 	#home = os.path.expanduser('~')
 	#baseDirectory = 'src/python/modules/sUAS'
 	#images = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/'
-	images = '/cis/otherstu/gvs6104/DIRS/20170928/150flight/000/'
+	images = '/cis/otherstu/gvs6104/DIRS/20170928/300flight/000/'
 
 	#im1 = cv2.imread(images + 'IMG_0058_1.tif', cv2.IMREAD_UNCHANGED)
 	#height, width, bands, dType = dimensions.dimensions(im1)
 
-	im1 = images + 'IMG_0058_1.tif'
-	im2 = images + 'IMG_0058_2.tif'
-	im3 = images + 'IMG_0058_3.tif'
-	im4 = images + 'IMG_0058_4.tif'
-	im5 = images + 'IMG_0058_5.tif'
+	im1 = images + 'IMG_0128_1.tif'
+	im2 = images + 'IMG_0128_2.tif'
+	im3 = images + 'IMG_0128_3.tif'
+	im4 = images + 'IMG_0128_4.tif'
+	im5 = images + 'IMG_0128_5.tif'
 
 	imageList = [im1, im2, im3, im4, im5]
 	matchOrder = correlateImages.OrderImagePairs(imageList, addOne=True)
-	imageStack = stackImages(imageList, matchOrder)
-
+	imageStack, goodCorr = stackImages(imageList, matchOrder, 'orb', crop=True)
+	#print(imageStack)
 	fullStack = cv2.addWeighted(imageStack[:,:,0], .2, 
 								imageStack[:,:,1], .2, 0, None)
+	#print(fullStack.shape)
+	#print(imageStack.shape)
 	for ind in range(2,len(imageList)):
 		fullStack = cv2.addWeighted(fullStack, 1, imageStack[:,:,ind], .2, 0, None)
 	fullStack = ipcv.histogram_enhancement(fullStack.astype(np.uint8), etype='linear2')
-	cv2.imshow('Stacked Image', cv2.resize(fullStack, None, fx=0.5, fy=0.5, 
+	cv2.imshow('Stacked Image', cv2.resize(fullStack, None, fx=0.8, fy=0.8, 
 							interpolation=cv2.INTER_AREA).astype(np.uint8))
 
 	action = ipcv.flush()

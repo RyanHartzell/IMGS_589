@@ -45,8 +45,9 @@ def metadataGrabber(filename):
     imagemetadata = GExiv2.Metadata(sampleimage)
 
     taglist = imagemetadata.get_tags()
+    print(taglist[45])
 
-    indexlist = (0,3,5,17,18,19,20,27,33,37,38,39,41,42,43,46,47,48,49,50,51,52,53,54,56)
+    indexlist = (0,3,5,14,17,18,19,20,27,33,34,35,36,37,38,39,41,42,43,45,46,47,48,49,50,51,52,53,54,56,69)
     metadatadict = {}
 
     for index in indexlist:
@@ -74,7 +75,7 @@ def metadataGrabber(filename):
             entry = (degrees,minutes,seconds)
 
         #String to string case for names,date,time
-        elif index in (19,20,33,46):
+        elif index in (14,19,20,33,34,35,45,46,69):
             pass
 
         #All other cases, no integers used for ease later
@@ -88,5 +89,15 @@ if __name__ == '__main__':
     import metadataReader
     filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
     metadatadict = metadataReader.metadataGrabber(filename)
-
-    print(metadatadict['Exif.Photo.ExposureTime'])
+    print(metadatadict)
+    print(metadatadict['Exif.Photo.SubSecTime'])
+    print(metadatadict['Exif.Image.DateTime'])
+    #print(metadatadict['Exif.Image.DateTime'])
+    #print(metadatadict['Exif.GPSInfo.GPSAltitude'])
+    #print(metadatadict['Exif.GPSInfo.GPSLongitude'])
+    #print(metadatadict['Exif.GPSInfo.GPSLatitude'])
+    #longitude = metadatadict['Exif.GPSInfo.GPSLongitude']
+    #longitude = longitude[0] + longitude[1]/60 + longitude[2]/3600
+    #print(longitude)
+    #print(metadatadict['Exif.Photo.DateTimeDigitized'])
+    print(metadatadict['Xmp.DLS.TimeStamp'])

@@ -16,10 +16,10 @@ copyright::
 	Copyright (C) 2017, Rochetser Institute of Technology
 """
 
-import numpy as np
-import cv2
-
 def createCorrelation(images):
+	import numpy as np
+	import cv2
+
 	flatImageList = []
 	#Creates a flat image list to hold all of the images
 
@@ -63,6 +63,8 @@ def createCorrelation(images):
 	return maxIndices, correlationMatrix
 
 def findPairs(maxIndices, correlationMatrix):
+	import numpy as np
+
 	max1, max2 = maxIndices[0], maxIndices[1]
 	#Seperates the maximum indices into the respective x & y locations
 	matchOrder = []
@@ -90,6 +92,10 @@ def findPairs(maxIndices, correlationMatrix):
 	return np.asarray(matchOrder)
 
 def OrderImagePairs(imageList, addOne=True):
+	from .correlateImages import createCorrelation
+	from .correlateImages import findPairs
+	import numpy as np
+
 	#Combines the two above methods for easier calling
 	maxIndices, correlationMatrix = createCorrelation(imageList)
 	#Sample maxIndices return where the 1st is the x values any 2nd is y

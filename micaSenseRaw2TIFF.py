@@ -14,12 +14,13 @@ copyright::
 import sys
 import os
 import glob
-from general_toolbox.directoryFix import fixNamingStructure
-from general_toolbox.writeGeoTIFF import writeGeoTIFF, showGeoTIFF, writeGPSLog
-from ImageRegistration.correlateImages import OrderImagePairs
-from ImageRegistration.registerMultiSpectral import stackImages
-
-#import resource
+import numpy as np
+import time
+import csv
+from fileStructure.fixMicaSenseStructure import fixNamingStructure
+from geoTIFF.createGeoTIFF import writeGeoTIFF, showGeoTIFF, writeGPSLog
+from registration.correlateImages import OrderImagePairs
+from registration.createImageStack import stackImages
 
 if sys.version_info[0] == 2:
 	import Tkinter as tkinter
@@ -34,9 +35,13 @@ root.withdraw()
 root.update()
 #flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
 initialdir = os.getcwd()
-flightDirectory = filedialog.askdirectory(initialdir=initialdir)
+flightDirectory = filedialog.askdirectory(initialdir=initialdir,
+			title="Choose the RAW MicaSense .tif directory")
+if flightDirectory == '':
+	sys.exit()
+startTime = time.time()
 #print(flightDirectory)
-fixNamingStructure(flightDirectory)
+#fixNamingStructure(flightDirectory)
 tiffList = sorted(glob.glob(flightDirectory + '/*.tif'))
 imageName = os.path.basename(tiffList[0])
 
@@ -48,8 +53,12 @@ progress_variable = tkinter.DoubleVar()
 progressbar = ttk.Progressbar(root, variable=progress_variable, 
 											maximum=len(tiffList)//5)
 progressbar.pack()
+root.title("Conversion Progress")
 
 gpsLog = []
+with open(flightDirectory+ "/GPSLog.csv",'w') as resultFile:
+	wr = csv.writer(resultFile)
+
 for images in range(0,len(tiffList),5):
 	im1 = tiffList[images]
 	im2 = tiffList[images+1]
@@ -65,15 +74,19 @@ for images in range(0,len(tiffList),5):
 		geoTiff = writeGeoTIFF(imageStack, im1)
 		logLine = writeGPSLog(im1)
 		gpsLog.append(logString)
+		wr.writerow(gpsLog)
+
 		#showGeoTIFF(geoTiff)
 	progress_variable.set(images//5)
 	status_text.set("Writing out GeoTIFF: {0}/{1}".format(
 								images//5,len(tiffList)//5))
 	root.update_idletasks()
 
-gpsLog = np.asarray(gpsLog)
-numpy.savetxt(flightDirectory+"/GPSLog.csv", gpsLog, delimiter=',')
+#np.savetxt(flightDirectory+"/GPSLog.csv", gpsLog, delimiter=',')
 
+totalTime = time.time()-startTime
+print("This took {0}m {1}s for {2} images.".format(totalTime//60, 
+										totalTime%60, len(tiffList)))
 
 root.update()
 root.destroy()

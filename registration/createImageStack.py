@@ -135,8 +135,8 @@ def register(im1, im2, corCoef, feature):
 def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	import cv2
 	import numpy as np
-	from ImageRegistration.correlateImages import createCorrelation
-	from ImageRegistration.correlateImages import findPairs
+	from registration.correlateImages import createCorrelation
+	from registration.correlateImages import findPairs
 
 
 	for image in imageList:

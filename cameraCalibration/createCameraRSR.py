@@ -270,35 +270,6 @@ def saveData(spdArray, meanDC, normDC, peakNorm, tiffList):
 				"Raw Green, Raw Red, Norm Blue, Norm Green, Norm Red,"+ \
 				"Peak Blue, Peak Green, Peak Red", comments='')
 
-def flush():
-    print( 'Press "c" to continue, ESC to exit, "q" to quit')
-    delay = 100
-    while True:
-        k = cv2.waitKey(delay)
-
-        # ESC pressed
-        if k == 27 or k == (65536 + 27):
-            action = 'exit'
-            print( 'Exiting ...')
-            plt.close()
-            break
-
-        # q or Q pressed
-        if k == 113 or k == (65536 + 113) or k == 81 or k == (65536 + 81):
-            action = 'quit'
-            print( 'Quitting ...')
-            plt.close()
-            break
-
-        # c or C pressed
-        if k == 99 or k == (65536 + 99) or k == 67 or k == (65536 + 67):
-            action = 'continue'
-            print( 'Continuing ...')
-            plt.close()
-            break
-
-    return action
-
 if __name__ == '__main__':
 
 	#import time

@@ -40,11 +40,9 @@ copyright::
 	Copyright (C) 2017, Rochetser Institute of Technology
 """
 
-import os, glob
-import tkinter
-import sys
-from tkinter import filedialog
-from os.path import basename, dirname
+#import os, glob
+
+#from os.path import basename, dirname
 
 
 def fixNamingStructure(directory):
@@ -82,6 +80,8 @@ def fixNamingStructure(directory):
 		#Removes the empty /000/ directory once all images are renamed
 
 def groupBands(directory):
+	import glob
+	import os
 
 	if len(glob.glob(directory+'/*.tif')) == 0:
 		msg = "No '.tif' files were found in the specified directory."
@@ -107,6 +107,10 @@ def groupBands(directory):
 			#Renames the original image BE CAREFUL
 
 if __name__ == "__main__":
+	import tkinter
+	import sys
+	from tkinter import filedialog
+	from fixMicaSenseStructure import fixNamingStructure, groupBands
 
 	root = tkinter.Tk()
 	root.withdraw()

@@ -55,8 +55,9 @@ def writeGeoTIFF(image, fileName):
 	return geoTiff
 
 def writeGPSLog(rawImage, geoTiff):
-	from general_toolbox.metadataReader import metadataGrabber
+	from geoTIFF.metadataReader import metadataGrabber
 	from os.path import basename
+
 	mDict = metadataGrabber(rawImage)
 	gName = basename(geoTiff)
 	longitude = mDict['Exif.GPSInfo.GPSLongitude']
@@ -103,11 +104,11 @@ if __name__ == "__main__":
 		import sys
 		from os import path
 		sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-		from ImageRegistration.correlateImages import OrderImagePairs
-		from ImageRegistration.registerMultiSpectral import stackImages
+		from registration.correlateImages import OrderImagePairs
+		from registration.registerMultiSpectral import stackImages
 	else:
-		from ..ImageRegistration.correlateImages import OrderImagePairs
-		from ..ImageRegistration.registerMultiSpectral import stackImages
+		from ..registration.correlateImages import OrderImagePairs
+		from ..registration.registerMultiSpectral import stackImages
 	from metadataReader import metadataGrabber
 
 	images = '/cis/otherstu/gvs6104/DIRS/20170928/300flight/000/'

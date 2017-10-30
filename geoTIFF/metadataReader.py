@@ -40,9 +40,9 @@ gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 
 def metadataGrabber(filename):
-    sampleimage = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
+    #sampleimage = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
 
-    imagemetadata = GExiv2.Metadata(sampleimage)
+    imagemetadata = GExiv2.Metadata(filename)
 
     taglist = imagemetadata.get_tags()
     #print(taglist[11])
@@ -83,7 +83,7 @@ def metadataGrabber(filename):
             entry = float(entry)
 
         metadatadict[specification] = entry
-    return(metadatadict)
+    return metadatadict
     
 if __name__ == '__main__':
     import metadataReader

@@ -55,37 +55,34 @@ progressbar = ttk.Progressbar(root, variable=progress_variable,
 progressbar.pack()
 root.title("Conversion Progress")
 
-gpsLog = []
 with open(flightDirectory+ "/GPSLog.csv",'w') as resultFile:
 	wr = csv.writer(resultFile)
 
-for images in range(0,len(tiffList),5):
-	im1 = tiffList[images]
-	im2 = tiffList[images+1]
-	im3 = tiffList[images+2]
-	im4 = tiffList[images+3]
-	im5 = tiffList[images+4]
+	for images in range(0,len(tiffList),5):
+		im1 = tiffList[images]
+		im2 = tiffList[images+1]
+		im3 = tiffList[images+2]
+		im4 = tiffList[images+3]
+		im5 = tiffList[images+4]
 
-	imageList = [im1, im2, im3, im4, im5]
-	matchOrder = OrderImagePairs(imageList, addOne=True)
-	imageStack, goodCorr = stackImages(imageList, matchOrder,'orb', crop=False)
-	if goodCorr:
-		#Normalize Image Stack
-		geoTiff = writeGeoTIFF(imageStack, im1)
-		logLine = writeGPSLog(im1)
-		gpsLog.append(logString)
-		wr.writerow(gpsLog)
+		imageList = [im1, im2, im3, im4, im5]
+		matchOrder = OrderImagePairs(imageList, addOne=True)
+		imageStack, goodCorr = stackImages(imageList, matchOrder,'orb', crop=False)
+		#print(goodCorr)
+		if goodCorr:
+			#Normalize Image Stack
+			geoTiff = writeGeoTIFF(imageStack, im1)
+			logLine = writeGPSLog(im1,geoTiff)
+			wr.writerow(logLine)
+			#showGeoTIFF(geoTiff)
 
-		#showGeoTIFF(geoTiff)
-	progress_variable.set(images//5)
-	status_text.set("Writing out GeoTIFF: {0}/{1}".format(
-								images//5,len(tiffList)//5))
-	root.update_idletasks()
-
-#np.savetxt(flightDirectory+"/GPSLog.csv", gpsLog, delimiter=',')
+		progress_variable.set(images//5)
+		status_text.set("Writing out GeoTIFF: {0}/{1}".format(
+									images//5,len(tiffList)//5))
+		root.update_idletasks()
 
 totalTime = time.time()-startTime
-print("This took {0}m {1}s for {2} images.".format(totalTime//60, 
+print("This took {0}m {1:.2f}s for {2} images.".format(int(totalTime//60), 
 										totalTime%60, len(tiffList)))
 
 root.update()

@@ -92,8 +92,8 @@ def findPairs(maxIndices, correlationMatrix):
 	return np.asarray(matchOrder)
 
 def OrderImagePairs(imageList, addOne=True):
-	from .correlateImages import createCorrelation
-	from .correlateImages import findPairs
+	#from correlateImages import createCorrelation
+	#from correlateImages import findPairs
 	import numpy as np
 
 	#Combines the two above methods for easier calling

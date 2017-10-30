@@ -165,7 +165,7 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	matchOrder = findPairs(maxIndices, correlationMatrix)
 	bestCorrelation = matchOrder[:,-1]
 
-	if (bestCorrelation< .2).sum() != bestCorrelation.size:
+	if (bestCorrelation> .2).sum() != bestCorrelation.size:
 		goodCorr = False
 
 	if goodCorr is True and crop is True:
@@ -200,7 +200,7 @@ if __name__ == '__main__':
 	import correlateImages
 	import cv2
 	import numpy as np
-	import dimensions
+	#import dimensions
 
 	#home = os.path.expanduser('~')
 	#baseDirectory = 'src/python/modules/sUAS'

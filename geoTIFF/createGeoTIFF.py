@@ -62,17 +62,21 @@ def writeGPSLog(rawImage, geoTiff):
 	gName = basename(geoTiff)
 	longitude = mDict['Exif.GPSInfo.GPSLongitude']
 	longitude = longitude[0] + longitude[1]/60 + longitude[2]/3600
+	strLong = '{0:.8f}'.format(longitude)
 	latitude = mDict['Exif.GPSInfo.GPSLatitude']
 	latitude = latitude[0] + latitude[1]/60 + latitude[2]/3600
+	strLat = '{0:.8f}'.format(latitude)
 	altitude = mDict['Exif.GPSInfo.GPSAltitude']
+	strAlt = '{0:.2f}'.format(altitude)
 	time = mDict['Exif.Photo.DateTimeDigitized']
 	subSec = mDict['Exif.Photo.SubSecTime']
-	zuluOffset = str(int(time[10:13])-5)
+	zuluOffset = str(int(time[11:13])-5)
+	print(zuluOffset)
 	time = time.replace(' ', 'T')
 	time = time.replace(':','-',2)
-	time = time[:10] + zuluOffset + time[13:]
+	time = time[:11] + zuluOffset + time[13:]
 	time = time + '.' + subSec[1:] + 'Z'
-	logLine = [gName, str(longitude), str(latitude), str(altitude), time]
+	logLine = [gName, strLong, strLat, strAlt, time]
 	#logString = ','.join(logLine)
 	return logLine
 
@@ -105,10 +109,10 @@ if __name__ == "__main__":
 		from os import path
 		sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 		from registration.correlateImages import OrderImagePairs
-		from registration.registerMultiSpectral import stackImages
+		from registration.createImageStack import stackImages
 	else:
 		from ..registration.correlateImages import OrderImagePairs
-		from ..registration.registerMultiSpectral import stackImages
+		from ..registration.createImageStack import stackImages
 	from metadataReader import metadataGrabber
 
 	images = '/cis/otherstu/gvs6104/DIRS/20170928/300flight/000/'

@@ -33,6 +33,8 @@ else:
 root = tkinter.Tk()
 root.withdraw()
 root.update()
+
+#IF MULTIPLE DIRECTORIES ARE SELECTED THEN PARALLEL PROCESS THEM
 #flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
 initialdir = os.getcwd()
 flightDirectory = filedialog.askdirectory(initialdir=initialdir,
@@ -41,7 +43,11 @@ if flightDirectory == '':
 	sys.exit()
 startTime = time.time()
 #print(flightDirectory)
-#fixNamingStructure(flightDirectory)
+if len(glob.glob(flightDirectory+'/*/')) != 0:
+	fixNamingStructure(flightDirectory)
+	#msg = "No subdirectories were found in the specified directory."
+	#raise ValueError (msg)
+
 tiffList = sorted(glob.glob(flightDirectory + '/*.tif'))
 imageName = os.path.basename(tiffList[0])
 

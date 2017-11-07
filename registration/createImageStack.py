@@ -36,12 +36,17 @@ def computeMatches(im1, im2, feature="orb"):
 		#Computes the features & descriptors for the images
 		kp1, des1 = orb.detectAndCompute(im1.astype(np.uint8), None)
 		kp2, des2 = orb.detectAndCompute(im2.astype(np.uint8), None)
+		dist = []
+		matches = []
+		if (des1 is not None) and (des2 is not None):
+			#print(des1)
+			#print(des2)
 
-		matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
-		matches = matcher.match(des1, des2)
-		matches = sorted(matches, key = lambda x:x.distance)
-		#Calculates the distance between matches
-		dist = [m.distance for m in matches]
+			matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
+			matches = matcher.match(des1, des2)
+			matches = sorted(matches, key = lambda x:x.distance)
+			#Calculates the distance between matches
+			dist = [m.distance for m in matches]
 		goodMatches = []
 		if len(dist) != 0:
 			#Finds the threshold distance between matches
@@ -138,8 +143,11 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	from registration.correlateImages import createCorrelation
 	from registration.correlateImages import findPairs
 
-
+	#print(matchOrder[0,0])
+	#print(imageList)
 	for image in imageList:
+
+		#print(int(image[-5]))
 		if int(image[-5]) == int(matchOrder[0,0]):
 			im1 = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
 	#height, width, bands, dType = dimensions.dimensions(im1)
@@ -154,7 +162,6 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 		im1 = imageStack[:,:,int(matchOrder[pair,0])-1]
 		im2 = image[:-5] + str(int(matchOrder[pair,1])) + image[-4:]
 		im2 = cv2.imread(im2, cv2.IMREAD_GRAYSCALE)
-		
 		warped = register(im1, im2, correlationCoef, feature)		
 
 		mask[np.where(warped == 0)] = 0
@@ -205,7 +212,7 @@ if __name__ == '__main__':
 	#home = os.path.expanduser('~')
 	#baseDirectory = 'src/python/modules/sUAS'
 	#images = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/'
-	images = '/cis/otherstu/gvs6104/DIRS/20170928/300flight/000/'
+	images = '/cis/otherstu/gvs6104/DIRS/20170928/300flight/'
 
 	#im1 = cv2.imread(images + 'IMG_0058_1.tif', cv2.IMREAD_UNCHANGED)
 	#height, width, bands, dType = dimensions.dimensions(im1)

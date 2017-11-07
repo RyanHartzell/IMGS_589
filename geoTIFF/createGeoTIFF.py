@@ -71,7 +71,7 @@ def writeGPSLog(rawImage, geoTiff):
 	time = mDict['Exif.Photo.DateTimeDigitized']
 	subSec = mDict['Exif.Photo.SubSecTime']
 	zuluOffset = str(int(time[11:13])-5)
-	print(zuluOffset)
+	#print(zuluOffset)
 	time = time.replace(' ', 'T')
 	time = time.replace(':','-',2)
 	time = time[:11] + zuluOffset + time[13:]

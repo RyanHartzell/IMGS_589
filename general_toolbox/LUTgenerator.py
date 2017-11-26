@@ -16,18 +16,14 @@ Description::
 Inputs::
 
 Version History::
+   findReflectance function completed                                                       11/26/2017
    Filling in the blanks                                                                    11/24/2017
    Converted field notes to excel for csv possibility
    Started                                                                                  11/23/2017
    Sudo Code
 
 Current Bugs/Questions::
-   -Integration with other workflows (ex. Image normalization and registration)
-   -Best Practice for multiplying SVC response and camera response curves?
-      1) Keep SVC data as original as possible, interpolate camera data (Seems proper)
-      2) Maintain camera data, downsample SVC data
-      3) Modify both data sets
-   -Need to streamline manual input method
+   -Need to create manual input method
    -Find relationship between field note times, SVC times, and micasense times
    -More to be discovered!
 
@@ -35,36 +31,47 @@ Author::
    Kevin Kha
 '''
 
-def findReflectance(SVCtargetSR,cameraresponseSR,image):
+import cv2
+import glob
+import numpy as np
+import os.path
+import os
+import sys
+from targets import svcReader
+from geoTIFF import metadataReader
+
+def findReflectance(SVCtargetSR,cameraresponseSR,bandname):
     #Find camera spectral response
     cameraSR = np.loadtxt(cameraresponseSR,unpack = True, skiprows = 1,dtype = float, delimiter = ',')
     #Band Selection
-    metadatadict = metadatagrabber(image)
-    band = metadatadict['Xmp.Camera.BandName']
-    if band == 'Blue':
+    wavelengthMono = cameraSR[0]
+    if bandname == 'Blue':
         band = cameraSR[12]
-    elif band == 'Green':
+    elif bandname == 'Green':
         band = cameraSR[13]
-    elif band == 'Red':
+    elif bandname == 'Red':
         band = cameraSR[14]
-    elif band == 'NIR':
+    elif bandname == 'NIR':
         band = cameraSR[16]
-    elif band == 'Red edge':
-        band = cameraSR[15]
-    #Find which target
-    
-    #Find time in scene
-    
+    elif bandname == 'Red edge':
+        band = cameraSR[15]    
     #For given time, trace back to nearest SVC measurement for given target
-    
+    wavelength,reference,target,target_response = svcGrabber(SVCtargetSR)
+    target_response = target_response/100
+    #Gaussian Curve fit for interpolation of data for a given band
+    mean = np.sum(band * wavelengthMono)/np.sum(band)
+    std = np.sqrt(np.abs(np.sum((wavelengthMono-mean)**2*band)/np.sum(band)))
+    #Assignment of cameraSR to domain of SVC measurements
+    gaussianResponse = np.exp(-(mean-wavelength)**2/std)    
     #Integral of product of SVC and Camera
-    numerator = np.sum(band * SVC)
+    numerator = np.sum(gaussianResponse * target_response)
     #Integral of SVC curves
-    denominator = np.sum(band)
+    denominator = np.sum(gaussianResponse)
     #Reflectance = quotient of two integrals
     reflectance = numerator/denominator
     return reflectance
-def findLuts(dictionary, image, DNfinder == 'auto'):
+
+def findLuts(dictionary, image, DNfinder = 'auto'):
     #find irradiance
     metadatadict = metadatagrabber(image)
     irradiance = metadatadict['Xmp.Camera.Irradiance']
@@ -72,9 +79,9 @@ def findLuts(dictionary, image, DNfinder == 'auto'):
     
     #find DN of target one
     if DNfinder == 'auto':
-        #Target Selection Stuff
+        print('Target Selection Stuff')
     elif DNfiner == 'manual':
-        #User Input DN
+        print('Manual Input Method')
     #find reflectance of target two
     
     #find DN of target two
@@ -117,4 +124,5 @@ for ref in referenceimageset:
 for image in fullset:
     im = cv2.imread(cwd + image, cv2.IMREAD_UNCHANGED)
     reflectanceImage = applyLuts(referencelibrary, image) 
+    
     

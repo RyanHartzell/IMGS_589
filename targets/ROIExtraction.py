@@ -2,13 +2,12 @@
 def getDisplayImage(geotiffFilename):
 	import numpy as np
 	import cv2
-	from osgeo import gdal
+	from osgeo import gdal	
 
 	#Get GEOTIFF
 	imageStack = gdal.Open(geotiffFilename).ReadAsArray()
 	imageStack = np.moveaxis(imageStack, 0, -1)
 	print(imageStack.dtype)
-
 
 	#crop
 	width = imageStack.shape[1]
@@ -30,7 +29,7 @@ def getDisplayImage(geotiffFilename):
 	band2 = imageStack_crop[:,:,1]
 	band3 = imageStack_crop[:,:,2]
 	band4 = imageStack_crop[:,:,3]
-	band5 = imageStack_crop[:,:,4]
+	band5 = imageStack_crop[:,:,4]	
 
 
 	#displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
@@ -50,7 +49,7 @@ def selectROI(mapName):
 	while p.number() < 4:
 		cv2.waitKey(100)
 
-	return p.x(), p.y()
+	return p.x(), p.y() 
 
 
 
@@ -75,7 +74,7 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	cv2.fillConvexPoly(mask, polyMaskCoords, 1.0)
 
 	#apply the single channel mask to each of the five bands in 'currentCroppedIm'
-	mask[np.where(mask == 0)] = np.nan
+	mask[np.where(mask == 0)] = np.nan 
 	mask = mask.astype(currentCroppedIm.dtype)
 
 	print(currentCroppedIm[:,:,0])
@@ -101,11 +100,10 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	print(stdev)
 	print(centroid)
 
-	cv2.imshow('a', (ROI_image[:,:,0]).astype(np.uint8))
-	cv2.waitKey(0)
 
 
-	return mask, ROI_image
+
+	return mask, ROI_image, mean, stdev, centroid
 
 
 
@@ -128,6 +126,7 @@ if __name__ == '__main__':
 
 
 	geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/IMG_0181.tiff'
+	#geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171108/Missions/1300_225ft/micasense/geoTiff/IMG_0188.tiff'
 
 	#get the geotiff image (5 band) and color (3 band)
 	geoTiffImage, displayImage = getDisplayImage(geotiffFilename)
@@ -135,16 +134,18 @@ if __name__ == '__main__':
 	print(np.max(geoTiffImage))
 
 
-	# mapName = 'Select corners for the target area.'
-	# cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
-	# im = cv2.imshow(mapName, displayImage)
+	mapName = 'Select corners for the target area.'
+	cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
+	im = cv2.imshow(mapName, displayImage)
+	
 
+	#select the points for a target in the scene
+	pointsX, pointsY = selectROI(mapName)
 
-	# #select the points for a target in the scene
-	# pointsX, pointsY = selectROI(mapName)
-	# cv2.destroyWindow(mapName)
+	#ask user for input of the current target
+	currentTargetNumber = assignTargetNumber()
 
-	# #ask user for input of the current target
-	# currentTargetNumber = assignTargetNumber()
+	maskedIm, ROI_image, mean, stdev, centroid = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
 
-	# maskedIm, ROI_image = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
+	cv2.waitKey(0)
+	cv2.destroyWindow(mapName)

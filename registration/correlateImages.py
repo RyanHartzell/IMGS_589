@@ -47,13 +47,13 @@ def createCorrelation(images):
 
 	#iTril = np.tril_indices(correlationMatrix.shape[0], k=0)
 	absoluteCorrelation[np.tril_indices(correlationMatrix.shape[0], k=0)] = 0
-	numMax = int((correlationMatrix.shape[0]**2 - 
+	numMax = int((correlationMatrix.shape[0]**2 -
 									correlationMatrix.shape[0])/2)
 	#Finds the number of values in the upper triangle of the correlation matrix
 	#Since the lower triangle is duplicates and the diagonal is one we don't
 	#use that when calculating the number of important correlation coefficents
-	
-	maxIndices = np.argpartition(absoluteCorrelation, range(-numMax,0), 
+
+	maxIndices = np.argpartition(absoluteCorrelation, range(-numMax,0),
 												axis=None)[-numMax:][::-1]
 	#Finds the indices of the top 10 maximum values of the flattened absolute
 	#Correlation matrix array
@@ -75,14 +75,14 @@ def findPairs(maxIndices, correlationMatrix):
 		flatMatch = [i for tmp in matchOrder for i in tmp]
 		#Flattens the already made matchorder list to do element comparison
 		if max1[pair] in flatMatch and max2[pair] not in flatMatch:
-			#Asks if the current x has already been matched and 
+			#Asks if the current x has already been matched and
 			#that the current y has not been matched, if true adds the pair.
-			matchOrder.append([max1[pair], max2[pair], 
+			matchOrder.append([max1[pair], max2[pair],
 								correlationMatrix[max1[pair],max2[pair]]])
 		elif max1[pair] not in flatMatch and max2[pair] in flatMatch:
-			#Asks if the current y has already been matched and 
+			#Asks if the current y has already been matched and
 			#that current x not matched if true, adds the pair.
-			matchOrder.append([max2[pair], max1[pair], 
+			matchOrder.append([max2[pair], max1[pair],
 								correlationMatrix[max1[pair],max2[pair]]])
 	#Returns an array of matched images and their correlation coefficents
 	#[ [ 0.0          2.0          0.8395225 ]
@@ -120,7 +120,7 @@ def OrderImagePairs(imageList, addOne=True):
 		onesMatrix = np.ones(matchOrder.shape)
 		#Creates a ones matrix the size of the matchOrder
 		onesMatrix[:,-1] = 0
-		#Sets the last column of the ones matrix to 0
+		#Sets the last column of the ones matrix to 0 to not modify correlation
 		matchOrder += onesMatrix
 		#Adds the ones matrix to the matchorder matrix
 		#[ [ 1.0          3.0          0.8395225 ]

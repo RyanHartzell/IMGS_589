@@ -26,7 +26,7 @@ description::
 
 	The Group Bands Method:
 	Takes all of the renamed images from the above method then
-	places them into subdirectories per band. The new directories 
+	places them into subdirectories per band. The new directories
 	are formatted below:
 		band1, band2, band3, ... ,band[n]
 		band1/IMG_0000_1.tif, band1/IMG_0001_1.tif, ...
@@ -47,7 +47,8 @@ copyright::
 
 def fixNamingStructure(directory):
 	import os, glob
-	from os.path import basename, dirname
+	import shutil
+	from os.path import basename, dirname, split
 
 	if len(glob.glob(directory+'/*/')) == 0:
 		msg = "No subdirectories were found in the specified directory."
@@ -56,13 +57,15 @@ def fixNamingStructure(directory):
 		msg = "No '.tif' files were found in the specified subdirectory."
 		raise ValueError (msg)
 
+	processedDirectory = os.path.split(directory)[0] + "/processed/"
+
 	for subDirectory in sorted(glob.iglob(directory + '/[0-9][0-9][0-9]/')):
 		#Goes through every subdirectory in the format of '/000/ or /###/'
 		subNumber = int(basename(dirname(subDirectory)))
 		#Finds the subdirectory number: /000/ = 0 /001/ = 1
 		for oldFilename in sorted(glob.iglob(subDirectory+'/*.tif')):
 			#Goes through every '.tif' file in the subdirectory of /###/
-			baseFileName = basename(oldFilename) 
+			baseFileName = basename(oldFilename)
 			#Creates a base filename without the path: IMG_0000_1.tif
 			fileNumber = int(baseFileName[4:8])
 			#Finds the filenumber '0000' in the case of IMG_0000_1.tif
@@ -71,13 +74,16 @@ def fixNamingStructure(directory):
 			newBaseFileName = baseFileName[:4] + newFileNumber + \
 													baseFileName[8:]
 			#Adds the new filenumber to the position of the old number
-			newFileName = directory + os.path.sep + newBaseFileName
+			newFileName = processedDirectory + os.path.sep + newBaseFileName
 			#Creates the new file with the original directory extension
 
-			os.rename(oldFilename, newFileName)
+			#os.rename(oldFilename, newFileName)
+			shutil.copyfile(oldFilename, newFileName)
 			#Renames the images. BE CAREFUL
-		os.rmdir(subDirectory)
+		#os.rmdir(subDirectory)
 		#Removes the empty /000/ directory once all images are renamed
+
+	return processedDirectory
 
 def groupBands(directory):
 	import glob
@@ -102,7 +108,7 @@ def groupBands(directory):
 		for tiff in glob.iglob(directory + '/*{0}.tif'.format(b)):
 			#Loops through all of the tiffs with the band extension
 			movedFile = bandDirectory + os.path.sep + basename(tiff)
-			#Creates the new filename in the new band directory			
+			#Creates the new filename in the new band directory
 			os.rename(tiff, movedFile)
 			#Renames the original image BE CAREFUL
 
@@ -119,11 +125,9 @@ if __name__ == "__main__":
 	initialdir = os.getcwd()
 	initialdir = "/cis/otherstu/gvs6104/DIRS/20171012/150ft"
 	flightDirectory = filedialog.askdirectory(initialdir=initialdir)
-	
+
 	if flightDirectory == '':
 		sys.exit()
 
-	fixNamingStructure(flightDirectory)
+	processedDirectory = fixNamingStructure(flightDirectory)
 	groupBands(flightDirectory)
-
-

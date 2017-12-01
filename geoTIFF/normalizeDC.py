@@ -2,11 +2,11 @@ def normalizeISOShutter(image, filename):
 	from .metadataReader import metadataGrabber
 	import numpy as np
 
-	minShutter = 1/(10**6) #1 Microsecond
-	minShutter = minShutter * 5 #To be made more accurate
+	#minShutter = 1/(10**6) #1 Microsecond
+	minShutter = 1/(10**5) #Estimation Needs to be improved
 	minISO = 100
 	uint16Max = float(2**16)-1
-	
+
 	if len(image.shape) == 3 and len(filename) == image.shape[2]:
 		normalizedImage = np.zeros_like(image)
 		for i in range(image.shape[2]):
@@ -52,18 +52,18 @@ if __name__ == '__main__':
 	sampleFileName = sampleFileDirectory + '/IMG_0000_1.tif'
 
 	sampleImage = cv2.imread(sampleFileName, cv2.IMREAD_UNCHANGED)
-	displaySampleImage = cv2.resize(sampleImage, None, fx=.5, fy=.5, 
+	displaySampleImage = cv2.resize(sampleImage, None, fx=.5, fy=.5,
 					interpolation=cv2.INTER_AREA)
 
 	cv2.imshow('sampleImage', ((displaySampleImage/65535)*255).astype('uint8'))
-	
+
 	#maxShutter, minShutter, maxISO, minISO = findMaxMinISOShutter(sampleFileDirectory)
 
 	normalizedImage = normalizeISOShutter(sampleImage, sampleFileName)
 
-	displayNormalizedImage = cv2.resize(normalizedImage, None, 
+	displayNormalizedImage = cv2.resize(normalizedImage, None,
 					fx=.5, fy=.5,interpolation=cv2.INTER_AREA)
-	cv2.imshow('normalizedImage', 
+	cv2.imshow('normalizedImage',
 				((displayNormalizedImage/numpy.max(normalizedImage))*255).astype('uint8'))
 
 	action = ipcv.flush()

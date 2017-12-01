@@ -17,6 +17,7 @@ import glob
 import numpy as np
 import time
 import csv
+import sys
 from fileStructure.fixMicaSenseStructure import fixNamingStructure
 from geoTIFF.createGeoTIFF import writeGeoTIFF, showGeoTIFF, writeGPSLog
 from geoTIFF.normalizeDC import normalizeISOShutter
@@ -38,6 +39,7 @@ root.update()
 #IF MULTIPLE DIRECTORIES ARE SELECTED THEN PARALLEL PROCESS THEM
 #flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
 initialdir = os.getcwd()
+initialdir = "/cis/otherstu/gvs6104/DIRS/"
 flightDirectory = filedialog.askdirectory(initialdir=initialdir,
 			title="Choose the RAW MicaSense .tif directory")
 if flightDirectory == '':
@@ -48,24 +50,24 @@ startTime = time.time()
 #print(flightDirectory)
 subdirs = glob.glob(flightDirectory+'/*/')
 if len(subdirs) != 0 and any("geoTiff" not in s for s in subdirs):
-	fixNamingStructure(flightDirectory)
+	processedDirectory = fixNamingStructure(flightDirectory)
 	#msg = "No subdirectories were found in the specified directory."
 	#raise ValueError (msg)
 
-tiffList = sorted(glob.glob(flightDirectory + '/*.tif'))
-imageName = os.path.basename(tiffList[0])
+tiffList = sorted(glob.glob(processedDirectory + '/*.tif'))
+#imageName = os.path.basename(tiffList[0])
 
 root.deiconify()
 status_text = tkinter.StringVar()
 label = tkinter.Label(root, textvariable=status_text)
 label.pack()
 progress_variable = tkinter.DoubleVar()
-progressbar = ttk.Progressbar(root, variable=progress_variable, 
+progressbar = ttk.Progressbar(root, variable=progress_variable,
 											maximum=len(tiffList)//5)
 progressbar.pack()
 root.title("Conversion Progress")
 
-with open(flightDirectory+ "/GPSLog.csv",'w') as resultFile:
+with open(os.path.split(flightDirectory)[0]+ "/GPSLog.csv",'w') as resultFile:
 	wr = csv.writer(resultFile)
 
 	for images in range(0,len(tiffList),5):
@@ -78,7 +80,6 @@ with open(flightDirectory+ "/GPSLog.csv",'w') as resultFile:
 		imageList = [im1, im2, im3, im4, im5]
 		matchOrder = OrderImagePairs(imageList, addOne=True)
 		imageStack, goodCorr = stackImages(imageList, matchOrder,'orb', crop=False)
-		#print(goodCorr)
 
 		if goodCorr:
 			normStack = normalizeISOShutter(imageStack, imageList)
@@ -93,7 +94,7 @@ with open(flightDirectory+ "/GPSLog.csv",'w') as resultFile:
 		root.update_idletasks()
 
 totalTime = time.time()-startTime
-print("This took {0}m {1:.2f}s for {2} images.".format(int(totalTime//60), 
+print("This took {0}m {1:.2f}s for {2} images.".format(int(totalTime//60),
 										totalTime%60, len(tiffList)))
 
 root.update()

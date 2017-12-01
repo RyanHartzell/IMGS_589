@@ -19,7 +19,7 @@ def writeGeoTIFF(image, fileName, geoTiffDir=None):
 	from osgeo import osr
 	import os
 
-	if directory is not None:
+	if geoTiffDir is None:
 		geoTiffDir = dirname(fileName) + "/geoTiff"
 		#Creates a geotiff directory
 
@@ -98,9 +98,9 @@ def showGeoTIFF(image):
 
 	displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
 
-	im = cv2.imshow("RGB GeoTiff", cv2.resize(displayImage, None, fx=0.5, fy=0.5, 
+	im = cv2.imshow("RGB GeoTiff", cv2.resize(displayImage, None, fx=0.5, fy=0.5,
 											interpolation=cv2.INTER_AREA))
-	#im = cv2.imshow("RGB GeoTiff", displayImage) 
+	#im = cv2.imshow("RGB GeoTiff", displayImage)
 
 	cv2.waitKey(10)
 
@@ -135,5 +135,3 @@ if __name__ == "__main__":
 	print(logLine)
 
 	#showGeoTIFF(geoTiff)
-
-

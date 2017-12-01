@@ -12,6 +12,7 @@ copyright::
 """
 
 import sys
+import argparse
 import os
 import glob
 import numpy as np
@@ -36,16 +37,25 @@ root = tkinter.Tk()
 root.withdraw()
 root.update()
 
-#IF MULTIPLE DIRECTORIES ARE SELECTED THEN PARALLEL PROCESS THEM
-#flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
-initialdir = os.getcwd()
-initialdir = "/cis/otherstu/gvs6104/DIRS/"
-flightDirectory = filedialog.askdirectory(initialdir=initialdir,
-			title="Choose the RAW MicaSense .tif directory")
-if flightDirectory == '':
-	sys.exit()
-geoTiffDir = filedialog.askdirectory(initialdir=os.path.split(flightDirectory)[0],
-			title="Choose the directory to place the GeoTiffs")
+parser = argparse.ArgumentParser(description='Create geotiff files for micasense')
+parser.add_argument('-i', '--input', type=str, help="An iput directory with RAW Tiffs")
+parser.add_argument('-o', '--output',type=str, help="An output directory to put GeoTiffs")
+args = parser.parse_args()
+flightDirectory = args.input
+geoTiffDir = args.output
+
+if flightDirectory is None or geoTiffDir is None:
+	#IF MULTIPLE DIRECTORIES ARE SELECTED THEN PARALLEL PROCESS THEM
+	#flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
+	initialdir = os.getcwd()
+	initialdir = "/cis/otherstu/gvs6104/DIRS/"
+	flightDirectory = filedialog.askdirectory(initialdir=initialdir,
+				title="Choose the RAW MicaSense .tif directory")
+	if flightDirectory == '':
+		sys.exit()
+	geoTiffDir = filedialog.askdirectory(initialdir=os.path.split(flightDirectory)[0],
+				title="Choose the directory to place the GeoTiffs")
+	print("Fixing the naming structure of the {0} directory".format(flightDirectory))
 startTime = time.time()
 #print(flightDirectory)
 subdirs = glob.glob(flightDirectory+'/*/')

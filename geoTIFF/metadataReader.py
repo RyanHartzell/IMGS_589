@@ -1,73 +1,109 @@
-"""
-['Exif.GPSInfo.GPSAltitude', 'Exif.GPSInfo.GPSAltitudeRef', 
-'Exif.GPSInfo.GPSDOP', 'Exif.GPSInfo.GPSLatitude', 
-'Exif.GPSInfo.GPSLatitudeRef', 'Exif.GPSInfo.GPSLongitude', 
-'Exif.GPSInfo.GPSLongitudeRef', 'Exif.GPSInfo.GPSVersionID', 
-'Exif.Image.0xbb94', 'Exif.Image.0xbb95', 'Exif.Image.0xbb96', 
-'Exif.Image.BitsPerSample', 'Exif.Image.BlackLevel', 
-'Exif.Image.BlackLevelRepeatDim', 'Exif.Image.DateTime', 'Exif.Image.ExifTag', 
-'Exif.Image.GPSTag', 'Exif.Image.ImageLength', 'Exif.Image.ImageWidth', 
-'Exif.Image.Make', 'Exif.Image.Model', 'Exif.Image.NewSubfileType', 
-'Exif.Image.OpcodeList3', 'Exif.Image.Orientation', 
-'Exif.Image.PhotometricInterpretation', 'Exif.Image.PlanarConfiguration', 
-'Exif.Image.RowsPerStrip', 'Exif.Image.SamplesPerPixel', 'Exif.Image.Software', 
-'Exif.Image.StripByteCounts', 'Exif.Image.StripOffsets', 'Exif.Image.XMLPacket', 
-'Exif.Photo.BodySerialNumber', 'Exif.Photo.DateTimeDigitized', 
-'Exif.Photo.DateTimeOriginal', 'Exif.Photo.ExifVersion', 
-'Exif.Photo.ExposureProgram', 'Exif.Photo.ExposureTime', 
-'Exif.Photo.FNumber', 'Exif.Photo.FocalLength', 
-'Exif.Photo.FocalPlaneResolutionUnit', 'Exif.Photo.FocalPlaneXResolution', 
-'Exif.Photo.FocalPlaneYResolution', 'Exif.Photo.ISOSpeed', 
-'Exif.Photo.MeteringMode', 'Exif.Photo.SubSecTime', 'Xmp.Camera.BandName', 
-'Xmp.Camera.BandSensitivity', 'Xmp.Camera.CentralWavelength', 
-'Xmp.Camera.Irradiance', 'Xmp.Camera.IrradianceExposureTime', 
-'Xmp.Camera.IrradianceGain', 'Xmp.Camera.IrradiancePitch', 
-'Xmp.Camera.IrradianceRoll', 'Xmp.Camera.IrradianceYaw', 
-'Xmp.Camera.RigCameraIndex', 'Xmp.Camera.WavelengthFWHM', 'Xmp.DLS.Bandwidth', 
-'Xmp.DLS.CenterWavelength', 'Xmp.DLS.Exposure', 'Xmp.DLS.Gain', 
-'Xmp.DLS.OffMeasurement', 'Xmp.DLS.Pitch', 'Xmp.DLS.RawMeasurement', 
-'Xmp.DLS.Roll', 'Xmp.DLS.SensorId', 'Xmp.DLS.Serial', 
-'Xmp.DLS.SpectralIrradiance', 'Xmp.DLS.SwVersion', 'Xmp.DLS.TimeStamp', 
-'Xmp.DLS.Yaw', 'Xmp.MicaSense.BootTimestamp', 'Xmp.MicaSense.CaptureId', 
-'Xmp.MicaSense.DarkRowValue', 'Xmp.MicaSense.FlightId', 
-'Xmp.MicaSense.PressureAlt', 'Xmp.MicaSense.TriggerMethod']
-
-<GExiv2.Metadata object at 0x7fa6cb983168 
-(GExiv2Metadata at 0x564151217280)>
-{'Xmp.Camera.IrradianceGain': 16.0, 'Exif.Image.ImageWidth': 1280.0, 
-'Exif.Image.Model': 'RedEdge', 'Exif.Photo.FNumber': 2.8, 
-'Xmp.Camera.BandName': 'Blue', 'Xmp.Camera.CentralWavelength': 475.0, 
-'Xmp.Camera.IrradianceRoll': -0.3043803784501027, 
-'Exif.Image.BitsPerSample': 16.0, 'Exif.Photo.ExposureProgram': 2.0, 
-'Exif.Image.ImageLength': 960.0, 
-'Exif.GPSInfo.GPSLongitude': (77.0, 1.0, 39.963), 
-'Exif.Photo.DateTimeDigitized': '2017:07:26 16:12:57', 
-'Exif.Photo.SubSecTime': '-279654', 
-'Exif.Photo.ExifVersion': '48 50 51 48', 
-'Exif.Photo.ExposureTime': 0.00135, 
-'Exif.GPSInfo.GPSAltitude': 272.152, 'Xmp.Camera.WavelengthFWHM': 20.0, 
-'Xmp.Camera.IrradianceYaw': -157.14660934524608, 
-'Xmp.Camera.IrradianceExposureTime': 0.10100000351667404, 
-'Exif.Image.DateTime': '2017:07:26 16:12:57', 
-'Xmp.Camera.BandSensitivity': 1702040981.6335442, 
-'Exif.Photo.DateTimeOriginal': '2017:07:26 16:12:57', 
-'Exif.Image.SamplesPerPixel': 1.0, 
-'Exif.GPSInfo.GPSLatitude': (42.0, 52.0, 26.92812), 
-'Exif.Photo.FocalPlaneYResolution': 266.666667, 
-'Xmp.Camera.Irradiance': 0.7153738737106323, 
-'Exif.Photo.FocalPlaneXResolution': 266.666667, 
-'Xmp.DLS.TimeStamp': '121456', 'Exif.Photo.ISOSpeed': 100.0, 
-'Exif.Image.Make': 'MicaSense', 'Exif.Photo.FocalLength': 5.5, 
-'Xmp.Camera.IrradiancePitch': -2.0375641618928038}
-"""
-
 'https://git.gnome.org/browse/gexiv2/tree/GExiv2.py'
+"""
+0 Exif.GPSInfo.GPSAltitude 272152000/1000000
+1 Exif.GPSInfo.GPSAltitudeRef 0
+2 Exif.GPSInfo.GPSDOP 1410000/1000000
+3 Exif.GPSInfo.GPSLatitude 42000000/1000000 52000000/1000000 26928120/1000000
+4 Exif.GPSInfo.GPSLatitudeRef N
+5 Exif.GPSInfo.GPSLongitude 77000000/1000000 1000000/1000000 39963000/1000000
+6 Exif.GPSInfo.GPSLongitudeRef W
+7 Exif.GPSInfo.GPSVersionID 2 2 0 0
+8 Exif.Image.0xbb94 1 1 1 7 0 0 1 4 1 48022 21 0 2 48022 21 21 3 48021 1 0 4 48022 16 42 5 48021 8 1 6 48021 2 9
+9 Exif.Image.0xbb95 189.466033935547 0.715373873710632 121456 475 20 0.101000003516674 130 16 2781 120 0
+10 Exif.Image.0xbb96 euRDiVz2THP0zQ7DaNyo|ntSQ5rGwEzn4lkZ6smUy|DL03-1711272-SC|
+11 Exif.Image.BitsPerSample 16
+12 Exif.Image.BlackLevel 4800 4800 4800 4800
+13 Exif.Image.BlackLevelRepeatDim 2 2
+14 Exif.Image.DateTime 2017:07:26 16:12:57
+15 Exif.Image.ExifTag 2457704
+16 Exif.Image.GPSTag 2457942
+17 Exif.Image.ImageLength 960
+18 Exif.Image.ImageWidth 1280
+19 Exif.Image.Make MicaSense
+20 Exif.Image.Model RedEdge
+21 Exif.Image.NewSubfileType 0
+22 Exif.Image.OpcodeList3 0 0 0 1 77 12 198 137
+23 Exif.Image.Orientation 1
+24 Exif.Image.PhotometricInterpretation 1
+25 Exif.Image.PlanarConfiguration 1
+26 Exif.Image.RowsPerStrip 100
+27 Exif.Image.SamplesPerPixel 1
+28 Exif.Image.Software v2.0.5
+29 Exif.Image.StripByteCounts 256000 256000 256000
+30 Exif.Image.StripOffsets 8 256008 512008 768008 1024008 1280008 1536008 1792008 2048008 2304008
+31 Exif.Image.XMLPacket 32 32 32 32 32 32 32 32 32 32 32 32
+32 Exif.Photo.BodySerialNumber 1713165
+33 Exif.Photo.DateTimeDigitized 2017:07:26 16:12:57
+34 Exif.Photo.DateTimeOriginal 2017:07:26 16:12:57
+35 Exif.Photo.ExifVersion 48 50 51 48
+36 Exif.Photo.ExposureProgram 2
+37 Exif.Photo.ExposureTime 1350/1000000
+38 Exif.Photo.FNumber 2800000/1000000
+39 Exif.Photo.FocalLength 5500000/1000000
+40 Exif.Photo.FocalPlaneResolutionUnit 4
+41 Exif.Photo.FocalPlaneXResolution 266666667/1000000
+42 Exif.Photo.FocalPlaneYResolution 266666667/1000000
+43 Exif.Photo.ISOSpeed 100
+44 Exif.Photo.MeteringMode 1
+45 Exif.Photo.SubSecTime -279654
+46 Xmp.Camera.BandName Blue
+47 Xmp.Camera.BandSensitivity 1702040981.6335442
+48 Xmp.Camera.CentralWavelength 475
+49 Xmp.Camera.Irradiance 0.71537387371063232
+50 Xmp.Camera.IrradianceExposureTime 0.10100000351667404
+51 Xmp.Camera.IrradianceGain 16
+52 Xmp.Camera.IrradiancePitch -2.0375641618928038
+53 Xmp.Camera.IrradianceRoll -0.30438037845010268
+54 Xmp.Camera.IrradianceYaw -157.14660934524608
+55 Xmp.Camera.RigCameraIndex 0
+56 Xmp.Camera.WavelengthFWHM 20
+57 Xmp.DLS.Bandwidth 20
+58 Xmp.DLS.CenterWavelength 475
+59 Xmp.DLS.Exposure 0.10100000351667404
+60 Xmp.DLS.Gain 16
+61 Xmp.DLS.OffMeasurement 2781
+62 Xmp.DLS.Pitch -0.035562203345668203
+63 Xmp.DLS.RawMeasurement 130
+64 Xmp.DLS.Roll -0.0053124397824206868
+65 Xmp.DLS.SensorId 0
+66 Xmp.DLS.Serial DL03-1711272-SC
+67 Xmp.DLS.SpectralIrradiance 0.71537387371063232
+68 Xmp.DLS.SwVersion v0.3.32
+69 Xmp.DLS.TimeStamp 121456
+70 Xmp.DLS.Yaw -2.7427257414198345
+71 Xmp.MicaSense.BootTimestamp 120
+72 Xmp.MicaSense.CaptureId euRDiVz2THP0zQ7DaNyo
+73 Xmp.MicaSense.DarkRowValue 4919, 4921, 4918, 4915
+74 Xmp.MicaSense.FlightId ntSQ5rGwEzn4lkZ6smUy
+75 Xmp.MicaSense.PressureAlt 189.46603393554688
+76 Xmp.MicaSense.TriggerMethod 4
+"""
+
+
 
 import gi
 gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 import collections
 
+badSpecification = ["Exif.Image.BlackLevel","Exif.Image.BlackLevelRepeatDim","Exif.Image.Software","Exif.Image.StripByteCounts","Exif.Image.StripOffsets","Exif.Photo.ExifVersion",
+"Xmp.Camera.PerspectiveDistortion","Xmp.Camera.PrincipalPoint","Xmp.Camera.VignettingCenter","Xmp.Camera.VignettingPolynomial","Xmp.DLS.Serial","Xmp.DLS.SwVersion","Xmp.MicaSense.CaptureId",
+"Xmp.MicaSense.DarkRowValue","Xmp.MicaSense.FlightId","Xmp.MicaSense.RadiometricCalibration"]
+
+skipSpecification = ["Exif.Image.0xbb94","Exif.Image.0xbb95","Exif.Image.0xbb96","Exif.Image.NewSubfileType","Exif.Image.OpcodeList3","Exif.Image.XMLPacket",]
+
+slashSplitSpecification = ["Exif.GPSInfo.GPSAltitude","Exif.GPSInfo.GPSDOP","Exif.GPSInfo.GPSLatitude",
+"Exif.GPSInfo.GPSLongitude","Exif.Photo.ExposureTime","Exif.Photo.FNumber","Exif.Photo.FocalLength","Exif.Photo.FocalPlaneXResolution",
+"Exif.Photo.FocalPlaneYResolution",]
+
+floatSpecification = ["Exif.GPSInfo.GPSAltitudeRef","Exif.Image.BitsPerSample","Exif.Image.ExifTag","Exif.Image.GPSTag","Exif.Image.ImageLength","Exif.Image.ImageWidth","Exif.Image.Orientation",
+"Exif.Image.PhotometricInterpretation","Exif.Image.PlanarConfiguration","Exif.Image.RowsPerStrip","Exif.Image.SamplesPerPixel","Exif.Photo.BodySerialNumber","Exif.Photo.ExposureProgram",
+"Exif.Photo.FocalPlaneResolutionUnit","Exif.Photo.ISOSpeed","Exif.Photo.MeteringMode","Xmp.Camera.BandSensitivity","Xmp.Camera.CentralWavelength","Xmp.Camera.Irradiance","Xmp.Camera.IrradianceExposureTime",
+"Xmp.Camera.IrradianceGain","Xmp.Camera.IrradiancePitch","Xmp.Camera.IrradianceRoll","Xmp.Camera.IrradianceYaw","Xmp.Camera.PerspectiveFocalLength","Xmp.Camera.RigCameraIndex","Xmp.Camera.WavelengthFWHM",
+"Xmp.DLS.Bandwidth","Xmp.DLS.CenterWavelength","Xmp.DLS.Exposure","Xmp.DLS.Gain","Xmp.DLS.OffMeasurement","Xmp.DLS.Pitch","Xmp.DLS.RawMeasurement","Xmp.DLS.Roll","Xmp.DLS.SensorId","Xmp.DLS.SpectralIrradiance",
+"Xmp.DLS.Yaw","Xmp.MicaSense.BootTimestamp","Xmp.MicaSense.PressureAlt","Xmp.MicaSense.TriggerMethod"]
+
+dateTimeSpecification = ["Exif.Image.DateTime","Exif.Photo.DateTimeDigitized","Exif.Photo.DateTimeOriginal","Exif.Photo.SubSecTime","Xmp.DLS.TimeStamp"]
 def metadataGrabber(filename):
     #sampleimage = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
 
@@ -82,6 +118,7 @@ def metadataGrabber(filename):
     for index in range(len(taglist)):
         specification = taglist[index]
         entry = imagemetadata.get(specification)
+        #print(index, specification, entry)
 
         #Single Fractions to Float Case
         if index in ( 0,37,38,39,41,42):
@@ -110,6 +147,24 @@ def metadataGrabber(filename):
         elif index in (2,7,8,9,10,12,13,14,22,28,29,30,31,33,35):
             #These Suck
             continue
+        elif specification == "Xmp.Camera.PerspectiveDistortion":
+            pass
+        elif specification == "Xmp.Camera.ModelType":
+            pass
+        elif specification == "Xmp.Camera.PrincipalPoint":
+            pass
+        elif specification == "Xmp.Camera.VignettingCenter":
+            pass
+        elif specification == "Xmp.Camera.VignettingPolynomial":
+            pass
+        elif specification == "Xmp.MicaSense.CaptureId":
+            pass
+        elif specification == "Xmp.MicaSense.DarkRowValue":
+            pass
+        elif specification == "Xmp.MicaSense.FlightId":
+            pass
+        elif specification == "Xmp.MicaSense.RadiometricCalibration":
+            pass
 
         #All other cases, no integers used for ease later
         else:
@@ -129,17 +184,18 @@ def metadataGrabber(filename):
     metadatadict['timeStamp'] = timeStamp
 
     return metadatadict
-    
+
 if __name__ == '__main__':
     import metadataReader
     filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
     metadatadict = metadataReader.metadataGrabber(filename)
+    print(metadatadict)
     #print(metadatadict)
     print(metadatadict['Exif.Photo.FocalPlaneXResolution'])
     print(metadatadict['Exif.Photo.FocalPlaneYResolution'])
     print(metadatadict['Exif.Photo.FocalPlaneResolutionUnit'])
     print(metadatadict['Exif.Photo.FocalLength'])
-    
+
     #print(metadatadict['Exif.Photo.SubSecTime'])
     #print(metadatadict['Exif.Image.DateTime'])
     #print(metadatadict['Exif.Image.BitsPerSample'])

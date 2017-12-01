@@ -44,7 +44,7 @@ flightDirectory = filedialog.askdirectory(initialdir=initialdir,
 			title="Choose the RAW MicaSense .tif directory")
 if flightDirectory == '':
 	sys.exit()
-geoTiffDir = filedialog.askdirectory(initialdir=initialdir,
+geoTiffDir = filedialog.askdirectory(initialdir=os.path.split(flightDirectory)[0],
 			title="Choose the directory to place the GeoTiffs")
 startTime = time.time()
 #print(flightDirectory)
@@ -53,6 +53,8 @@ if len(subdirs) != 0 and any("geoTiff" not in s for s in subdirs):
 	processedDirectory = fixNamingStructure(flightDirectory)
 	#msg = "No subdirectories were found in the specified directory."
 	#raise ValueError (msg)
+else:
+	processedDirectory = flightDirectory
 
 tiffList = sorted(glob.glob(processedDirectory + '/*.tif'))
 #imageName = os.path.basename(tiffList[0])

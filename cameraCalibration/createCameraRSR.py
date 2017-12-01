@@ -326,4 +326,5 @@ if __name__ == '__main__':
 	#print("The run time is: {0}".format(time.time()-startTime))
 
 	#action = flush()
+	
 	root.destroy()

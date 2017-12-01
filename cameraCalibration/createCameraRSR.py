@@ -50,7 +50,9 @@ def openAndReadSPD():
 	creates and returns a numpy array of the data while rounding the 
 	wavelengths to the nearest integer, typically in 10nm increments.
 	"""
-	spdFile = filedialog.askopenfilename(initialdir=os.getcwd(), 
+	initialdir = os.getcwd()
+	initialdir = "/Users/Geoffrey/Desktop/MonochrometerTiffs"
+	spdFile = filedialog.askopenfilename(initialdir=initialdir, 
 						filetypes=[("Excel files", "*.xlsx *.xls"), 
 								("Comma Seperated Values", "*.csv")], 
 						title="Choose the Spectral Power Distribution")
@@ -71,6 +73,7 @@ def openAndReadSPD():
 		raise ValueError(msg)
 
 	spdArray[0:,0] = np.around(spdArray[0:,0]).astype(int)
+	#spdArray[spdArray < 10**-5] = np.inf
 	#spdDictionary = dict(zip(spdArray[0],spdArray[1]))
 	return spdArray, spdFile
 
@@ -114,6 +117,7 @@ def findBrightestPointMean(tiffList, verbose=False):
 
 	brightValues = []
 	brightLocations = []
+	darkNoise = []
 
 	root.deiconify()
 	status_text = tkinter.StringVar()
@@ -124,10 +128,13 @@ def findBrightestPointMean(tiffList, verbose=False):
 	progressbar.pack()
 
 	for tiff in tiffList:
-		gray = cv2.imread(tiff, cv2.IMREAD_GRAYSCALE)
+		gray = cv2.imread(tiff, cv2.IMREAD_UNCHANGED)
+		if len(gray.shape) == 3:
+			gray = cv2.cvtColor(gray, cv2.COLOR_BGR2GRAY)
 		minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(gray)
 		brightValues.append(maxVal)
 		brightLocations.append(maxLoc)
+		darkNoise.append(minVal)
 		progress_variable.set(tiffList.index(tiff))
 		status_text.set("Finding the brightest image: {0}/{1}".format(tiffList.index(tiff),len(tiffList)))
 		root.update_idletasks()
@@ -135,19 +142,30 @@ def findBrightestPointMean(tiffList, verbose=False):
 	brightestImageIndex = np.argmax(brightValues)
 	maxLocation = brightLocations[brightestImageIndex]
 
-	mask = np.zeros(gray.shape, np.uint8)
-	radius = np.around(gray.shape[0] * .1).astype(int)
-	cv2.circle(mask, maxLocation, radius, (255,255,255), -1)
+	brightestImage = tiffList[brightestImageIndex]
+	bIm = cv2.imread(brightestImage, cv2.IMREAD_UNCHANGED)
+	mask = np.full(gray.shape, np.nan, bIm.dtype)
+	maskedIm = bIm * cv2.circle(mask, maxLocation, 10, (1,1,1), -1)
+	startStd = np.nanstd(maskedIm, dtype=np.float64)
+
+	for r in range(10, gray.shape[0]//2):
+		mask = np.full(gray.shape, np.nan, bIm.dtype)
+		cv2.circle(mask, maxLocation, r, (1,1,1), -1)
+		std = np.nanstd(bIm*mask, dtype=np.float64)
+		if std >= 2*startStd:
+			break
 
 	meanDCArray = np.empty((len(tiffList),3), dtype="float64")
-
+	maxCount = int(np.power(2,int(str(bIm.dtype)[4:])))
+	mask = np.zeros(gray.shape, np.uint8)
+	cv2.circle(mask, maxLocation, 10, (255,255,255), -1)
 	for tiff in range(len(tiffList)):
 		image = cv2.imread(tiffList[tiff], cv2.IMREAD_UNCHANGED)
+		#b, g, r, a = cv2.mean(image, mask=mask)
 		meanDCArray[tiff, :3] = cv2.mean(image, mask=mask)[:3]
 		progress_variable.set(tiff)
 		status_text.set("Calculating Image Means: {0}/{1}".format(tiff,len(tiffList)))
 		root.update_idletasks()
-
 	if verbose:
 		brightestImage = tiffList[brightestImageIndex]
 		bIm = cv2.imread(brightestImage, cv2.IMREAD_UNCHANGED)
@@ -156,11 +174,17 @@ def findBrightestPointMean(tiffList, verbose=False):
 		cv2.namedWindow("brightestImage", cv2.WINDOW_AUTOSIZE)
 		cv2.imshow("brightestImage", cv2.resize(bIm, None, 
 							fx=.2,fy=.2, interpolation=cv2.INTER_AREA))
+		cv2.waitKey(0)
+
 
 	root.update()
 	root.withdraw()
 
-	meanDCArray = np.subtract(meanDCArray, 16)
+	for band in range(meanDCArray.shape[1]):
+		bandNoise = np.min(meanDCArray[:,band])
+		meanDCArray[:,band] = np.subtract(meanDCArray[:,band], bandNoise)
+
+	meanDCArray[meanDCArray < 0] = 0
 
 	return meanDCArray
 
@@ -177,7 +201,8 @@ def normalizeMeanDC(meanDC, spdArray):
 	#print(peakNormalized.shape)
 	#print(normSP[0:,0])
 	for band in np.arange(0,peakNormalized.shape[1]):
-		peakNormalized[0:,band] = normSP[0:,band]/np.max(normSP[0:,band])
+		if np.max(normSP[0:,band]) != 0:
+			peakNormalized[0:,band] = normSP[0:,band]/np.max(normSP[0:,band])
 	
 	return peakNormalized, normSP
 
@@ -301,5 +326,4 @@ if __name__ == '__main__':
 	#print("The run time is: {0}".format(time.time()-startTime))
 
 	#action = flush()
-	
 	root.destroy()

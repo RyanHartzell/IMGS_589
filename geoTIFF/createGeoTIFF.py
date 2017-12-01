@@ -13,14 +13,16 @@ copyright::
 """
 
 
-def writeGeoTIFF(image, fileName):
+def writeGeoTIFF(image, fileName, geoTiffDir=None):
 	from os.path import basename, dirname
 	from osgeo import gdal
 	from osgeo import osr
 	import os
 
-	geoTiffDir = dirname(fileName) + "/geoTiff"
-	#Creates a geotiff directory
+	if directory is not None:
+		geoTiffDir = dirname(fileName) + "/geoTiff"
+		#Creates a geotiff directory
+
 	if not os.path.exists(geoTiffDir):
 		#If the geoTiff directory does not exist it makes the directory
 		os.makedirs(geoTiffDir)
@@ -68,7 +70,7 @@ def writeGPSLog(rawImage, geoTiff):
 	strLat = '{0:.8f}'.format(latitude)
 	altitude = mDict['Exif.GPSInfo.GPSAltitude']
 	strAlt = '{0:.2f}'.format(altitude)
-	time = mDict['Exif.Photo.DateTimeDigitized']
+	time = mDict['Exif.Photo.DateTimeOriginal']
 	subSec = mDict['Exif.Photo.SubSecTime']
 	zuluOffset = str(int(time[11:13])-5)
 	#print(zuluOffset)

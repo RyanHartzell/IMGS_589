@@ -135,7 +135,11 @@ if __name__ == '__main__':
     filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
     metadatadict = metadataReader.metadataGrabber(filename)
     #print(metadatadict)
-    #print(metadatadict['timeStamp'])
+    print(metadatadict['Exif.Photo.FocalPlaneXResolution'])
+    print(metadatadict['Exif.Photo.FocalPlaneYResolution'])
+    print(metadatadict['Exif.Photo.FocalPlaneResolutionUnit'])
+    print(metadatadict['Exif.Photo.FocalLength'])
+    
     #print(metadatadict['Exif.Photo.SubSecTime'])
     #print(metadatadict['Exif.Image.DateTime'])
     #print(metadatadict['Exif.Image.BitsPerSample'])

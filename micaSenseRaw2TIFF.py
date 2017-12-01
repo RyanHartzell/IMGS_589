@@ -19,6 +19,7 @@ import time
 import csv
 from fileStructure.fixMicaSenseStructure import fixNamingStructure
 from geoTIFF.createGeoTIFF import writeGeoTIFF, showGeoTIFF, writeGPSLog
+from geoTIFF.normalizeDC import normalizeISOShutter
 from registration.correlateImages import OrderImagePairs
 from registration.createImageStack import stackImages
 
@@ -41,9 +42,12 @@ flightDirectory = filedialog.askdirectory(initialdir=initialdir,
 			title="Choose the RAW MicaSense .tif directory")
 if flightDirectory == '':
 	sys.exit()
+geoTiffDir = filedialog.askdirectory(initialdir=initialdir,
+			title="Choose the directory to place the GeoTiffs")
 startTime = time.time()
 #print(flightDirectory)
-if len(glob.glob(flightDirectory+'/*/')) != 0:
+subdirs = glob.glob(flightDirectory+'/*/')
+if len(subdirs) != 0 and any("geoTiff" not in s for s in subdirs):
 	fixNamingStructure(flightDirectory)
 	#msg = "No subdirectories were found in the specified directory."
 	#raise ValueError (msg)
@@ -75,9 +79,10 @@ with open(flightDirectory+ "/GPSLog.csv",'w') as resultFile:
 		matchOrder = OrderImagePairs(imageList, addOne=True)
 		imageStack, goodCorr = stackImages(imageList, matchOrder,'orb', crop=False)
 		#print(goodCorr)
+
 		if goodCorr:
-			#Normalize Image Stack
-			geoTiff = writeGeoTIFF(imageStack, im1)
+			normStack = normalizeISOShutter(imageStack, imageList)
+			geoTiff = writeGeoTIFF(normStack, im1, geoTiffDir)
 			logLine = writeGPSLog(im1,geoTiff)
 			wr.writerow(logLine)
 			#showGeoTIFF(geoTiff)

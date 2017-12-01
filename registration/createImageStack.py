@@ -96,6 +96,8 @@ def register(im1, im2, corCoef, feature):
 
 	if len(im1.shape) > 2:
 		im1 = im1[:,:,0]
+	if len(im2.shape) > 2:
+		im2 = im2[:,:,0]
 
 	#im_size = (im1.shape[0], im1.shape[1])
 	kp1, kp2, goodMatches = computeMatches(im1, im2, feature)
@@ -149,7 +151,7 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 
 		#print(int(image[-5]))
 		if int(image[-5]) == int(matchOrder[0,0]):
-			im1 = cv2.imread(image, cv2.IMREAD_GRAYSCALE)
+			im1 = cv2.imread(image, cv2.IMREAD_UNCHANGED)
 	#height, width, bands, dType = dimensions.dimensions(im1)
 	height, width = im1.shape
 	imageStack = np.zeros((height, width, len(imageList)))
@@ -161,7 +163,7 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 		correlationCoef = matchOrder[pair,2]
 		im1 = imageStack[:,:,int(matchOrder[pair,0])-1]
 		im2 = image[:-5] + str(int(matchOrder[pair,1])) + image[-4:]
-		im2 = cv2.imread(im2, cv2.IMREAD_GRAYSCALE)
+		im2 = cv2.imread(im2, cv2.IMREAD_UNCHANGED)
 		warped = register(im1, im2, correlationCoef, feature)		
 
 		mask[np.where(warped == 0)] = 0

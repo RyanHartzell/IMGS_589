@@ -1,27 +1,43 @@
 def normalizeISOShutter(image, filename):
-	from metadataReader import metadataGrabber
-
-	#gets the metadata for the given filename/image
-	metadataDictionary = metadataGrabber(filename)
-	#pulls the EXIF:ExposureTime from the metadata dictionary
-	exposureTime = metadataDictionary['Exif.Photo.ExposureTime']
-	#pulls the EXIF:ISO from the metadata dictionary
-	iso = metadataDictionary['Exif.Photo.ISOSpeed']
-	#normalizes the image by the exposuretime and the ISO
-	bitDepth = metadataDictionary['Exif.Image.BitsPerSample']
-	maxCount = float(2**bitDepth)-1
+	from .metadataReader import metadataGrabber
+	import numpy as np
 
 	minShutter = 1/(10**6) #1 Microsecond
+	minShutter = minShutter * 5 #To be made more accurate
 	minISO = 100
-
-	normalizedImage = image/(exposureTime*iso)
-	maxPossibleDC = maxCount/(minISO*minShutter)
-
 	uint16Max = float(2**16)-1
+	
+	if len(image.shape) == 3 and len(filename) == image.shape[2]:
+		normalizedImage = np.zeros_like(image)
+		for i in range(image.shape[2]):
+			mDict = metadataGrabber(filename[i])
+			eTime = mDict['Exif.Photo.ExposureTime']
+			iso = mDict['Exif.Photo.ISOSpeed']
+			bDepth = mDict['Exif.Image.BitsPerSample']
+			maxCount = float(2**bDepth)-1
+			nBand = image[:,:,i]/(eTime*iso)
+			maxPoss = maxCount / (minISO*minShutter)
+			scalar = uint16Max/maxPoss
+			normalizedImage[:,:,i] = nBand*scalar
 
-	scalar = uint16Max/maxPossibleDC
+	else:
+		#gets the metadata for the given filename/image
+		metadataDictionary = metadataGrabber(filename)
+		#pulls the EXIF:ExposureTime from the metadata dictionary
+		exposureTime = metadataDictionary['Exif.Photo.ExposureTime']
+		#pulls the EXIF:ISO from the metadata dictionary
+		iso = metadataDictionary['Exif.Photo.ISOSpeed']
+		#normalizes the image by the exposuretime and the ISO
 
-	normalizedImage *= scalar
+		bitDepth = metadataDictionary['Exif.Image.BitsPerSample']
+		maxCount = float(2**bitDepth)-1
+
+		normalizedImage = image/(exposureTime*iso)
+		maxPossibleDC = maxCount/(minISO*minShutter)
+
+		scalar = uint16Max/maxPossibleDC
+
+		normalizedImage *= scalar
 
 	return normalizedImage
 

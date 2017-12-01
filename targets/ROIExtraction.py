@@ -21,8 +21,6 @@ def getDisplayImage(geotiffFilename):
 	#imageStackMasked = imageStack*circleMask
 
 
-
-
 	imageStack_crop = imageStack[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
 
 
@@ -77,6 +75,11 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 
 	#apply the single channel mask to each of the five bands in 'currentCroppedIm'
 	mask[np.where(mask == 0)] = np.nan 
+	mask = mask.astype(currentCroppedIm.dtype)
+
+	print(currentCroppedIm[:,:,0])
+	print(currentCroppedIm.dtype)
+
 	#ROI_image = mask * currentCroppedIm.T
 	ROI_image = np.dstack(((mask * currentCroppedIm[:,:,0]), (mask * currentCroppedIm[:,:,1]), (mask * currentCroppedIm[:,:,2]), (mask * currentCroppedIm[:,:,3]), (mask * currentCroppedIm[:,:,4])))
 
@@ -87,7 +90,7 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	#calculate statistics
 	mean = []
 	stdev = []
-	for i in [1, 2, 3, 4, 5]:
+	for i in [0, 1, 2, 3, 4]:
 		mean.append(np.nanmean(ROI_image[:,:,i]))
 		stdev.append(np.nanstd(ROI_image[:,:,i]))
 
@@ -123,33 +126,26 @@ if __name__ == '__main__':
 	from osgeo import gdal
 
 
-	geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/IMG_0183.tiff'
+	geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/IMG_0181.tiff'
 
 	#get the geotiff image (5 band) and color (3 band)
 	geoTiffImage, displayImage = getDisplayImage(geotiffFilename)
+	print(geoTiffImage.dtype)
+	print(np.max(geoTiffImage))
 
 
-	mapName = 'Select corners for the target area.'
-	cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
-	im = cv2.imshow(mapName, displayImage)
-
-	#the image will be cropped...
+	# mapName = 'Select corners for the target area.'
+	# cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
+	# im = cv2.imshow(mapName, displayImage)
 	
 
-	#select the points for a target in the scene
-	pointsX, pointsY = selectROI(mapName)
-	cv2.destroyWindow(mapName)
-
-	#ask user for input of the current target
-	currentTargetNumber = assignTargetNumber()
-
-	maskedIm, ROI_image = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
-
-
-
-
-	# cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
-	# im = cv2.imshow(mapName, ROI_image[:,:,0:3])	
-
-	# cv2.waitKey(0)
+	# #select the points for a target in the scene
+	# pointsX, pointsY = selectROI(mapName)
 	# cv2.destroyWindow(mapName)
+
+	# #ask user for input of the current target
+	# currentTargetNumber = assignTargetNumber()
+
+	# maskedIm, ROI_image = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
+
+

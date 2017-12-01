@@ -20,6 +20,9 @@ def getDisplayImage(geotiffFilename):
 	#circleMask = circleMask.reshape(imageStack.shape)
 	#imageStackMasked = imageStack*circleMask
 
+
+
+
 	imageStack_crop = imageStack[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
 
 
@@ -32,7 +35,7 @@ def getDisplayImage(geotiffFilename):
 
 
 	#displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
-	displayImage = imageStack_crop[:,:,0:3].astype(imageStack.dtype) #RGB
+	displayImage = imageStack_crop[:,:,0:3].astype(np.uint8) #RGB
 	return imageStack_crop, displayImage
 
 
@@ -68,20 +71,37 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	from osgeo import gdal
 
 	#Create poly mask
-	#mask = np.zeros_like(currentCroppedIm)
 	mask = np.zeros((currentCroppedIm.shape[0], currentCroppedIm.shape[1]))
 	polyMaskCoords = np.asarray(list(zip(pointsX, pointsY)))
-	cv2.fillConvexPoly(mask, polyMaskCoords, 1)
+	cv2.fillConvexPoly(mask, polyMaskCoords, 1.0)
 
-	x_coords = np.where(np.any(mask==1, axis=1))
-	y_coords = np.where(np.any(mask==1, axis=0))
-
-	print(len(x_coords[0]), len(y_coords[0]))
 	#apply the single channel mask to each of the five bands in 'currentCroppedIm'
-	#maskedGeotiff = mask 
+	mask[np.where(mask == 0)] = np.nan 
+	#ROI_image = mask * currentCroppedIm.T
+	ROI_image = np.dstack(((mask * currentCroppedIm[:,:,0]), (mask * currentCroppedIm[:,:,1]), (mask * currentCroppedIm[:,:,2]), (mask * currentCroppedIm[:,:,3]), (mask * currentCroppedIm[:,:,4])))
 
 
-	return mask
+
+
+
+	#calculate statistics
+	mean = []
+	stdev = []
+	for i in [1, 2, 3, 4, 5]:
+		mean.append(np.nanmean(ROI_image[:,:,i]))
+		stdev.append(np.nanstd(ROI_image[:,:,i]))
+
+	#calculate centroid
+	centroid = [np.mean(np.asarray(pointsX)) ,np.mean(np.asarray(pointsY))]
+	print(mean)
+	print(stdev)
+	print(centroid)
+
+	cv2.imshow('a', (ROI_image[:,:,0]).astype(np.uint8))
+	cv2.waitKey(0)
+
+
+	return mask, ROI_image
 
 
 
@@ -114,24 +134,22 @@ if __name__ == '__main__':
 	im = cv2.imshow(mapName, displayImage)
 
 	#the image will be cropped...
-	currentCroppedIm = geoTiffImage
 	
 
 	#select the points for a target in the scene
 	pointsX, pointsY = selectROI(mapName)
+	cv2.destroyWindow(mapName)
 
 	#ask user for input of the current target
 	currentTargetNumber = assignTargetNumber()
 
-	maskedIm = computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY)
+	maskedIm, ROI_image = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
 
 
 
-	cv2.destroyWindow(mapName)
 
+	# cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
+	# im = cv2.imshow(mapName, ROI_image[:,:,0:3])	
 
-	cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
-	im = cv2.imshow(mapName, maskedIm)	
-
-	cv2.waitKey(0)
-	cv2.destroyWindow(mapName)
+	# cv2.waitKey(0)
+	# cv2.destroyWindow(mapName)

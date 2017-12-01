@@ -92,7 +92,6 @@ with open(os.path.split(flightDirectory)[0]+ "/GPSLog.csv",'w') as resultFile:
 		imageList = [im1, im2, im3, im4, im5]
 		matchOrder = OrderImagePairs(imageList, addOne=True)
 		imageStack, goodCorr = stackImages(imageList, matchOrder,'orb', crop=False)
-
 		if goodCorr:
 			normStack = normalizeISOShutter(imageStack, imageList)
 			geoTiff = writeGeoTIFF(normStack, im1, geoTiffDir)

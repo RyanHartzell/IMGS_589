@@ -20,6 +20,9 @@ def computeMatches(im1, im2, feature="orb"):
 	import cv2
 	import numpy as np
 
+	eightIm1 = (im1/256).astype(np.uint8)
+	eightIm2 = (im1/256).astype(np.uint8)
+
 	if feature == "orb":
 		#ORB
 		#scaleFactor = Pyramid decimination ratio > 1
@@ -34,9 +37,10 @@ def computeMatches(im1, im2, feature="orb"):
 							edgeThreshold=31, firstLevel=0, WTA_K=2,
 							scoreType=cv2.ORB_HARRIS_SCORE, patchSize=31,
 							fastThreshold=20)
+
 		#Computes the features & descriptors for the images
-		kp1, des1 = orb.detectAndCompute((im1/256).astype(np.uint8), None)
-		kp2, des2 = orb.detectAndCompute((im2/256).astype(np.uint8), None)
+		kp1, des1 = orb.detectAndCompute(eightIm1, None)
+		kp2, des2 = orb.detectAndCompute(eightIm2, None)
 		#The ORB detect and compute function only takes 8 bit images
 
 		#kp1Image = cv2.drawKeypoints((im1/256).astype(np.uint8),
@@ -83,8 +87,8 @@ def computeMatches(im1, im2, feature="orb"):
 										contrastThreshold=.01,
 										edgeThreshold=50, sigma=3)
 		#Computes the Keypoints and Descriptors at the Same Time
-		kp1, des1 = sift.detectAndCompute(im1.astype(np.uint8), None)
-		kp2, des2 = sift.detectAndCompute(im2.astype(np.uint8), None)
+		kp1, des1 = sift.detectAndCompute(eightIm1, None)
+		kp2, des2 = sift.detectAndCompute(eightIm2, None)
 
 		bruteForce = cv2.BFMatcher()
 		matches = bruteForce.knnMatch(des1, des2, k=2)

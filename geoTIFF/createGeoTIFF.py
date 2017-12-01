@@ -42,6 +42,7 @@ def writeGeoTIFF(image, fileName, geoTiffDir=None):
 		GDT = gdal.GDT_Float64
 
 	ds = driver.Create( geoTiff, width, height, channels, GDT)
+
 	pWidth, pHeight = 1.0, 1.0
 	X, Y = 0.0, 0.0
 	geoTransform = ([X,pWidth,0,Y,0,pHeight])

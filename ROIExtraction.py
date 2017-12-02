@@ -42,7 +42,7 @@ def selectROI(mapName):
 	import numpy as np
 	import cv2
 	#import ipcv
-	import PointsSelected
+	from targets import PointsSelected
 	#utilize 'PointsSelected' to get the search window, manual input
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints()
@@ -106,14 +106,15 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	return mask, ROI_image, mean, stdev, centroid
 
 def micasenseRawData(geotiffFilename):
-	from geoTiff import metadataReader
+	from geoTIFF import metadataReader
 	import time
 	
 	irradianceDict = {}
 	#For each band we are going to record a value for irradiance
 	for band in np.arange(1,6):
-		rawextension = '_{}.tiff'.format(str(band))
+		rawextension = '_{}.tif'.format(str(band))
 		rawFilename = geotiffFilename[:-21] + 'processed/' + geotiffFilename[-13:-5] + rawextension
+		print('rawFilename',rawFilename)
 		metadatadict = metadataReader.metadataGrabber(rawFilename)
 		irradianceDict[band] = float(metadatadict['Xmp.DLS.SpectralIrradiance'])
 
@@ -147,41 +148,41 @@ def fieldData(tsvFilename):
 	return times, filenumbers, targetdescriptor
 
 def targetNumtoStr(targetnumber):
-	if targetnumber == 1:
+	if targetnumber == '1':
 		targetstring = 'White Tri'
-	elif targetnumber == 2:
+	elif targetnumber == '2':
 		targetstring = 'Medium Gray Tri'
-	elif targetnumber == 3:
+	elif targetnumber == '3':
 		targetstring = 'Dark Gray Tri'
-	elif targetnumber == 4:
+	elif targetnumber == '4':
 		targetstring = 'Black Cal Panel'
-	elif targetnumber == 5:
+	elif targetnumber == '5':
 		targetstring = 'White Cal Panel'
-	elif targetnumber == 6:
+	elif targetnumber == '6':
 		targetstring = 'Asphalt'
-	elif targetnumber == 7:
+	elif targetnumber == '7':
 		targetstring = 'Grass'
-	elif targetnumber == 8:
+	elif targetnumber == '8':
 		targetstring = 'Concrete'
-	elif targetnumber == 9:
+	elif targetnumber == '9':
 		targetstring = 'Red Felt (Sun)'
-	elif targetnumber == 10:
+	elif targetnumber == '10':
 		targetstring = 'Blue Felt (Sun)'
-	elif targetnumber == 11:
+	elif targetnumber == '11':
 		targetstring = 'Green Felt (Sun)'
-	elif targetnumber == 12:
+	elif targetnumber == '12':
 		targetstring = 'Brown Felt (Sun)'
-	elif targetnumber == 13:
+	elif targetnumber == '13':
 		targetstring = 'White Cal Panel (Shadow)'
-	elif targetnumber == 14:
+	elif targetnumber == '14':
 		targetstring = 'Black Cal Panel (Shadow)'		
-	elif targetnumber == 15:
+	elif targetnumber == '15':
 		targetstring = 'Red Felt (Shadow)'
-	elif targetnumber == 16:
+	elif targetnumber == '16':
 		targetstring = 'Blue Felt (Shadow)'
-	elif targetnumber == 17:
+	elif targetnumber == '17':
 		targetstring = 'Green Felt (Shadow)'
-	elif targetnumber == 18:
+	elif targetnumber == '18':
 		targetstring = 'Brown Felt (Shadow)'
 	else:
 		print('Invalid Target Number')
@@ -243,4 +244,6 @@ if __name__ == '__main__':
 	times,targets,targetdescriptor = fieldData(tsvFilename)
 
 	irradianceDict, frametime = micasenseRawData(geotiffFilename)
-	filenumber = bestSVC(minutes,currentTargetnumber,times,targets,targetdescriptor)
+	print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
+	filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
+	print(filenumber)

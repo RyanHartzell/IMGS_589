@@ -180,7 +180,7 @@ def metadataGrabber(filename):
     dateTime = dateTime.replace(' ', 'T')
     dateTime = dateTime.replace(':','-',2)
     subSec = metadatadict['Exif.Photo.SubSecTime']
-    timeStamp = dateTime + '.' + subSec[1:]
+    timeStamp = dateTime# + '.' + subSec[1:]
     metadatadict['timeStamp'] = timeStamp
 
     return metadatadict
@@ -189,12 +189,17 @@ if __name__ == '__main__':
     import metadataReader
     filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
     metadatadict = metadataReader.metadataGrabber(filename)
-    print(metadatadict)
+    
+    import time
+    t = time.strptime(metadatadict['timeStamp'][-8:],'%H:%M:%S')
+    minutes = (t.tm_hour - 5) * 60 + t.tm_min
+    
     #print(metadatadict)
-    print(metadatadict['Exif.Photo.FocalPlaneXResolution'])
-    print(metadatadict['Exif.Photo.FocalPlaneYResolution'])
-    print(metadatadict['Exif.Photo.FocalPlaneResolutionUnit'])
-    print(metadatadict['Exif.Photo.FocalLength'])
+    #print(metadatadict)
+    #print(metadatadict['Exif.Photo.FocalPlaneXResolution'])
+    #print(metadatadict['Exif.Photo.FocalPlaneYResolution'])
+    #print(metadatadict['Exif.Photo.FocalPlaneResolutionUnit'])
+    #print(metadatadict['Exif.Photo.FocalLength'])
 
     #print(metadatadict['Exif.Photo.SubSecTime'])
     #print(metadatadict['Exif.Image.DateTime'])

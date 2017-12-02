@@ -10,18 +10,19 @@ def getDisplayImage(geotiffFilename):
 	print(imageStack.dtype)
 
 	#crop
-	width = imageStack.shape[1]
-	radius = width // 4
+	#width = imageStack.shape[1]
+	#radius = width // 4
+	focalLen, focalRes, angle = 5.5, 266.66667, 10
+	radius = int(focalLen*focalRes*np.tan(np.deg2rad(angle/2)))
 	imageCenter = (imageStack.shape[0]//2, imageStack.shape[1]//2)
 
-	#circleMask = numpy.full(imageStack.shape[0:2], 0,  dtype=imageStack.dtype)
-	#cv2.circle(circleMask, (imageCenter[1],imageCenter[0]), int(radius), (1,1,1), -1)
-	#circleMask = numpy.repeat(circleMask[:,:,np.newaxis], imageStack.shape[2])
-	#circleMask = circleMask.reshape(imageStack.shape)
-	#imageStackMasked = imageStack*circleMask
+	circleMask = np.full(imageStack.shape[0:2], 0,  dtype=imageStack.dtype)
+	cv2.circle(circleMask, (imageCenter[1],imageCenter[0]), int(radius), (1,1,1), -1)
+	circleMask = np.repeat(circleMask[:,:,np.newaxis], imageStack.shape[2])
+	circleMask = circleMask.reshape(imageStack.shape)
+	imageStackMasked = imageStack*circleMask
 
-
-	imageStack_crop = imageStack[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
+	imageStack_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
 
 
 
@@ -114,10 +115,6 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	#ROI_image = mask * currentCroppedIm.T
 	ROI_image = np.dstack(((mask * currentCroppedIm[:,:,0]), (mask * currentCroppedIm[:,:,1]), (mask * currentCroppedIm[:,:,2]), (mask * currentCroppedIm[:,:,3]), (mask * currentCroppedIm[:,:,4])))
 
-
-
-
-
 	#calculate statistics
 	mean = []
 	stdev = []
@@ -142,6 +139,7 @@ def micasenseRawData(geotiffFilename):
 	for band in np.arange(1,6):
 		rawextension = '_{}.tif'.format(str(band))
 		rawFilename = geotiffFilename[:-21] + 'processed/' + geotiffFilename[-13:-5] + rawextension
+		#print('rawFilename',rawFilename)
 		metadatadict = metadataReader.metadataGrabber(rawFilename)
 		irradianceDict[band] = float(metadatadict['Xmp.DLS.SpectralIrradiance'])
 
@@ -150,6 +148,29 @@ def micasenseRawData(geotiffFilename):
 	frametime = (t.tm_hour - 5) * 60 + t.tm_min
 
 	return irradianceDict, frametime
+
+def fieldData(tsvFilename):
+	import numpy as np
+
+	fulltext = np.loadtxt(tsvFilename,skiprows = 4, dtype = str, delimiter = '\t')
+
+	times = fulltext[:,0]
+	times = times[1:]
+	for index in np.arange(np.size(times)):
+		timestring =  times[index]
+		hours = int(timestring[0:2])
+		minutes = int(timestring[2:4])
+		totalmin = hours * 60 + minutes
+		times[index] = totalmin
+	times = times.astype(int)
+
+	filenumbers = fulltext[:,2]
+	filenumbers = filenumbers[1:]
+
+	targetdescriptor = fulltext[:,1]
+	targetdescriptor = targetdescriptor[1:]
+
+	return times, filenumbers, targetdescriptor
 
 def targetNumtoStr(targetnumber):
 	if targetnumber == '1':
@@ -194,6 +215,18 @@ def targetNumtoStr(targetnumber):
 	return targetstring
 
 
+def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
+	targetstring = targetNumtoStr(targetnumber)
+	possibleSVC = np.where(targetdescriptor == targetstring)[0]
+	test = np.abs(times[possibleSVC]-frametime)
+	tset = test[::-1]
+	bestindex = len(tset) - np.argmin(tset) - 1
+	filenumberindex = possibleSVC[bestindex]
+	filenumber = filenumbers[filenumberindex]
+	return filenumber
+
+	return irradianceDict, frametime
+
 def fieldData(tsvFilename):
 	import numpy as np
 
@@ -217,7 +250,6 @@ def fieldData(tsvFilename):
 
 	return times, filenumbers, targetdescriptor
 
-
 def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
 	targetstring = targetNumtoStr(targetnumber)
 	possibleSVC = np.where(targetdescriptor == targetstring)[0]
@@ -229,6 +261,7 @@ def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
 	return filenumber
 
 
+	#np.abs(SVCmeasurementtimes - frametime)
 #PYTHON TEST HARNESS
 if __name__ == '__main__':
 
@@ -279,6 +312,7 @@ if __name__ == '__main__':
 	print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
 	filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
 	print(filenumber)
+	print(mean)
 
 	with open('Target_Data_Test.txt', 'w') as stuff:
-		stuff.write('here\'s our stuff:   {0}   {1}   {2}   {3} {4}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))
+		stuff.write('here\'s our stuff:   {0}   {1}   {2}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))

@@ -49,6 +49,13 @@ class PointsSelected(object):
       return len(_x)
 
    @staticmethod
+   def restrict_len(bound):
+       global _x
+       global _y
+       _x = _x[:bound]
+       _y = _y[:bound]
+
+   @staticmethod
    def _on_mouse(event, currentX, currentY, flags, params):
       global _x
       global _y

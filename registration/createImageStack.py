@@ -21,7 +21,7 @@ def computeMatches(im1, im2, feature="orb"):
 	import numpy as np
 
 	eightIm1 = (im1/256).astype(np.uint8)
-	eightIm2 = (im1/256).astype(np.uint8)
+	eightIm2 = (im2/256).astype(np.uint8)
 
 	if feature == "orb":
 		#ORB
@@ -34,8 +34,8 @@ def computeMatches(im1, im2, feature="orb"):
 		#PatchSize = Size of patch used by orientated BREIF Descriptor
 		#Default:500, 1.2, 8, 31, 0, 2, cv2.ORB_HARRIS_SCORE, 31, 20
 		orb = cv2.ORB_create(nfeatures=500,scaleFactor=1.2, nlevels=8,
-							edgeThreshold=31, firstLevel=0, WTA_K=2,
-							scoreType=cv2.ORB_HARRIS_SCORE, patchSize=31,
+							edgeThreshold=31, firstLevel=0, WTA_K=3,
+							scoreType=cv2.ORB_FAST_SCORE, patchSize=31,
 							fastThreshold=20)
 
 		#Computes the features & descriptors for the images
@@ -45,8 +45,12 @@ def computeMatches(im1, im2, feature="orb"):
 
 		#kp1Image = cv2.drawKeypoints((im1/256).astype(np.uint8),
 		#		kp1,None,flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+		#kp1Image = cv2.drawKeypoints((im1/256).astype(np.uint8),
+		#		kp1,None,flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
 		#kp2Image = cv2.drawKeypoints((im2/256).astype(np.uint8),
 		#		kp2,None,flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+		#kp2Image = cv2.drawKeypoints((im2/256).astype(np.uint8),
+		#		kp2,None,flags=cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
 		#cv2.imshow("RAW Keypoint 1 Image", cv2.resize(kp1Image, None,
 		#			fx=0.5, fy=0.5,interpolation=cv2.INTER_AREA))
 		#cv2.imshow("RAW Keypoint 2 Image", cv2.resize(kp2Image, None,
@@ -55,11 +59,22 @@ def computeMatches(im1, im2, feature="orb"):
 
 		dist = []
 		matches = []
+		m1, m2 =[], []
 		if (des1 is not None) and (des2 is not None):
 			#Makes sure the descriptors are not empty or none
-			matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
-			matches = matcher.match(des1, des2)
-			matches = sorted(matches, key = lambda x:x.distance)
+			#matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
+			matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+			#matches = matcher.match(des1, des2)
+			#print(matches)
+			matches = matcher.knnMatch(des1, des2, k=2)
+			for i in range(len(matches)):
+				#print(matches[i])
+				m1.append(matches[i][0])
+				m2.append(matches[i][1])
+
+			#matches = sorted(matches, key = lambda x:x.distance)
+			matches = sorted(m1, key = lambda x:x.distance)
+
 			#matchIm = cv2.drawMatches((im1/256).astype(np.uint8),kp1,
 			#	(im2/256).astype(np.uint8),kp2,matches, None, flags=2)
 			#cv2.imshow("RAW Match Image", cv2.resize(matchIm, None,
@@ -70,13 +85,13 @@ def computeMatches(im1, im2, feature="orb"):
 			#			fx=0.5, fy=0.5,interpolation=cv2.INTER_AREA))
 			#Calculates the distance between matches
 			dist = [m.distance for m in matches]
+
 		goodMatches = []
 		if len(dist) != 0:
 			#Finds the threshold distance between matches
-			thres_dist = (np.sum(dist)/len(dist))*.70
+			thres_dist = (np.sum(dist)/len(dist))*.7
 			#Puts the thresholded matches into the good matches
-			goodMatches = [m for m in matches if m.distance < thres_dist]
-
+			goodMatches = [m for m in matches if m.distance <= thres_dist]
 	elif feature == "sift":
 		#SIFT
 		#nOctaveLayers = Lowe Uses 3, Auto computed from resolution
@@ -116,7 +131,6 @@ def register(fixedIm, movingIm, corCoef, feature):
 	if corCoef < 0:
 		#print("Bitwise Switch")
 		featureMovingIm = cv2.bitwise_not(featureMovingIm)
-
 	if len(fixedIm.shape) > 2:
 		fixedIm = fixedIm[:,:,0]
 	if len(movingIm.shape) > 2:
@@ -132,6 +146,8 @@ def register(fixedIm, movingIm, corCoef, feature):
 		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
 		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None,
 		#							matchesMask=mask.ravel().tolist(),flags=2)
+		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
+		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None, flags=2)
 		#cv2.imshow('Distance Filtered Match Image',
 		#				cv2.resize(goodMatchIm, None, fx=0.5, fy=0.5,
 		#								interpolation=cv2.INTER_AREA))
@@ -141,10 +157,16 @@ def register(fixedIm, movingIm, corCoef, feature):
 		M = cv2.estimateRigidTransform(match2, match1, False)
 		if M is not None:
 			warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
+			#print("Used Affine")
+			#cv2.imshow("Overlay", cv2.resize(cv2.addWeighted(fixedIm, .5, warpedIm, .5, 0), None,
+			#									 fx=0.5, fy=0.5,interpolation=cv2.INTER_AREA))
+			#cv2.waitKey(0)
+
 			warpedCorCoef = np.absolute(np.corrcoef(np.ravel(movingIm), np.ravel(warpedIm)))[0,1]
 			if warpedCorCoef > 0.2:
 				registerIm = np.reshape(warpedIm, movingIm.shape)
 		else: #If the affine transformation matrix was not able to be calculated
+			#print("Used Homography")
 			homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
 			if homography is not None:
 				warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
@@ -169,8 +191,7 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	#Puts the first image into the respective place in the image stack.
 	#IE. IMG_0128_2 goes into ImageStack[:,:,1] due to python indexing
 
-	mask = np.ones((height, width), dtype=np.uint8)
-
+	mask = np.ones((height, width), dtype=im1.dtype)
 	for pair in range(matchOrder.shape[0]):
 		correlationCoef = matchOrder[pair,2] #Extracts pair correlation coefficent
 		fixed = imageStack[:,:,int(matchOrder[pair,0])-1]
@@ -227,19 +248,18 @@ if __name__ == '__main__':
 	#home = os.path.expanduser('~')
 	#baseDirectory = 'src/python/modules/sUAS'
 	#images = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/'
-	images = '/cis/otherstu/gvs6104/DIRS/20170928/300flight/'
+	images = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1400/micasense/processed/'
 
-	im1 = images + 'IMG_0128_1.tif'
-	im2 = images + 'IMG_0128_2.tif'
-	im3 = images + 'IMG_0128_3.tif'
-	im4 = images + 'IMG_0128_4.tif'
-	im5 = images + 'IMG_0128_5.tif'
-
+	im1 = images + 'IMG_0110_1.tif'
+	im2 = images + 'IMG_0110_2.tif'
+	im3 = images + 'IMG_0110_3.tif'
+	im4 = images + 'IMG_0110_4.tif'
+	im5 = images + 'IMG_0110_5.tif'
 	imageList = [im1, im2, im3, im4, im5]
 	matchOrder = correlateImages.OrderImagePairs(imageList, addOne=True)
-	imageStack, goodCorr = stackImages(imageList, matchOrder, 'orb', crop=True)
+	imageStack, goodCorr = stackImages(imageList, matchOrder, 'orb', crop=False)
 
-	dispImageStack = (imageStack/255).astype(np.uint8)
+	dispImageStack = (imageStack/256).astype(np.uint8)
 	bgrDisplay = dispImageStack[:,:,0:3]
 	cv2.imshow('RGB Register', cv2.resize(bgrDisplay, None, fx=0.8,fy=0.8,
 				interpolation=cv2.INTER_AREA))

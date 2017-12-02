@@ -189,11 +189,14 @@ if __name__ == '__main__':
     import metadataReader
     filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
     metadatadict = metadataReader.metadataGrabber(filename)
-    
+
     import time
+    print(metadatadict['Xmp.DLS.TimeStamp'], type(metadatadict['Xmp.DLS.TimeStamp']) )
+    print(metadatadict['timeStamp'], type(metadatadict['timeStamp']))
+    print(metadatadict['timeStamp'][-8:])
     t = time.strptime(metadatadict['timeStamp'][-8:],'%H:%M:%S')
     minutes = (t.tm_hour - 5) * 60 + t.tm_min
-    
+
     #print(metadatadict)
     #print(metadatadict)
     #print(metadatadict['Exif.Photo.FocalPlaneXResolution'])

@@ -41,17 +41,10 @@ def selectROI(mapName, im):
 	#mapName, (str)
 	import numpy as np
 	import cv2
-<<<<<<< HEAD
-	import PointsSelected as ps
-
-	#utilize 'PointsSelected' to get the search window, manual input
-	p = ps.PointsSelected(mapName, verbose=False)
-=======
 	#import ipcv
 	import PointsSelected
 	#utilize 'PointsSelected' to get the search window, manual input
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
->>>>>>> ab828c363bf8dbae0d4e4c82d32378412e2c0784
 	p.clearPoints()
 
 	while p.number() < 4:

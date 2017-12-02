@@ -7,7 +7,7 @@ def getDisplayImage(geotiffFilename):
 	#Get GEOTIFF
 	imageStack = gdal.Open(geotiffFilename).ReadAsArray()
 	imageStack = np.moveaxis(imageStack, 0, -1)
-	print(imageStack.dtype)
+	#print(imageStack.dtype)
 
 	#crop
 	#width = imageStack.shape[1]
@@ -24,13 +24,11 @@ def getDisplayImage(geotiffFilename):
 
 	imageStack_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
 
-
-
-	band1 = imageStack_crop[:,:,0]
-	band2 = imageStack_crop[:,:,1]
-	band3 = imageStack_crop[:,:,2]
-	band4 = imageStack_crop[:,:,3]
-	band5 = imageStack_crop[:,:,4]
+	#band1 = imageStack_crop[:,:,0]
+	#band2 = imageStack_crop[:,:,1]
+	#band3 = imageStack_crop[:,:,2]
+	#band4 = imageStack_crop[:,:,3]
+	#band5 = imageStack_crop[:,:,4]
 
 
 	#displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
@@ -109,8 +107,8 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	mask[np.where(mask == 0)] = np.nan
 	mask = mask.astype(currentCroppedIm.dtype)
 
-	print(currentCroppedIm[:,:,0])
-	print(currentCroppedIm.dtype)
+	#print(currentCroppedIm[:,:,0])
+	#print(currentCroppedIm.dtype)
 
 	#ROI_image = mask * currentCroppedIm.T
 	ROI_image = np.dstack(((mask * currentCroppedIm[:,:,0]), (mask * currentCroppedIm[:,:,1]), (mask * currentCroppedIm[:,:,2]), (mask * currentCroppedIm[:,:,3]), (mask * currentCroppedIm[:,:,4])))
@@ -123,10 +121,13 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 		stdev.append(np.nanstd(ROI_image[:,:,i]))
 
 	#calculate centroid
-	centroid = [np.mean(np.asarray(pointsX)) ,np.mean(np.asarray(pointsY))]
-	# print(mean)
-	# print(stdev)
-	# print(centroid)
+	orignalImage = gdal.Open(geotiffFilename).ReadAsArray()
+	orignalImage = np.moveaxis(orignalImage, 0, -1)
+	print(pointsX, orignalImage.shape[1], currentCroppedIm.shape[1])
+	print(pointsY, orignalImage.shape[0], currentCroppedIm.shape[0])
+	pointsX = np.array(pointsX)+orignalImage.shape[1]//2-currentCroppedIm.shape[1]//2
+	pointsY = np.array(pointsY)+orignalImage.shape[0]//2-currentCroppedIm.shape[0]//2
+	centroid = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
 
 	return mask, ROI_image, mean, stdev, centroid
 
@@ -260,8 +261,6 @@ def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
 	filenumber = filenumbers[filenumberindex]
 	return filenumber
 
-
-	#np.abs(SVCmeasurementtimes - frametime)
 #PYTHON TEST HARNESS
 if __name__ == '__main__':
 
@@ -283,12 +282,12 @@ if __name__ == '__main__':
 
 	#get the geotiff image (5 band) and color (3 band)
 	geoTiffImage, displayImage = getDisplayImage(geotiffFilename)
-	print(geoTiffImage.dtype)
-	print(np.max(geoTiffImage))
+	#print(geoTiffImage.dtype)
+	#print(np.max(geoTiffImage))
 
 	mapName = 'Select corners for the target area.'
 	cv2.namedWindow(mapName, cv2.WINDOW_AUTOSIZE)
-	im = cv2.imshow(mapName, (displayImage/np.max(displayImage)*255).astype(np.uint8))
+	cv2.imshow(mapName, (displayImage/np.max(displayImage)*255).astype(np.uint8))
 
 	zoomName = 'Zoomed region for easier point selection.'
 	cv2.namedWindow(zoomName, cv2.WINDOW_AUTOSIZE)

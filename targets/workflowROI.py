@@ -79,39 +79,43 @@ if __name__ == '__main__':
 	##Create the textfile that the data will be written out to
 	with open(txtDestination, 'w') as currentTextFile:
 
+
+
+	##START MAIN LOOP
 	currentImIndex = 0
 	while True:
 		currentFilename = geotiffFolderName + fileNames[currentImIndex]
 		currentGeotiff, displayImage = getDisplayImage(currentFilename)
 		im = cv2.imshow(currentIm_tag, displayImage)
 
-		#get the coordinates of the ROI from the user
-		pointsX, pointsY = selectROI(currentIm_tag, displayImage)
+		while True:
+			#get the coordinates of the ROI from the user
+			pointsX, pointsY = selectROI(currentIm_tag, displayImage)
 
-		#ask user for input of the current target
-		currentTargetNumber = assignTargetNumber()
+			#ask user for input of the current target
+			currentTargetNumber = assignTargetNumber()
 
-		#compute the statistics that will be written out, from the ROI coords
-		maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentGeotiff, currentFilename, pointsX, pointsY)
+			#compute the statistics that will be written out, from the ROI coords
+			maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentGeotiff, currentFilename, pointsX, pointsY)
 
-		#get metadata
-		irradianceDict, frametime = micasenseRawData(currentFilename)
-		filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
-
-
-		currentTextFile.write('here\'s our stuff:   {0}   {1}   {2}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))
+			#get metadata
+			irradianceDict, frametime = micasenseRawData(currentFilename)
+			filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
 
 
+			currentTextFile.write('here\'s our stuff:   {0}   {1}   {2}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))
 
 
-		#Commands corresponding to changing the current GEOTIFF that is being operated on
-		response = cv2.waitKey(33) #utilize user responses to move forward or backwards in sequence of imagery
-		if response == ord('d'):
-			currentImIndex += 1
-		elif response == ord('a'):
-			currentImIndex += -1
-		elif response == 27:
-			break
+
+
+			#Commands corresponding to changing the current GEOTIFF that is being operated on
+			response = cv2.waitKey(33) #utilize user responses to move forward or backwards in sequence of imagery
+			if response == ord('d'):
+				currentImIndex += 1
+			elif response == ord('a'):
+				currentImIndex += -1
+			elif response == 27:
+				break
 
 	cv2.destroyWindow(currentIm_tag)
 

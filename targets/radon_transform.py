@@ -5,13 +5,27 @@ import matplotlib.pyplot as plt
 import os.path
 import cv2
 
-def discrete_radon_transform(image, steps):
-    R = np.zeros((steps, len(image)), dtype='float64')
+def discrete_radon_transform(x, y, stack, R, steps):
+	# x and y are vectors of length four, coordinates of template
     for s in range(steps):
-        rotation = misc.imrotate(image, -s*180/steps).astype('float64')
-        R[:,s] = sum(rotation)
-    return R
+		# generate x' and y' for every step
+		
 
+		# sum lines of values within x' y' bounding box
+		R[:,s] = sum(rotation)
+
+	return R
+
+def pre_radon_transform(src, steps):
+	R_empty = np.zeros((steps, len(image)), dtype='float64')
+	n, m = src.shape
+	rotation_stack = np.zeros(n, m, steps)
+
+	for s in range(steps):
+		rotation = misc.imrotate(src, -s*180/steps).astype('float64')
+		rotation_stack[:,:,s] = rotation 
+
+	return R_empty, rotation_stack
 
 home = os.path.expanduser('~')
 # Read image as 64bit float gray scale

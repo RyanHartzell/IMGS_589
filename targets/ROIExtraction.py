@@ -40,37 +40,54 @@ def selectROI(mapName, im):
 	#mapName, (str)
 	import numpy as np
 	import cv2
-	#import ipcv
 	import PointsSelected
 	#utilize 'PointsSelected' to get the search window, manual input
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints()
+	original = im.copy()
 
-	while p.number() < 4:
-		# if p.number() > 1:
-		# 	points = np.asarray(list(zip(p.x(), p.y())), np.int32)
-		# 	points = points.reshape((-1,1,2))
-		# 	im = cv2.polylines(im.copy(), [points], True, (0,0,255))
-		# 	cv2.imshow(mapName, im)
-		# elif p.number == 1:
+	while True:
+		if p.number() > 4:
+			p.restrict_len(4)
+
 		if p.number() == 1:
-			im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
+			im = cv2.circle(original.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
 			cv2.imshow(mapName, im)
 
-		if p.number() >= 2:
+		if (p.number() == 2) or (p.number() == 3):
 			im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
 			im = cv2.line(im.copy(),(p.x()[-2],p.y()[-2]),(p.x()[-1],p.y()[-1]),(255,0,0),1)
 			cv2.imshow(mapName, im)
 
-		cv2.waitKey(100)
+		if p.number() == 4:
+			im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
+			points = np.asarray(list(zip(p.x(), p.y())), np.int32)
+			points = points.reshape((-1,1,2))
+			im = cv2.polylines(im.copy(), [points], True, (255,0,0))
+			cv2.imshow(mapName, im)
+
+		response = cv2.waitKey(100)
+		if response == ord('n'):
+			p.clearPoints()
+			cv2.imshow(mapName, original)
+			print('Clearing selected points...')
+
+		elif (response == ord('y')):
+			if (p.number() == 4):
+				print('Running ROI calculations...')
+				break
+			else:
+				print('Must select 4 points!!!')
+
+		# cv2.waitKey(100)
 
 	# draw final point
-	im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
-	points = np.asarray(list(zip(p.x(), p.y())), np.int32)
-	points = points.reshape((-1,1,2))
-	im = cv2.polylines(im.copy(), [points], True, (255,0,0))
-	cv2.imshow(mapName, im)
-	cv2.waitKey(100)
+	# im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
+	# points = np.asarray(list(zip(p.x(), p.y())), np.int32)
+	# points = points.reshape((-1,1,2))
+	# im = cv2.polylines(im.copy(), [points], True, (255,0,0))
+	# cv2.imshow(mapName, im)
+	# cv2.waitKey(100)
 
 	return p.x(), p.y()
 

@@ -142,7 +142,6 @@ def micasenseRawData(geotiffFilename):
 	for band in np.arange(1,6):
 		rawextension = '_{}.tif'.format(str(band))
 		rawFilename = geotiffFilename[:-21] + 'processed/' + geotiffFilename[-13:-5] + rawextension
-		print('rawFilename',rawFilename)
 		metadatadict = metadataReader.metadataGrabber(rawFilename)
 		irradianceDict[band] = float(metadatadict['Xmp.DLS.SpectralIrradiance'])
 
@@ -151,29 +150,6 @@ def micasenseRawData(geotiffFilename):
 	frametime = (t.tm_hour - 5) * 60 + t.tm_min
 
 	return irradianceDict, frametime
-
-def fieldData(tsvFilename):
-	import numpy as np
-
-	fulltext = np.loadtxt(tsvFilename,skiprows = 4, dtype = str, delimiter = '\t')
-
-	times = fulltext[:,0]
-	times = times[1:]
-	for index in np.arange(np.size(times)):
-		timestring =  times[index]
-		hours = int(timestring[0:2])
-		minutes = int(timestring[2:4])
-		totalmin = hours * 60 + minutes
-		times[index] = totalmin
-	times = times.astype(int)
-
-	filenumbers = fulltext[:,2]
-	filenumbers = filenumbers[1:]
-
-	targetdescriptor = fulltext[:,1]
-	targetdescriptor = targetdescriptor[1:]
-
-	return times, filenumbers, targetdescriptor
 
 def targetNumtoStr(targetnumber):
 	if targetnumber == '1':
@@ -218,18 +194,6 @@ def targetNumtoStr(targetnumber):
 	return targetstring
 
 
-def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
-	targetstring = targetNumtoStr(targetnumber)
-	possibleSVC = np.where(targetdescriptor == targetstring)[0]
-	test = np.abs(times[possibleSVC]-frametime)
-	tset = test[::-1]
-	bestindex = len(tset) - np.argmin(tset) - 1
-	filenumberindex = possibleSVC[bestindex]
-	filenumber = filenumbers[filenumberindex]
-	return filenumber
-
-	return irradianceDict, frametime
-
 def fieldData(tsvFilename):
 	import numpy as np
 
@@ -253,48 +217,6 @@ def fieldData(tsvFilename):
 
 	return times, filenumbers, targetdescriptor
 
-def targetNumtoStr(targetnumber):
-	if targetnumber == 1:
-		targetstring = 'White Tri'
-	elif targetnumber == 2:
-		targetstring = 'Medium Gray Tri'
-	elif targetnumber == 3:
-		targetstring = 'Dark Gray Tri'
-	elif targetnumber == 4:
-		targetstring = 'Black Cal Panel'
-	elif targetnumber == 5:
-		targetstring = 'White Cal Panel'
-	elif targetnumber == 6:
-		targetstring = 'Asphalt'
-	elif targetnumber == 7:
-		targetstring = 'Grass'
-	elif targetnumber == 8:
-		targetstring = 'Concrete'
-	elif targetnumber == 9:
-		targetstring = 'Red Felt (Sun)'
-	elif targetnumber == 10:
-		targetstring = 'Blue Felt (Sun)'
-	elif targetnumber == 11:
-		targetstring = 'Green Felt (Sun)'
-	elif targetnumber == 12:
-		targetstring = 'Brown Felt (Sun)'
-	elif targetnumber == 13:
-		targetstring = 'White Cal Panel (Shadow)'
-	elif targetnumber == 14:
-		targetstring = 'Black Cal Panel (Shadow)'
-	elif targetnumber == 15:
-		targetstring = 'Red Felt (Shadow)'
-	elif targetnumber == 16:
-		targetstring = 'Blue Felt (Shadow)'
-	elif targetnumber == 17:
-		targetstring = 'Green Felt (Shadow)'
-	elif targetnumber == 18:
-		targetstring = 'Brown Felt (Shadow)'
-	else:
-		print('Invalid Target Number')
-
-	return targetstring
-
 
 def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
 	targetstring = targetNumtoStr(targetnumber)
@@ -307,7 +229,6 @@ def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
 	return filenumber
 
 
-	#np.abs(SVCmeasurementtimes - frametime)
 #PYTHON TEST HARNESS
 if __name__ == '__main__':
 
@@ -351,7 +272,6 @@ if __name__ == '__main__':
 
 	cv2.destroyWindow(mapName)
 
-<<<<<<< HEAD
 	tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171109/GroundDocumentation/datasheets/Flight_Notes.tsv'
 	times,targets,targetdescriptor = fieldData(tsvFilename)
 
@@ -361,11 +281,4 @@ if __name__ == '__main__':
 	print(filenumber)
 
 	with open('Target_Data_Test.txt', 'w') as stuff:
-		stuff.write('here\'s our stuff:   {0}   {1}   {2}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))
-=======
-	tsvFilename = '/cis/ugrad/kxk8298/Documents/Flight_Notes.tsv'
-	times,targets,targetdescriptor = fieldData(tsvFilename)
-
-	irradianceDict, frametime = micasenseRawData(geotiffFilename)
-	filenumber = bestSVC(minutes,currentTargetnumber,times,targets,targetdescriptor)
->>>>>>> ab828c363bf8dbae0d4e4c82d32378412e2c0784
+		stuff.write('here\'s our stuff:   {0}   {1}   {2}   {3} {4}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))

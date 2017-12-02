@@ -96,6 +96,7 @@ def findLuts(dictionary, image, DNfinder = 'auto'):
     dictionary[irradiance] = LUT
     #Return dictionary
     return dictionary
+    
 def applyLuts(dictionary, image):
     #Generate array of dictionary key irradiances
     irradianceKeys = np.asarray(list(dictionary.keys()))

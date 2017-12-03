@@ -21,17 +21,19 @@ userName = getpass.getuser()
 
 
 
+#example:
+#python3 workflowROI.py -g /cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/ -t /cis/otherstu/gvs6104/DIRS/20171102/GroundDocumentation/datasheets/Flight_Notes.tsv -s 2 -f IMG_0180.tiff
 
 
-## USER INPUTS
-geotiffFolderName = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/'
-tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171102/GroundDocumentation/datasheets/Flight_Notes.tsv'
-#txtDestination = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/Flight1445_' + userName + '.csv'
-stepNumber = 2 #do every other image, or every image, ...
+# individual example inputs
+# geotiffFolderName = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/'
+# tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171102/GroundDocumentation/datasheets/Flight_Notes.tsv'
+# #txtDestination = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/Flight1445_' + userName + '.csv'
+# stepNumber = 2 #do every other image, or every image, ...
 
-startFrameNumber = 0 #can equal int or filename as string
-startFrameNumber = 'IMG_0000.tiff'
-##
+# startFrameNumber = 0 #can equal int or filename as string
+# startFrameNumber = 'IMG_0000.tiff'
+# ##
 
 
 parser = argparse.ArgumentParser(description='Collect user inputs for ROI extraction process')

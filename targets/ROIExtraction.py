@@ -7,6 +7,7 @@ def getDisplayImage(geotiffFilename):
 	#Get GEOTIFF
 	imageStack = gdal.Open(geotiffFilename).ReadAsArray()
 	imageStack = np.moveaxis(imageStack, 0, -1)
+
 	#print(imageStack.dtype)
 
 	#crop
@@ -151,10 +152,8 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 
 	#apply the single channel mask to each of the five bands in 'currentCroppedIm'
 	mask[np.where(mask == 0)] = np.nan
-	mask = mask.astype(currentCroppedIm.dtype)
+	#mask = mask.astype(currentCroppedIm.dtype)
 
-	#print(currentCroppedIm[:,:,0])
-	#print(currentCroppedIm.dtype)
 
 	#ROI_image = mask * currentCroppedIm.T
 	ROI_image = np.dstack(((mask * currentCroppedIm[:,:,0]), (mask * currentCroppedIm[:,:,1]), (mask * currentCroppedIm[:,:,2]), (mask * currentCroppedIm[:,:,3]), (mask * currentCroppedIm[:,:,4])))
@@ -330,8 +329,11 @@ if __name__ == '__main__':
 	#os.path.abspath(os.path.join(os.path.dirname(__file__),os.path.pardir)))
 	import geoTIFF
 
-	geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/IMG_0181.tiff'
+	geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/IMG_0186.tiff'
+	geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0106.tiff'
+
 	#geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171108/Missions/1300_225ft/micasense/geoTiff/IMG_0188.tiff'
+
 
 	#get the geotiff image (5 band) and color (3 band)
 	geoTiffImage, displayImage = getDisplayImage(geotiffFilename)
@@ -357,15 +359,17 @@ if __name__ == '__main__':
 
 	cv2.destroyWindow(mapName)
 
-	tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171109/GroundDocumentation/datasheets/Flight_Notes.tsv'
-	times,targets,targetdescriptor = fieldData(tsvFilename)
+	print(mean, stdev, centroid)
 
-	irradianceDict, frametime = micasenseRawData(geotiffFilename)
-	#print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
+	# tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171109/GroundDocumentation/datasheets/Flight_Notes.tsv'
+	# times,targets,targetdescriptor = fieldData(tsvFilename)
 
-	filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
-	#print(filenumber)
-	#print(mean)
+	# irradianceDict, frametime = micasenseRawData(geotiffFilename)
+	# #print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
 
-	with open('Target_Data_Test.txt', 'w') as stuff:
-		stuff.write('here\'s our stuff:   {0}   {1}   {2}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))
+	# filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
+	# #print(filenumber)
+	# #print(mean)
+
+	# with open('Target_Data_Test.txt', 'w') as stuff:
+	# 	stuff.write('here\'s our stuff:   {0}   {1}   {2}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))

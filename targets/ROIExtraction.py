@@ -140,8 +140,8 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	#calculate centroid
 	orignalImage = gdal.Open(geotiffFilename).ReadAsArray()
 	orignalImage = np.moveaxis(orignalImage, 0, -1)
-	print(pointsX, orignalImage.shape[1], currentCroppedIm.shape[1])
-	print(pointsY, orignalImage.shape[0], currentCroppedIm.shape[0])
+	#print(pointsX, orignalImage.shape[1], currentCroppedIm.shape[1])
+	#print(pointsY, orignalImage.shape[0], currentCroppedIm.shape[0])
 	pointsX = np.array(pointsX)+orignalImage.shape[1]//2-currentCroppedIm.shape[1]//2
 	pointsY = np.array(pointsY)+orignalImage.shape[0]//2-currentCroppedIm.shape[0]//2
 	centroid = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
@@ -325,10 +325,10 @@ if __name__ == '__main__':
 	times,targets,targetdescriptor = fieldData(tsvFilename)
 
 	irradianceDict, frametime = micasenseRawData(geotiffFilename)
-	print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
+	#print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
 	filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
-	print(filenumber)
-	print(mean)
+	#print(filenumber)
+	#print(mean)
 
 	with open('Target_Data_Test.txt', 'w') as stuff:
 		stuff.write('here\'s our stuff:   {0}   {1}   {2}'.format(filenumber,mean,stdev,centroid,frametime,irradianceDict[1]))

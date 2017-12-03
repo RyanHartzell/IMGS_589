@@ -66,18 +66,35 @@ def selectROI(mapName, im):
 			im = cv2.polylines(im.copy(), [points], True, (255,0,0))
 			cv2.imshow(mapName, im)
 
+
 		response = cv2.waitKey(100)
 		if response == ord('n'):
 			p.clearPoints()
 			cv2.imshow(mapName, original)
 			print('Clearing selected points...')
 
-		elif (response == ord('y')):
+		# elif (response == ord('y')):
+		# 	if (p.number() == 4):
+		# 		print('Running ROI calculations...')
+		# 		break
+		# 	else:
+		# 		print('Must select 4 points!!!')
+
+
+		elif response == ord('0') or response == ord('1'):
 			if (p.number() == 4):
+				print(chr(response))
+				response_2 = cv2.waitKey(0)
+				targetNumber = ((chr(response)) + (chr(response_2)))
+				if (chr(response)) == '0':
+					targetNumber = (chr(response_2))
+				print(targetNumber)
+
 				print('Running ROI calculations...')
 				break
 			else:
 				print('Must select 4 points!!!')
+
 
 		# cv2.waitKey(100)
 
@@ -89,7 +106,7 @@ def selectROI(mapName, im):
 	# cv2.imshow(mapName, im)
 	# cv2.waitKey(100)
 
-	return p.x(), p.y()
+	return p.x(), p.y(), targetNumber
 
 def selectZoomWindow(mapName, zoomName):
 	#mapName, (str)
@@ -101,9 +118,21 @@ def selectZoomWindow(mapName, zoomName):
 	pass
 
 def assignTargetNumber():
+	import cv2
 	#no input required
-	currentTargetNumber = input("Enter Target Number. Then press 'enter'.\n")
-	return currentTargetNumber
+	print("Enter Target Number with 2 digits [04]:")
+	firstDigit = cv2.waitKey(0)
+	print(chr(firstDigit))
+
+	secondDigit = cv2.waitKey(0)
+	print((chr(firstDigit)) + chr(secondDigit))
+	#convert from ASCII int
+
+	targetNumber = ((chr(firstDigit)) + (chr(secondDigit)))
+	if (chr(firstDigit)) == '0':
+		targetNumber = (chr(secondDigit))
+
+	return targetNumber
 
 
 
@@ -151,6 +180,7 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 def micasenseRawData(geotiffFilename):
 	from geoTIFF import metadataReader
 	import time
+	import numpy as np
 
 	irradianceDict = {}
 	#For each band we are going to record a value for irradiance
@@ -165,7 +195,9 @@ def micasenseRawData(geotiffFilename):
 	t = time.strptime(metadatadict['timeStamp'].split('T')[-1].split('.')[0],'%H:%M:%S')
 	frametime = (t.tm_hour - 5) * 60 + t.tm_min
 
-	return irradianceDict, frametime
+	altitude = metadatadict['Exif.GPSInfo.GPSAltitude']
+	resolution = metadatadict['Exif.Photo.FocalPlaneXResolution']
+	return irradianceDict, frametime, altitude, resolution
 
 def fieldData(tsvFilename):
 	import numpy as np
@@ -233,15 +265,15 @@ def targetNumtoStr(targetnumber):
 	return targetstring
 
 
-def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
-	targetstring = targetNumtoStr(targetnumber)
-	possibleSVC = np.where(targetdescriptor == targetstring)[0]
-	test = np.abs(times[possibleSVC]-frametime)
-	tset = test[::-1]
-	bestindex = len(tset) - np.argmin(tset) - 1
-	filenumberindex = possibleSVC[bestindex]
-	filenumber = filenumbers[filenumberindex]
-	return filenumber
+# def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
+# 	targetstring = targetNumtoStr(targetnumber)
+# 	possibleSVC = np.where(targetdescriptor == targetstring)[0]
+# 	test = np.abs(times[possibleSVC]-frametime)
+# 	tset = test[::-1]
+# 	bestindex = len(tset) - np.argmin(tset) - 1
+# 	filenumberindex = possibleSVC[bestindex]
+# 	filenumber = filenumbers[filenumberindex]
+# 	return filenumber
 
 	return irradianceDict, frametime
 
@@ -269,13 +301,17 @@ def fieldData(tsvFilename):
 	return times, filenumbers, targetdescriptor
 
 def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
+	import numpy as np
 	targetstring = targetNumtoStr(targetnumber)
 	possibleSVC = np.where(targetdescriptor == targetstring)[0]
 	test = np.abs(times[possibleSVC]-frametime)
 	tset = test[::-1]
-	bestindex = len(tset) - np.argmin(tset) - 1
-	filenumberindex = possibleSVC[bestindex]
-	filenumber = filenumbers[filenumberindex]
+	filenumber = None
+	if len(tset) != 0:
+		bestindex = len(tset) - np.argmin(tset) - 1
+		filenumberindex = possibleSVC[bestindex]
+		filenumber = filenumbers[filenumberindex]
+
 	return filenumber
 
 #PYTHON TEST HARNESS
@@ -311,11 +347,11 @@ if __name__ == '__main__':
 	zoom = cv2.imshow(zoomName, np.zeros((200,200)))
 
 	#select the points for a target in the scene
-	pointsX, pointsY = selectROI(mapName, displayImage)
+	pointsX, pointsY, currentTargetNumber = selectROI(mapName, displayImage)
 	# call updater for zoomed function each time in the while loop (and in selectROI!!!)
 
 	#ask user for input of the current target
-	currentTargetNumber = assignTargetNumber()
+	#currentTargetNumber = assignTargetNumber()
 
 	maskedIm, ROI_image, mean, stdev, centroid = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
 
@@ -326,6 +362,7 @@ if __name__ == '__main__':
 
 	irradianceDict, frametime = micasenseRawData(geotiffFilename)
 	#print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
+
 	filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
 	#print(filenumber)
 	#print(mean)

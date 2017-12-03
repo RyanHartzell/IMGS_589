@@ -73,12 +73,28 @@ def selectROI(mapName, im):
 			cv2.imshow(mapName, original)
 			print('Clearing selected points...')
 
-		elif (response == ord('y')):
+		# elif (response == ord('y')):
+		# 	if (p.number() == 4):
+		# 		print('Running ROI calculations...')
+		# 		break
+		# 	else:
+		# 		print('Must select 4 points!!!')
+
+
+		elif response == ord('0') or response == ord('1'):
 			if (p.number() == 4):
+				print(chr(response))
+				response_2 = cv2.waitKey(0)
+				targetNumber = ((chr(response)) + (chr(response_2)))
+				if (chr(response)) == '0':
+					targetNumber = (chr(response_2))
+				print(targetNumber)
+
 				print('Running ROI calculations...')
 				break
 			else:
 				print('Must select 4 points!!!')
+
 
 		# cv2.waitKey(100)
 
@@ -90,7 +106,7 @@ def selectROI(mapName, im):
 	# cv2.imshow(mapName, im)
 	# cv2.waitKey(100)
 
-	return p.x(), p.y()
+	return p.x(), p.y(), targetNumber
 
 def selectZoomWindow(mapName, zoomName):
 	#mapName, (str)
@@ -331,11 +347,11 @@ if __name__ == '__main__':
 	zoom = cv2.imshow(zoomName, np.zeros((200,200)))
 
 	#select the points for a target in the scene
-	pointsX, pointsY = selectROI(mapName, displayImage)
+	pointsX, pointsY, currentTargetNumber = selectROI(mapName, displayImage)
 	# call updater for zoomed function each time in the while loop (and in selectROI!!!)
 
 	#ask user for input of the current target
-	currentTargetNumber = assignTargetNumber()
+	#currentTargetNumber = assignTargetNumber()
 
 	maskedIm, ROI_image, mean, stdev, centroid = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
 

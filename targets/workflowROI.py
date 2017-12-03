@@ -12,6 +12,11 @@ import geoTIFF
 import csv
 import argparse
 import getpass
+import tkinter
+from tkinter import filedialog, ttk
+root = tkinter.Tk()
+root.withdraw()
+root.update()
 userName = getpass.getuser()
 
 
@@ -30,7 +35,7 @@ startFrameNumber = 'IMG_0000.tiff'
 
 
 parser = argparse.ArgumentParser(description='Collect user inputs for ROI extraction process')
-parser.add_argument('-g', '--geotiffFolderName', type=str, help='The directory with geotiffs in it')
+parser.add_argument('-g', '--geotiffFolderName', type=str, help='The geotiff image directory')
 parser.add_argument('-t', '--tsvFilename', type=str, help='The filename with the .tsv')
 parser.add_argument('-s', '--stepNumber', type=int, help='How many images you want to skip')
 parser.add_argument('-f', '--startFrameNumber', help='Image to start at, can be string or index (int)')
@@ -41,10 +46,32 @@ tsvFilename = args.tsvFilename
 stepNumber = args.stepNumber
 startFrameNumber = args.startFrameNumber
 
+if geotiffFolderName is None:
+	geotiffFolderName = filedialog.askdirectory(initialdir = "/cis/otherstu/gvs6104/DIRS/", title="Choose the geotiff image directory")
+	if geotiffFolderName == "":
+		sys.exit()
+	else:
+		geotiffFolderName = geotiffFolderName + os.path.sep
+if tsvFilename is None:
+	tsvFilename = filedialog.askopenfilename(initialdir = "/cis/otherstu/gvs6104/DIRS/", title="Choose the Flight Notes [.tsv]",
+			filetypes=[("Tab Seperated Values", "*.tsv"), ("Comma Seperated Values", "*.csv"),("Excel Files", "*.xlsx *.xls")])
+
+	if tsvFilename == "":
+		sys.exit()
+
+if stepNumber is None:
+	stepNumber = int(input('Type number for how many images you want to skip \n'))
+if startFrameNumber is None:
+	startFrameNumber = input('Type number (index) or filename (string) for which image to start at \n')
+	try:
+		startFrameNumber = int(startFrameNumber) #this will only work (convert to int) if it is an index
+	except Exception:
+		pass
+
+
 flightNumber = os.path.basename(os.path.abspath(os.path.join(geotiffFolderName, '../..')))
 flightDate = os.path.basename(os.path.abspath(os.path.join(geotiffFolderName, '../../../..')))
 flightInfo = 'Flight_' + flightDate + 'T' + flightNumber + '_'
-print(flightInfo)
 txtDestination = os.path.abspath(os.path.join(geotiffFolderName, os.pardir)) + os.path.sep + flightInfo + userName + '.csv'
 
 
@@ -103,15 +130,15 @@ with open(txtDestination, writeMode) as currentTextFile:
 		userInput = cv2.waitKey(0)
 		if userInput == ord('y'):
 			print('Ready to accept points.')
-			print("Once you are done, press 'y' to accept, 'n' to redo.")
+			print("Once you are done, enter target number with 2 digits [04], 'n' to redo.")
 
 
 
 			#get the coordinates of the ROI from the user
-			pointsX, pointsY = selectROI(currentIm_tag, displayImage)
+			pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage)
 
 			#ask user for input of the current target
-			currentTargetNumber = assignTargetNumber()
+			#currentTargetNumber = assignTargetNumber()
 
 			#compute the statistics that will be written out, from the ROI coords
 			maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentGeotiff, currentFilename, pointsX, pointsY)

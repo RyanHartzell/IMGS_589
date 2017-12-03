@@ -10,18 +10,45 @@ import sys
 sys.path.append("..")
 import geoTIFF
 import csv
+import argparse
 import getpass
 userName = getpass.getuser()
+
+
+
+
 
 ## USER INPUTS
 geotiffFolderName = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/'
 tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171102/GroundDocumentation/datasheets/Flight_Notes.tsv'
-txtDestination = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/Flight1445_' + userName + '.csv'
+#txtDestination = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/Flight1445_' + userName + '.csv'
 stepNumber = 2 #do every other image, or every image, ...
 
 startFrameNumber = 0 #can equal int or filename as string
 startFrameNumber = 'IMG_0000.tiff'
 ##
+
+
+parser = argparse.ArgumentParser(description='Collect user inputs for ROI extraction process')
+parser.add_argument('-g', '--geotiffFolderName', type=str, help='The directory with geotiffs in it')
+parser.add_argument('-t', '--tsvFilename', type=str, help='The filename with the .tsv')
+parser.add_argument('-s', '--stepNumber', type=int, help='How many images you want to skip')
+parser.add_argument('-f', '--startFrameNumber', help='Image to start at, can be string or index (int)')
+
+args = parser.parse_args()
+geotiffFolderName = args.geotiffFolderName
+tsvFilename = args.tsvFilename
+stepNumber = args.stepNumber
+startFrameNumber = args.startFrameNumber
+
+flightNumber = os.path.basename(os.path.abspath(os.path.join(geotiffFolderName, '../..')))
+flightDate = os.path.basename(os.path.abspath(os.path.join(geotiffFolderName, '../../../..')))
+flightInfo = 'Flight_' + flightDate + 'T' + flightNumber + '_'
+print(flightInfo)
+txtDestination = os.path.abspath(os.path.join(geotiffFolderName, os.pardir)) + os.path.sep + flightInfo + userName + '.csv'
+
+
+
 
 
 # Get all filenames within this flight directory

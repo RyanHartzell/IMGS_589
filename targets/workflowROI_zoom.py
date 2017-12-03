@@ -112,7 +112,7 @@ else:
 with open(txtDestination, writeMode) as currentTextFile:
 	writer = csv.writer(currentTextFile, delimiter = ',')
 	if writeMode == 'w':
-		writer.writerow(['Target Number', 'Frame Number(s) [geoTiff]', 'ELM/Profile', 'Pixel Resolution', 'Flight Altitude', 'Mean B', 'Mean G', 'Mean R', 'Mean RE', 'Mean IR', 'Std B', 'Std G', 'Std R', 'Std RE', 'Std IR', 'Centroid Coord X', 'Centroid Coord Y', 'Nadir Angle'])
+		writer.writerow(['Target Number', 'Frame Number(s) [geoTiff]', 'ELM/Profile', 'Pixel Resolution', 'Flight Altitude', 'Mean B', 'Mean G', 'Mean R', 'Mean RE', 'Mean IR', 'Std B', 'Std G', 'Std R', 'Std RE', 'Std IR', 'Irradiance B', 'Irradiance G', 'Irradiance R','Irradiance RE', 'Irradiance IR', 'Centroid Coord X', 'Centroid Coord Y', 'Nadir Angle'])
 
 	##START MAIN LOOP
 	currentImIndex = startFrameNumber
@@ -166,7 +166,7 @@ with open(txtDestination, writeMode) as currentTextFile:
 			irradianceDict, frametime, altitude, resolution= micasenseRawData(currentFilename)
 			filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
 			#writer.writerow([currentTargetNumber, fileNames[currentImIndex], '', 'Pixel Resolution', 'Flight Altitude', str(mean[0]), str(mean[1]), str(mean[2]), str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]), str(stdev[3]), str(stdev[4]), str(centroid), 'Nadir Angle'])
-			writer.writerow([currentTargetNumber, fileNames[currentImIndex], '', resolution, altitude, str(mean[0]), str(mean[1]), str(mean[2]), str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]), str(stdev[3]), str(stdev[4]), str(centroid[0]), str(centroid[1]), ''])
+			writer.writerow([currentTargetNumber, fileNames[currentImIndex], '', resolution, altitude, str(mean[0]), str(mean[1]), str(mean[2]), str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]), str(stdev[3]), str(stdev[4]), str(irradianceDict[1]), str(irradianceDict[2]), str(irradianceDict[3]), str(irradianceDict[4]), str(irradianceDict[5]),str(centroid[0]), str(centroid[1]), ''])
 
 			print('Line has been written to file.')
 

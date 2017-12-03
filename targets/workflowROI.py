@@ -125,7 +125,9 @@ with open(txtDestination, writeMode) as currentTextFile:
 
 		currentFilename = geotiffFolderName + fileNames[currentImIndex]
 		currentGeotiff, displayImage = getDisplayImage(currentFilename)
+		##RESIZE DISPLAY
 		im = cv2.imshow(currentIm_tag, displayImage)
+		#im = cv2.imshow(currentIm_tag, cv2.resize(displayImage, None, fx=2, fy=2, interpolation=cv2.INTER_AREA))
 
 		print("Do you want to get ROIs in this frame? 'y' for yes, 'a' for back, 'd' for forward.")
 		print(fileNames[currentImIndex], 'Index = ', currentImIndex)
@@ -137,7 +139,22 @@ with open(txtDestination, writeMode) as currentTextFile:
 
 
 			#get the coordinates of the ROI from the user
+			##RESIZE DISPLAY
 			pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage)
+			#pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, cv2.resize(displayImage, None, fx=2, fy=2, interpolation=cv2.INTER_AREA))
+
+			##RESIZE DISPLAY
+			# pointsX_resize = []
+			# pointsY_resize = []
+			# for i in pointsX:
+			# 	newX = i//2
+			# 	pointsX_resize.append(newX)
+			# for i in pointsY:
+			# 	newY = i//2
+			# 	pointsY_resize.append(newY)
+			# pointsX = pointsX_resize
+			# pointsY = pointsY_resize
+			
 
 			#ask user for input of the current target
 			#currentTargetNumber = assignTargetNumber()

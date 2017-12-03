@@ -67,6 +67,9 @@ else:
 	processedDirectory = flightDirectory
 
 tiffList = sorted(glob.glob(processedDirectory + '/*.tif'))
+if len(tiffList)%5 != 0:
+	msg = "The number of tiffs is not divisible by 5"
+	raise ValueError(msg)
 #imageName = os.path.basename(tiffList[0])
 
 root.deiconify()
@@ -79,7 +82,8 @@ progressbar = ttk.Progressbar(root, variable=progress_variable,
 progressbar.pack()
 root.title("Conversion Progress")
 
-with open(os.path.split(flightDirectory)[0]+ "/GPSLog.csv",'w') as resultFile:
+#print(os.path.split(os.path.split(processedDirectory)[0])[0])
+with open(os.path.split(os.path.split(processedDirectory)[0])[0]+ "/GPSLog.csv",'w') as resultFile:
 	wr = csv.writer(resultFile)
 
 	for images in range(0,len(tiffList),5):

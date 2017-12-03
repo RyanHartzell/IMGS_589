@@ -58,22 +58,22 @@ def computeMatches(im1, im2, feature="orb"):
 		#cv2.waitKey(0)
 
 		dist = []
-		matches = []
-		m1, m2 =[], []
+		#matches = []
+		#m1, m2 =[], []
 		if (des1 is not None) and (des2 is not None):
 			#Makes sure the descriptors are not empty or none
 			#matcher = cv2.DescriptorMatcher_create("BruteForce-Hamming")
 			matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
-			#matches = matcher.match(des1, des2)
+			matches = matcher.match(des1, des2)
 			#print(matches)
-			matches = matcher.knnMatch(des1, des2, k=2)
-			for i in range(len(matches)):
+			#matches = matcher.knnMatch(des1, des2, k=2)
+			#for i in range(len(matches)):
 				#print(matches[i])
-				m1.append(matches[i][0])
-				m2.append(matches[i][1])
+			#	m1.append(matches[i][0])
+			#	m2.append(matches[i][1])
 
 			#matches = sorted(matches, key = lambda x:x.distance)
-			matches = sorted(m1, key = lambda x:x.distance)
+			matches = sorted(matches, key = lambda x:x.distance)
 
 			#matchIm = cv2.drawMatches((im1/256).astype(np.uint8),kp1,
 			#	(im2/256).astype(np.uint8),kp2,matches, None, flags=2)

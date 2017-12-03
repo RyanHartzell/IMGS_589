@@ -66,6 +66,7 @@ def selectROI(mapName, im):
 			im = cv2.polylines(im.copy(), [points], True, (255,0,0))
 			cv2.imshow(mapName, im)
 
+
 		response = cv2.waitKey(100)
 		if response == ord('n'):
 			p.clearPoints()
@@ -101,9 +102,21 @@ def selectZoomWindow(mapName, zoomName):
 	pass
 
 def assignTargetNumber():
+	import cv2
 	#no input required
-	currentTargetNumber = input("Enter Target Number. Then press 'enter'.\n")
-	return currentTargetNumber
+	print("Enter Target Number with 2 digits [04]:")
+	firstDigit = cv2.waitKey(0)
+	print(chr(firstDigit))
+
+	secondDigit = cv2.waitKey(0)
+	print((chr(firstDigit)) + chr(secondDigit))
+	#convert from ASCII int
+	
+	targetNumber = ((chr(firstDigit)) + (chr(secondDigit)))
+	if (chr(firstDigit)) == '0':
+		targetNumber = (chr(secondDigit))
+
+	return targetNumber
 
 
 
@@ -140,8 +153,8 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	#calculate centroid
 	orignalImage = gdal.Open(geotiffFilename).ReadAsArray()
 	orignalImage = np.moveaxis(orignalImage, 0, -1)
-	print(pointsX, orignalImage.shape[1], currentCroppedIm.shape[1])
-	print(pointsY, orignalImage.shape[0], currentCroppedIm.shape[0])
+	#print(pointsX, orignalImage.shape[1], currentCroppedIm.shape[1])
+	#print(pointsY, orignalImage.shape[0], currentCroppedIm.shape[0])
 	pointsX = np.array(pointsX)+orignalImage.shape[1]//2-currentCroppedIm.shape[1]//2
 	pointsY = np.array(pointsY)+orignalImage.shape[0]//2-currentCroppedIm.shape[0]//2
 	centroid = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
@@ -151,6 +164,7 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 def micasenseRawData(geotiffFilename):
 	from geoTIFF import metadataReader
 	import time
+	import numpy as np
 
 	irradianceDict = {}
 	#For each band we are going to record a value for irradiance
@@ -165,7 +179,9 @@ def micasenseRawData(geotiffFilename):
 	t = time.strptime(metadatadict['timeStamp'].split('T')[-1].split('.')[0],'%H:%M:%S')
 	frametime = (t.tm_hour - 5) * 60 + t.tm_min
 
-	return irradianceDict, frametime
+	altitude = metadatadict['Exif.GPSInfo.GPSAltitude']
+	resolution = metadatadict['Exif.Photo.FocalPlaneXResolution']
+	return irradianceDict, frametime, altitude, resolution
 
 def fieldData(tsvFilename):
 	import numpy as np
@@ -233,15 +249,15 @@ def targetNumtoStr(targetnumber):
 	return targetstring
 
 
-def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
-	targetstring = targetNumtoStr(targetnumber)
-	possibleSVC = np.where(targetdescriptor == targetstring)[0]
-	test = np.abs(times[possibleSVC]-frametime)
-	tset = test[::-1]
-	bestindex = len(tset) - np.argmin(tset) - 1
-	filenumberindex = possibleSVC[bestindex]
-	filenumber = filenumbers[filenumberindex]
-	return filenumber
+# def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
+# 	targetstring = targetNumtoStr(targetnumber)
+# 	possibleSVC = np.where(targetdescriptor == targetstring)[0]
+# 	test = np.abs(times[possibleSVC]-frametime)
+# 	tset = test[::-1]
+# 	bestindex = len(tset) - np.argmin(tset) - 1
+# 	filenumberindex = possibleSVC[bestindex]
+# 	filenumber = filenumbers[filenumberindex]
+# 	return filenumber
 
 	return irradianceDict, frametime
 
@@ -269,13 +285,17 @@ def fieldData(tsvFilename):
 	return times, filenumbers, targetdescriptor
 
 def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
+	import numpy as np
 	targetstring = targetNumtoStr(targetnumber)
 	possibleSVC = np.where(targetdescriptor == targetstring)[0]
 	test = np.abs(times[possibleSVC]-frametime)
 	tset = test[::-1]
-	bestindex = len(tset) - np.argmin(tset) - 1
-	filenumberindex = possibleSVC[bestindex]
-	filenumber = filenumbers[filenumberindex]
+	filenumber = None
+	if len(tset) != 0:
+		bestindex = len(tset) - np.argmin(tset) - 1
+		filenumberindex = possibleSVC[bestindex]
+		filenumber = filenumbers[filenumberindex]
+
 	return filenumber
 
 #PYTHON TEST HARNESS
@@ -324,7 +344,7 @@ if __name__ == '__main__':
 	tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171109/GroundDocumentation/datasheets/Flight_Notes.tsv'
 	times,targets,targetdescriptor = fieldData(tsvFilename)
 
-	irradianceDict, frametime = micasenseRawData(geotiffFilename)
+	irradianceDict, frametime, altitude, resolution = micasenseRawData(geotiffFilename)
 	print(irradianceDict[1],irradianceDict[2],irradianceDict[3],irradianceDict[4],irradianceDict[5])
 	filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
 	print(filenumber)

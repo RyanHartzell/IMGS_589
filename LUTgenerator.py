@@ -73,7 +73,7 @@ def findReflectance(SVCtargetSR,cameraresponseSR,bandname):
 
 #def findLuts(dictionary, image)#, DNfinder = 'auto'):
 #def findLUTS(missionDatafilename,SVCdirectory,cameraresponseSR,bandname):
-def findLUTS(missionDatafilename,processsedimagedirectory,cameraresponseSR):
+def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
     missionData = np.loadtxt(missionDatafilename,unpack = True, skiprows = 1,dtype = str, delimiter = ',')
     frames = list(np.unique(missionData[1]))
     LUTdict = {}
@@ -162,7 +162,7 @@ def findLUTS(missionDatafilename,processsedimagedirectory,cameraresponseSR):
                     #print('slope',slope)       
                     intercept = whiteReflect[band] - slope * whiteDN[band]
                     #print('intercept',intercept)
-                    imagemetadatafile = processsedimagedirectory + name[:8] + '_' + str(band+1) + '.tif'
+                    imagemetadatafile = processedimagedirectory + name[:8] + '_' + str(band+1) + '.tif'
                     #print(imagemetadatafile)
                     metadatadict = metadataReader.metadataGrabber(imagemetadatafile)
                     irradiance = metadatadict['Xmp.Camera.Irradiance']
@@ -180,7 +180,35 @@ def findLUTS(missionDatafilename,processsedimagedirectory,cameraresponseSR):
 
             #svcdict[key] = reflectance        
 
-def applyLuts(dictionary, image):
+def applyLuts(LUTdict, processedimagedirectory, geoTiff):
+    print(geoTiff[-13:-5])
+    imageStack = gdal.Open(geoTiff).ReadAsArray()
+    imageStack = np.moveaxis(imageStack, 0 ,-1)
+    reflectanceImage = np.zeros(np.shape(imageStack))
+    for band in np.arange(1,6):
+        rawimage = processedimagedirectory + geoTiff[-13:-5] + '_{}'.format(band) + '.tif'
+        #print(rawimage)
+        metadatadict = metadataReader.metadataGrabber(rawimage)
+        irradiance = metadatadict['Xmp.Camera.Irradiance']
+        #print(irradiance)
+        refIrradiance = []
+        for key, value in LUTdict.items() :
+            if key[0] == band-1:
+                refIrradiance.append(key[1])
+        refIrradiance = np.asarray(refIrradiance)
+        comparison = np.abs(refIrradiance-irradiance)
+        #print(comparison)
+        #print(np.argmin(comparison))
+        closestIrradiance = refIrradiance[np.argmin(comparison)]
+        #print(closestIrradiance)
+        dictionaryreadkey = (band-1,closestIrradiance)
+        slope = LUTdict[dictionaryreadkey][0][0]
+        intercept = LUTdict[dictionaryreadkey][1][0]
+        reflectanceImage[:,:,band-1] = imageStack[:,:,band-1] * slope + intercept
+        #print(np.argmin(comparison))
+        print(np.max(reflectanceImage[:,:,band-1]))
+    return reflectanceImage    
+    '''
     #Generate array of dictionary key irradiances
     irradianceKeys = np.asarray(list(dictionary.keys()))
     #find irradiance
@@ -195,6 +223,7 @@ def applyLuts(dictionary, image):
     #saveout image
     
     #return image
+    '''
 if __name__ == '__main__':
 
     import cv2
@@ -206,13 +235,47 @@ if __name__ == '__main__':
     from osgeo import gdal
 
     import sys
+    starttime = time.time()
     sys.path.append("..")
 
     SVCdirectory = '/cis/otherstu/gvs6104/DIRS/20171109/SVC/'
-    processsedimagedirectory = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/processed/'
+    processedimagedirectory = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/processed/'
     missionDatafilename = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/Flight_20171109T1345_375ft_kxk8298.csv'
     cameraresponseSR = '/cis/otherstu/gvs6104/DIRS/MonochrometerTiffs/Spectral_Response.csv'
-    LUTdict = findLUTS(missionDatafilename,processsedimagedirectory,cameraresponseSR)
+    LUTdict = findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR)
+    print(LUTdict)
+    print(time.time() - starttime)
+    sampleimage = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0160.tiff'
+    reflectanceImage = applyLuts(LUTdict, processedimagedirectory, sampleimage)
+    
+    reflectanceDir = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
+    imagename = 'ref' + sampleimage[-13:]
+    print(imagename)
+    if not os.path.exists(reflectanceDir):
+        os.makedirs(reflectanceDir)
+    height, width, channels = reflectanceImage.shape
+    driver = gdal.GetDriverByName( 'GTiff' )
+    if reflectanceImage.dtype == 'uint8':
+        GDT = gdal.GDT_Byte
+    elif reflectanceImage.dtype == 'uint16':
+        GDT = gdal.GDT_UInt16
+    elif reflectanceImage.dtype == 'float32':
+        GDT = gdal.GDT_Float32
+    elif reflectanceImage.dtype == 'float64':
+        GDT = gdal.GDT_Float64
+    ds = driver.Create (reflectanceDir + imagename, width, height, channels, GDT)
+    pWidth, pHeight = 1.0, 1.0
+    X, Y = 0.0, 0.0
+    geoTransform = ([X,pWidth,0,Y,0,pHeight])
+    ds.SetGeoTransform(geoTransform)
+    wktProjection = ''
+    #srs = osr.SpatialReference(wkt = "")
+    ds.SetProjection(wktProjection)
+    for band in range(1, reflectanceImage.shape[2]+1):
+        ds.GetRasterBand(band).WriteArray(reflectanceImage[:,:,band-1])
+    ds.FlushCache()
+    ds = None
+    print(time.time() - starttime)
 
     
     #print(missionDataarray)

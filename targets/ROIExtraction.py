@@ -162,7 +162,7 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 
 	#Create poly mask
 	mask = np.zeros((currentCroppedIm.shape[0], currentCroppedIm.shape[1]))
-	polyMaskCoords = np.asarray(list(zip(pointsX, pointsY)))
+	polyMaskCoords = np.asarray(list(zip(pointsX, pointsY)),dtype=np.int32)
 	cv2.fillConvexPoly(mask, polyMaskCoords, 1.0)
 
 	#apply the single channel mask to each of the five bands in 'currentCroppedIm'

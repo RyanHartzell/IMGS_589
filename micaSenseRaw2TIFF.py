@@ -68,7 +68,7 @@ else:
 
 tiffList = sorted(glob.glob(processedDirectory + '/*.tif'))
 if len(tiffList)%5 != 0:
-	msg = "The number of tiffs is not divisible by 5"
+	msg = "The number of tiffs in the {0} directory is not divisible by 5".format(processedDirectory)
 	raise ValueError(msg)
 #imageName = os.path.basename(tiffList[0])
 

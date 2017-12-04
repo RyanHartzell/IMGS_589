@@ -48,7 +48,7 @@ geotiffFolderName = args.geotiffFolderName
 tsvFilename = args.tsvFilename
 stepNumber = args.stepNumber
 startFrameNumber = args.startFrameNumber
-scaleFactor = float(args.scaleFactor)
+scaleFactor = args.scaleFactor
 
 if geotiffFolderName is None:
 	geotiffFolderName = filedialog.askdirectory(initialdir = "/cis/otherstu/gvs6104/DIRS/",
@@ -91,7 +91,7 @@ try:
 	startFrameNumber= int(startFrameNumber)
 except Exception as e:
 	pass
-	
+
 if type(startFrameNumber) == str:
 	try:
 		startFrameNumber = int(imageNameDict[startFrameNumber])

@@ -33,7 +33,8 @@ def getDisplayImage(geotiffFilename):
 
 
 	#displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
-	displayImage = imageStack_crop[:,:,0:3].astype(np.uint8) #RGB
+	displayImage = imageStack_crop[:,:,0:3] #RGB
+	displayImage = ((displayImage/np.max(displayImage))*255).astype(np.uint8)
 	return imageStack_crop, displayImage
 
 
@@ -62,7 +63,7 @@ def selectROI(mapName, im):
 
 		if p.number() == 4:
 			im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
-			points = np.asarray(list(zip(p.x(), p.y())), np.int32)
+			points = np.asarray(list(zip(INTER_AREAp.x(), p.y())), np.int32)
 			points = points.reshape((-1,1,2))
 			im = cv2.polylines(im.copy(), [points], True, (255,0,0))
 			cv2.imshow(mapName, im)

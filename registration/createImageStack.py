@@ -58,7 +58,7 @@ def computeMatches(im1, im2, feature="orb"):
 		#cv2.waitKey(0)
 
 		dist = []
-		#matches = []
+		matches, goodMatches = [], []
 		#m1, m2 =[], []
 		if (des1 is not None) and (des2 is not None):
 			#Makes sure the descriptors are not empty or none
@@ -86,7 +86,6 @@ def computeMatches(im1, im2, feature="orb"):
 			#Calculates the distance between matches
 			dist = [m.distance for m in matches]
 
-		goodMatches = []
 		if len(dist) != 0:
 			#Finds the threshold distance between matches
 			thres_dist = (np.sum(dist)/len(dist))*.7

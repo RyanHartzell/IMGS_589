@@ -154,10 +154,10 @@ with open(txtDestination, writeMode) as currentTextFile:
 			pointsX_resize = []
 			pointsY_resize = []
 			for i in pointsX:
-				newX = i//scaleFactor
+				newX = i/scaleFactor
 				pointsX_resize.append(newX)
 			for i in pointsY:
-				newY = i//scaleFactor
+				newY = i/scaleFactor
 				pointsY_resize.append(newY)
 			pointsX = pointsX_resize
 			pointsY = pointsY_resize

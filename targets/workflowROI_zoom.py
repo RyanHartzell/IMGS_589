@@ -9,6 +9,7 @@ from ROIExtraction import *
 import sys
 sys.path.append("..")
 import geoTIFF
+import glob
 import csv
 import argparse
 import getpass
@@ -89,7 +90,12 @@ flightInfo = 'Flight_' + flightDate + 'T' + flightNumber + '_'
 txtDestination = os.path.abspath(os.path.join(geotiffFolderName, os.pardir)) + os.path.sep + flightInfo + userName + '.csv'
 
 # Get all filenames within this fliinterght directory
-fileNames = sorted(os.listdir(geotiffFolderName))
+#fileNames = sorted(os.listdir(geotiffFolderName)) #Does not handle files that arn't *.tiff
+listofFiles = sorted(glob.glob(geotiffFolderName + "*.tiff"))
+fileNames = []
+for name in listofFiles:
+	fileNames.append(os.path.basename(name))
+
 imageCount = len(fileNames)
 imageNameDict = dict(enumerate(fileNames))
 imageNameDict = {v:k for k,v in imageNameDict.items()}
@@ -137,18 +143,13 @@ with open(txtDestination, writeMode) as currentTextFile:
 			break
 
 		currentFilename = geotiffFolderName + fileNames[currentImIndex]
-		currentGeotiff, displayImage = getDisplayImage(currentFilename, angle)
+		currentGeotiff, displayImage = getDisplayImage(currentFilename, angle, scaleFactor)
 		##RESIZE DISPLAY
-		#im = cv2.imshow(currentIm_tag, displayImage)
-		if displayImage.shape[1] > screenWidth or displayImage.shape[0] > screenHeight:
-			#print(displayImage.shape[1], displayImage.shape[0])
-			scaleFactor = []
-			scaleFactor.append(screenWidth/displayImage.shape[1])
-			scaleFactor.append(screenHeight/displayImage.shape[0])
-			scaleFactor = max(scaleFactor)
+		im = cv2.imshow(currentIm_tag, displayImage)
 
-		im = cv2.imshow(currentIm_tag, cv2.resize(displayImage, None,
-				fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4))
+
+		#im = cv2.imshow(currentIm_tag, cv2.resize(displayImage, None,
+		#		fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4))
 
 		print("Do you want to get ROIs in this frame? 'w' for yes, 'a' for back, 'd' for forward.")
 		print(fileNames[currentImIndex], 'Index = ', currentImIndex,'/', imageCount)
@@ -159,10 +160,10 @@ with open(txtDestination, writeMode) as currentTextFile:
 
 			#get the coordinates of the ROI from the user
 			##RESIZE DISPLAY
-			#pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage)
-			pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag,
-					cv2.resize(displayImage, None, fx=scaleFactor, fy=scaleFactor,
-					interpolation=cv2.INTER_LANCZOS4))
+			pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage)
+			#pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag,
+			#		cv2.resize(displayImage, None, fx=scaleFactor, fy=scaleFactor,
+			#		interpolation=cv2.INTER_LANCZOS4))
 
 			#RESIZE DISPLAY
 			pointsX_resize = []
@@ -192,6 +193,12 @@ with open(txtDestination, writeMode) as currentTextFile:
 			currentImIndex += stepNumber
 		elif userInput == ord('a'):
 			currentImIndex += -stepNumber
+		elif userInput == ord('r'):
+			newScaleFactor = input("What is the new scale factor?")
+			try:
+				scaleFactor = float(newScaleFactor)
+			except:
+				pass
 		elif userInput == 27:
 			break
 		else:

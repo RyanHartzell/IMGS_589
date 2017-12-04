@@ -1,8 +1,14 @@
 
-def getDisplayImage(geotiffFilename, angle=10):
+def getDisplayImage(geotiffFilename, angle=10, scaleFactor=2):
 	import numpy as np
 	import cv2
 	from osgeo import gdal
+	import tkinter
+	root = tkinter.Tk()
+	root.withdraw()
+	root.update()
+	screenWidth = root.winfo_screenwidth()
+	screenHeight = root.winfo_screenheight()
 
 	#Get GEOTIFF
 	imageStack = gdal.Open(geotiffFilename).ReadAsArray()
@@ -27,19 +33,24 @@ def getDisplayImage(geotiffFilename, angle=10):
 		imageStack_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
 	else:
 		imageStack_crop = imageStack
-
-	#band1 = imageStack_crop[:,:,0]
-	#band2 = imageStack_crop[:,:,1]
-	#band3 = imageStack_crop[:,:,2]
-	#band4 = imageStack_crop[:,:,3]
-	#band5 = imageStack_crop[:,:,4]
-
-
+		
 	#displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
 	displayImage = imageStack_crop[:,:,0:3] #RGB
-	displayImage = ((displayImage/np.max(displayImage))*255).astype(np.uint8)
-	return imageStack_crop, displayImage
+	displayImage = cv2.resize(displayImage, None,
+			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
 
+	if displayImage.shape[1] > screenWidth:
+		scaleFactor = (screenWidth/displayImage.shape[1])*.9
+		displayImage = cv2.resize(displayImage, None,
+			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
+	if displayImage.shape[0] > screenHeight:
+		scaleFactor = (screenHeight/displayImage.shape[0])*.9
+		displayImage = cv2.resize(displayImage, None,
+			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
+
+	#displayImage = ((displayImage/np.max(displayImage))*255).astype(np.uint8)
+	displayImage = displayImage/np.max(displayImage)
+	return imageStack_crop, displayImage
 
 def selectROI(mapName, im):
 	#mapName, (str)

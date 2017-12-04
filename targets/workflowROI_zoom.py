@@ -17,6 +17,9 @@ from tkinter import filedialog, ttk
 root = tkinter.Tk()
 root.withdraw()
 root.update()
+screenWidth = root.winfo_screenwidth()
+screenHeight = root.winfo_screenheight()
+#print(screenWidth, screenHeight)
 userName = getpass.getuser()
 
 
@@ -41,6 +44,7 @@ parser.add_argument('-g', '--geotiffFolderName', type=str, help='The geotiff ima
 parser.add_argument('-t', '--tsvFilename', type=str, help='The filename with the .tsv')
 parser.add_argument('-s', '--stepNumber', type=int, help='How many images you want to skip')
 parser.add_argument('-r', '--scaleFactor', type=float, help='How much would you like to resize the images by for viewing default: 2')
+parser.add_argument('-a', '--angle', type=float, help='The angle away from nadir to crop the images to')
 parser.add_argument('-f', '--startFrameNumber', help='Image to start at, can be string or index (int)')
 
 args = parser.parse_args()
@@ -49,6 +53,7 @@ tsvFilename = args.tsvFilename
 stepNumber = args.stepNumber
 startFrameNumber = args.startFrameNumber
 scaleFactor = args.scaleFactor
+angle = args.angle
 
 if geotiffFolderName is None:
 	geotiffFolderName = filedialog.askdirectory(initialdir = "/cis/otherstu/gvs6104/DIRS/",
@@ -68,6 +73,8 @@ if stepNumber is None:
 	stepNumber = int(input('Type number for how many images you want to skip \n'))
 if scaleFactor is None:
 	scaleFactor = 2
+if angle is None:
+	angle = 10
 
 if startFrameNumber is None:
 	startFrameNumber = input('Type number (index) or filename (string) for which image to start at \n')
@@ -130,9 +137,16 @@ with open(txtDestination, writeMode) as currentTextFile:
 			break
 
 		currentFilename = geotiffFolderName + fileNames[currentImIndex]
-		currentGeotiff, displayImage = getDisplayImage(currentFilename)
+		currentGeotiff, displayImage = getDisplayImage(currentFilename, angle)
 		##RESIZE DISPLAY
 		#im = cv2.imshow(currentIm_tag, displayImage)
+		if displayImage.shape[1] > screenWidth or displayImage.shape[0] > screenHeight:
+			#print(displayImage.shape[1], displayImage.shape[0])
+			scaleFactor = []
+			scaleFactor.append(screenWidth/displayImage.shape[1])
+			scaleFactor.append(screenHeight/displayImage.shape[0])
+			scaleFactor = max(scaleFactor)
+
 		im = cv2.imshow(currentIm_tag, cv2.resize(displayImage, None,
 				fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4))
 

@@ -1,5 +1,5 @@
 
-def getDisplayImage(geotiffFilename):
+def getDisplayImage(geotiffFilename, angle=10):
 	import numpy as np
 	import cv2
 	from osgeo import gdal
@@ -13,17 +13,20 @@ def getDisplayImage(geotiffFilename):
 	#crop
 	#width = imageStack.shape[1]
 	#radius = width // 4
-	focalLen, focalRes, angle = 5.5, 266.66667, 10
-	radius = int(focalLen*focalRes*np.tan(np.deg2rad(angle/2)))
-	imageCenter = (imageStack.shape[0]//2, imageStack.shape[1]//2)
-
-	circleMask = np.full(imageStack.shape[0:2], 0,  dtype=imageStack.dtype)
-	cv2.circle(circleMask, (imageCenter[1],imageCenter[0]), int(radius), (1,1,1), -1)
-	circleMask = np.repeat(circleMask[:,:,np.newaxis], imageStack.shape[2])
-	circleMask = circleMask.reshape(imageStack.shape)
-	imageStackMasked = imageStack*circleMask
-
-	imageStack_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
+	focalLen, focalRes, angle = 5.5, 266.66667, angle
+	radius = -1
+	if angle > 0:
+		radius = int(focalLen*focalRes*np.tan(np.deg2rad(np.abs(angle)/2)))
+	if 0 < radius < imageStack.shape[0]//2 or 0 < radius < imageStack.shape[1]//2:
+		imageCenter = (imageStack.shape[0]//2, imageStack.shape[1]//2)
+		circleMask = np.full(imageStack.shape[0:2], 0,  dtype=imageStack.dtype)
+		cv2.circle(circleMask, (imageCenter[1],imageCenter[0]), int(radius), (1,1,1), -1)
+		circleMask = np.repeat(circleMask[:,:,np.newaxis], imageStack.shape[2])
+		circleMask = circleMask.reshape(imageStack.shape)
+		imageStackMasked = imageStack*circleMask
+		imageStack_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
+	else:
+		imageStack_crop = imageStack
 
 	#band1 = imageStack_crop[:,:,0]
 	#band2 = imageStack_crop[:,:,1]
@@ -335,9 +338,9 @@ if __name__ == '__main__':
 
 	#geotiffFilename = '/cis/otherstu/gvs6104/DIRS/20171108/Missions/1300_225ft/micasense/geoTiff/IMG_0188.tiff'
 
-
+	angle=10
 	#get the geotiff image (5 band) and color (3 band)
-	geoTiffImage, displayImage = getDisplayImage(geotiffFilename)
+	geoTiffImage, displayImage = getDisplayImage(geotiffFilename, angle)
 	#print(geoTiffImage.dtype)
 	#print(np.max(geoTiffImage))
 

@@ -40,6 +40,7 @@ parser = argparse.ArgumentParser(description='Collect user inputs for ROI extrac
 parser.add_argument('-g', '--geotiffFolderName', type=str, help='The geotiff image directory')
 parser.add_argument('-t', '--tsvFilename', type=str, help='The filename with the .tsv')
 parser.add_argument('-s', '--stepNumber', type=int, help='How many images you want to skip')
+parser.add_argument('-r', '--scaleFactor', type=float, help='How much would you like to resize the images by for viewing default: 2')
 parser.add_argument('-f', '--startFrameNumber', help='Image to start at, can be string or index (int)')
 
 args = parser.parse_args()
@@ -47,9 +48,11 @@ geotiffFolderName = args.geotiffFolderName
 tsvFilename = args.tsvFilename
 stepNumber = args.stepNumber
 startFrameNumber = args.startFrameNumber
+scaleFactor = float(args.scaleFactor)
 
 if geotiffFolderName is None:
-	geotiffFolderName = filedialog.askdirectory(initialdir = "/cis/otherstu/gvs6104/DIRS/", title="Choose the geotiff image directory")
+	geotiffFolderName = filedialog.askdirectory(initialdir = "/cis/otherstu/gvs6104/DIRS/",
+											title="Choose the geotiff image directory")
 	if geotiffFolderName == "":
 		sys.exit()
 	else:
@@ -63,6 +66,9 @@ if tsvFilename is None:
 
 if stepNumber is None:
 	stepNumber = int(input('Type number for how many images you want to skip \n'))
+if scaleFactor is None:
+	scaleFactor = 2
+
 if startFrameNumber is None:
 	startFrameNumber = input('Type number (index) or filename (string) for which image to start at \n')
 	try:
@@ -70,22 +76,22 @@ if startFrameNumber is None:
 	except Exception:
 		pass
 
-
 flightNumber = os.path.basename(os.path.abspath(os.path.join(geotiffFolderName, '../..')))
 flightDate = os.path.basename(os.path.abspath(os.path.join(geotiffFolderName, '../../../..')))
 flightInfo = 'Flight_' + flightDate + 'T' + flightNumber + '_'
 txtDestination = os.path.abspath(os.path.join(geotiffFolderName, os.pardir)) + os.path.sep + flightInfo + userName + '.csv'
 
-
-
-
-
-# Get all filenames within this flight directory
+# Get all filenames within this fliinterght directory
 fileNames = sorted(os.listdir(geotiffFolderName))
 imageCount = len(fileNames)
 imageNameDict = dict(enumerate(fileNames))
 imageNameDict = {v:k for k,v in imageNameDict.items()}
 
+try:
+	startFrameNumber= int(startFrameNumber)
+except Exception as e:
+	pass
+	
 if type(startFrameNumber) == str:
 	try:
 		startFrameNumber = int(imageNameDict[startFrameNumber])
@@ -127,40 +133,38 @@ with open(txtDestination, writeMode) as currentTextFile:
 		currentGeotiff, displayImage = getDisplayImage(currentFilename)
 		##RESIZE DISPLAY
 		#im = cv2.imshow(currentIm_tag, displayImage)
-		im = cv2.imshow(currentIm_tag, cv2.resize(displayImage, None, fx=2, fy=2, interpolation=cv2.INTER_AREA))
+		im = cv2.imshow(currentIm_tag, cv2.resize(displayImage, None,
+				fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4))
 
-		print("Do you want to get ROIs in this frame? 'y' for yes, 'a' for back, 'd' for forward.")
-		print(fileNames[currentImIndex], 'Index = ', currentImIndex)
+		print("Do you want to get ROIs in this frame? 'w' for yes, 'a' for back, 'd' for forward.")
+		print(fileNames[currentImIndex], 'Index = ', currentImIndex,'/', imageCount)
 		userInput = cv2.waitKey(0)
-		if userInput == ord('y'):
+		if userInput == ord('w'):
 			print('Ready to accept points.')
 			print("Once you are done, enter target number with 2 digits [04], 'n' to redo.")
-
-
 
 			#get the coordinates of the ROI from the user
 			##RESIZE DISPLAY
 			#pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage)
-			pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, cv2.resize(displayImage, None, fx=2, fy=2, interpolation=cv2.INTER_AREA))
+			pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag,
+					cv2.resize(displayImage, None, fx=scaleFactor, fy=scaleFactor,
+					interpolation=cv2.INTER_LANCZOS4))
 
 			#RESIZE DISPLAY
 			pointsX_resize = []
 			pointsY_resize = []
 			for i in pointsX:
-				newX = i//2
+				newX = i//scaleFactor
 				pointsX_resize.append(newX)
 			for i in pointsY:
-				newY = i//2
+				newY = i//scaleFactor
 				pointsY_resize.append(newY)
 			pointsX = pointsX_resize
 			pointsY = pointsY_resize
-			
-
-			#ask user for input of the current target
-			#currentTargetNumber = assignTargetNumber()
 
 			#compute the statistics that will be written out, from the ROI coords
-			maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentGeotiff, currentFilename, pointsX, pointsY)
+			maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentGeotiff,
+												currentFilename, pointsX, pointsY)
 
 			#get metadata
 			irradianceDict, frametime, altitude, resolution= micasenseRawData(currentFilename)
@@ -169,12 +173,6 @@ with open(txtDestination, writeMode) as currentTextFile:
 			writer.writerow([currentTargetNumber, fileNames[currentImIndex], '', resolution, altitude, str(mean[0]), str(mean[1]), str(mean[2]), str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]), str(stdev[3]), str(stdev[4]), str(irradianceDict[1]), str(irradianceDict[2]), str(irradianceDict[3]), str(irradianceDict[4]), str(irradianceDict[5]),str(centroid[0]), str(centroid[1]), '', str(filenumber)])
 
 			print('Line has been written to file.')
-
-
-		#elif userInput == ord('n'):	
-			# print("Press 'a' for back, 'd' for forward.")	
-			# motionInput = cv2.waitKey(0)
-
 
 		elif userInput == ord('d'):
 			currentImIndex += stepNumber
@@ -193,4 +191,3 @@ with open(txtDestination, writeMode) as currentTextFile:
 	cv2.destroyWindow(currentIm_tag)
 	currentTextFile.close()
 	print('You can find the csv file at:' + txtDestination)
-

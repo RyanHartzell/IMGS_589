@@ -39,9 +39,11 @@ def createCorrelation(images):
 		#If the type of the input is an array then it adds the images
 		for i in range(images.shape[2]):
 			flatImageList.append(np.ravel(images[:,:,i]))
-
-	#Creates the correlation matrix of correlation coefficents
-	correlationMatrix = np.corrcoef(flatImageList)
+	try:
+		#Creates the correlation matrix of correlation coefficents
+		correlationMatrix = np.corrcoef(flatImageList)
+	except:
+		print("Could not create the correlation matrix for images:", images)
 	#Creates an absolute value of the correlation matrix to find the maximum
 	absoluteCorrelation = np.absolute(correlationMatrix)
 

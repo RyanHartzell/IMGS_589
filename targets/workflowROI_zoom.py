@@ -135,7 +135,8 @@ with open(txtDestination, writeMode) as currentTextFile:
 		'Pixel Resolution', 'Flight Altitude', 'Mean B', 'Mean G', 'Mean R', 'Mean RE',
 		 'Mean IR', 'Std B', 'Std G', 'Std R', 'Std RE', 'Std IR', 'Irradiance B',
 		 'Irradiance G', 'Irradiance R','Irradiance RE', 'Irradiance IR',
-		 'Centroid Coord X', 'Centroid Coord Y','Points X', 'Points Y', 'Nadir Angle','SVC filenumber'])
+		 'Centroid Coord X', 'Centroid Coord Y','Point X1','Point X2','Point X3','Point X4',
+		 'Point Y1','Point Y2','Point Y3', 'Points Y4', 'Nadir Angle','SVC filenumber'])
 
 	##START MAIN LOOP
 	currentImIndex = startFrameNumber
@@ -194,7 +195,9 @@ with open(txtDestination, writeMode) as currentTextFile:
 			str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]),
 			str(stdev[3]), str(stdev[4]), str(irradianceDict[1]), str(irradianceDict[2]),
 			str(irradianceDict[3]), str(irradianceDict[4]), str(irradianceDict[5]),
-			str(centroid[0]), str(centroid[1]), str(pointsX), str(pointsY), '', str(filenumber)])
+			str(centroid[0]), str(centroid[1]), str(pointsX[0]), str(pointsX[1]),
+			str(pointsX[2]), str(pointsX[3]), str(pointsY[0]), str(pointsY[1]),
+			str(pointsY[2]), str(pointsY[3]), '', str(filenumber)])
 
 			print('Line has been written to file.')
 

@@ -44,7 +44,7 @@ args = parser.parse_args()
 flightDirectory = args.input
 geoTiffDir = args.output
 
-if flightDirectory is None or geoTiffDir is None:
+if flightDirectory is None:
 	#IF MULTIPLE DIRECTORIES ARE SELECTED THEN PARALLEL PROCESS THEM
 	#flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
 	initialdir = os.getcwd()
@@ -53,13 +53,14 @@ if flightDirectory is None or geoTiffDir is None:
 				title="Choose the RAW MicaSense .tif directory")
 	if flightDirectory == '':
 		sys.exit()
+if geoTiffDir is None:
 	geoTiffDir = filedialog.askdirectory(initialdir=os.path.split(flightDirectory)[0],
 				title="Choose the directory to place the GeoTiffs")
-	print("Fixing the naming structure of the {0} directory".format(flightDirectory))
 startTime = time.time()
 #print(flightDirectory)
 subdirs = glob.glob(flightDirectory+'/*/')
 if len(subdirs) != 0 and any("geoTiff" not in s for s in subdirs):
+	print("Fixing the naming structure of the {0} directory".format(flightDirectory))
 	processedDirectory = fixNamingStructure(flightDirectory)
 	#msg = "No subdirectories were found in the specified directory."
 	#raise ValueError (msg)
@@ -81,7 +82,8 @@ progressbar = ttk.Progressbar(root, variable=progress_variable,
 											maximum=len(tiffList)//5)
 progressbar.pack()
 root.title("Conversion Progress")
-
+print("Registering RAW imagery and writing out as geotiff.")
+print(processedDirectory)
 #print(os.path.split(os.path.split(processedDirectory)[0])[0])
 with open(os.path.split(os.path.split(processedDirectory)[0])[0]+ "/GPSLog.csv",'w') as resultFile:
 	wr = csv.writer(resultFile)
@@ -111,6 +113,7 @@ with open(os.path.split(os.path.split(processedDirectory)[0])[0]+ "/GPSLog.csv",
 totalTime = time.time()-startTime
 print("This took {0}m {1:.2f}s for {2} images.".format(int(totalTime//60),
 										totalTime%60, len(tiffList)))
+print("You now have {0} geoTiffs.".format(len(glob.glob(geoTiffDir+"*.tiff"))))
 
 root.update()
 root.destroy()

@@ -190,6 +190,16 @@ with open(txtDestination, writeMode) as currentTextFile:
 			irradianceDict, frametime, altitude, resolution= micasenseRawData(currentFilename)
 			filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
 			#writer.writerow([currentTargetNumber, fileNames[currentImIndex], '', 'Pixel Resolution', 'Flight Altitude', str(mean[0]), str(mean[1]), str(mean[2]), str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]), str(stdev[3]), str(stdev[4]), str(centroid), 'Nadir Angle'])
+
+			#'Target Number', 'Frame Number(s) [geoTiff]', 
+			#'ELM/Profile', 'Pixel Resolution', 'Flight Altitude', 'Mean B', 'Mean G', 'Mean R',
+			#'Mean RE', 'Mean IR', 'Std B', 'Std G', 'Std R',
+			#'Std RE', 'Std IR', 'Irradiance B','Irradiance G',
+			#'Irradiance R','Irradiance RE', 'Irradiance IR',
+			#'Centroid Coord X', 'Centroid Coord Y','Point X1','Point X2',
+			#'Point X3','Point X4','Point Y1','Point Y2',
+			#'Point Y3', 'Points Y4', 'Nadir Angle','SVC filenumber'
+
 			writer.writerow([currentTargetNumber, fileNames[currentImIndex],
 			'', resolution, altitude, str(mean[0]), str(mean[1]), str(mean[2]),
 			str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]),

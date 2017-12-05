@@ -33,7 +33,7 @@ def getDisplayImage(geotiffFilename, angle=10, scaleFactor=2):
 		imageStack_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
 	else:
 		imageStack_crop = imageStack
-		
+
 	#displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
 	displayImage = imageStack_crop[:,:,0:3] #RGB
 	displayImage = cv2.resize(displayImage, None,
@@ -88,6 +88,11 @@ def selectROI(mapName, im):
 			p.clearPoints()
 			cv2.imshow(mapName, original)
 			print('Clearing selected points...')
+			print('Press n again [1/2 sec] to exit point selection')
+			confirm = cv2.waitKey(500)
+			if confirm == ord('n'):
+				pointsX, pointsY, targetNumber = None, None, None
+				break
 
 		# elif (response == ord('y')):
 		# 	if (p.number() == 4):
@@ -105,6 +110,7 @@ def selectROI(mapName, im):
 				if (chr(response)) == '0':
 					targetNumber = (chr(response_2))
 				print(targetNumber)
+				pointsX, pointsY = p.x(), p.y()
 
 				print('Running ROI calculations...')
 				break
@@ -122,7 +128,7 @@ def selectROI(mapName, im):
 	# cv2.imshow(mapName, im)
 	# cv2.waitKey(100)
 
-	return p.x(), p.y(), targetNumber
+	return pointsX, pointsY, targetNumber
 
 def selectZoomWindow(mapName, zoomName):
 	#mapName, (str)

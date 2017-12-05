@@ -86,93 +86,126 @@ gi.require_version('GExiv2', '0.10')
 from gi.repository import GExiv2
 import collections
 
-badSpecification = ["Exif.Image.BlackLevel","Exif.Image.BlackLevelRepeatDim","Exif.Image.Software","Exif.Image.StripByteCounts","Exif.Image.StripOffsets","Exif.Photo.ExifVersion",
-"Xmp.Camera.PerspectiveDistortion","Xmp.Camera.PrincipalPoint","Xmp.Camera.VignettingCenter","Xmp.Camera.VignettingPolynomial","Xmp.DLS.Serial","Xmp.DLS.SwVersion","Xmp.MicaSense.CaptureId",
+badSpecification = ["Exif.Image.BlackLevel","Exif.Image.BlackLevelRepeatDim",
+"Exif.Image.Software","Exif.Image.StripByteCounts","Exif.Image.StripOffsets","Exif.Photo.ExifVersion",
+"Xmp.Camera.PerspectiveDistortion","Xmp.Camera.PrincipalPoint","Xmp.Camera.VignettingCenter",
+"Xmp.Camera.VignettingPolynomial","Xmp.DLS.Serial","Xmp.DLS.SwVersion","Xmp.MicaSense.CaptureId",
 "Xmp.MicaSense.DarkRowValue","Xmp.MicaSense.FlightId","Xmp.MicaSense.RadiometricCalibration"]
 
-skipSpecification = ["Exif.Image.0xbb94","Exif.Image.0xbb95","Exif.Image.0xbb96","Exif.Image.NewSubfileType","Exif.Image.OpcodeList3","Exif.Image.XMLPacket",]
+skipSpecification = ["Exif.Image.0xbb94","Exif.Image.0xbb95","Exif.Image.0xbb96",
+    "Exif.Image.NewSubfileType","Exif.Image.OpcodeList3","Exif.Image.XMLPacket",]
 
-slashSplitSpecification = ["Exif.GPSInfo.GPSAltitude","Exif.GPSInfo.GPSDOP","Exif.GPSInfo.GPSLatitude",
-"Exif.GPSInfo.GPSLongitude","Exif.Photo.ExposureTime","Exif.Photo.FNumber","Exif.Photo.FocalLength","Exif.Photo.FocalPlaneXResolution",
+slashSplitSpecification = ["Exif.GPSInfo.GPSAltitude","Exif.GPSInfo.GPSDOP",
+"Exif.GPSInfo.GPSLatitude","Exif.GPSInfo.GPSLongitude","Exif.Photo.ExposureTime",
+"Exif.Photo.FNumber","Exif.Photo.FocalLength","Exif.Photo.FocalPlaneXResolution",
 "Exif.Photo.FocalPlaneYResolution",]
 
-floatSpecification = ["Exif.GPSInfo.GPSAltitudeRef","Exif.Image.BitsPerSample","Exif.Image.ExifTag","Exif.Image.GPSTag","Exif.Image.ImageLength","Exif.Image.ImageWidth","Exif.Image.Orientation",
-"Exif.Image.PhotometricInterpretation","Exif.Image.PlanarConfiguration","Exif.Image.RowsPerStrip","Exif.Image.SamplesPerPixel","Exif.Photo.BodySerialNumber","Exif.Photo.ExposureProgram",
-"Exif.Photo.FocalPlaneResolutionUnit","Exif.Photo.ISOSpeed","Exif.Photo.MeteringMode","Xmp.Camera.BandSensitivity","Xmp.Camera.CentralWavelength","Xmp.Camera.Irradiance","Xmp.Camera.IrradianceExposureTime",
-"Xmp.Camera.IrradianceGain","Xmp.Camera.IrradiancePitch","Xmp.Camera.IrradianceRoll","Xmp.Camera.IrradianceYaw","Xmp.Camera.PerspectiveFocalLength","Xmp.Camera.RigCameraIndex","Xmp.Camera.WavelengthFWHM",
-"Xmp.DLS.Bandwidth","Xmp.DLS.CenterWavelength","Xmp.DLS.Exposure","Xmp.DLS.Gain","Xmp.DLS.OffMeasurement","Xmp.DLS.Pitch","Xmp.DLS.RawMeasurement","Xmp.DLS.Roll","Xmp.DLS.SensorId","Xmp.DLS.SpectralIrradiance",
-"Xmp.DLS.Yaw","Xmp.MicaSense.BootTimestamp","Xmp.MicaSense.PressureAlt","Xmp.MicaSense.TriggerMethod"]
+floatSpecification = ["Exif.GPSInfo.GPSAltitudeRef","Exif.Image.BitsPerSample",
+"Exif.Image.ExifTag","Exif.Image.GPSTag","Exif.Image.ImageLength","Exif.Image.ImageWidth",
+"Exif.Image.Orientation","Exif.Image.PhotometricInterpretation",
+"Exif.Image.PlanarConfiguration","Exif.Image.RowsPerStrip","Exif.Image.SamplesPerPixel",
+"Exif.Photo.BodySerialNumber","Exif.Photo.ExposureProgram",
+"Exif.Photo.FocalPlaneResolutionUnit","Exif.Photo.ISOSpeed","Exif.Photo.MeteringMode",
+"Xmp.Camera.BandSensitivity","Xmp.Camera.CentralWavelength","Xmp.Camera.Irradiance",
+"Xmp.Camera.IrradianceExposureTime","Xmp.Camera.IrradianceGain","Xmp.Camera.IrradiancePitch",
+"Xmp.Camera.IrradianceRoll","Xmp.Camera.IrradianceYaw","Xmp.Camera.PerspectiveFocalLength",
+"Xmp.Camera.RigCameraIndex","Xmp.Camera.WavelengthFWHM","Xmp.DLS.Bandwidth",
+"Xmp.DLS.CenterWavelength","Xmp.DLS.Exposure","Xmp.DLS.Gain","Xmp.DLS.OffMeasurement",
+"Xmp.DLS.Pitch","Xmp.DLS.RawMeasurement","Xmp.DLS.Roll","Xmp.DLS.SensorId",
+"Xmp.DLS.SpectralIrradiance","Xmp.DLS.Yaw","Xmp.MicaSense.BootTimestamp",
+"Xmp.MicaSense.PressureAlt","Xmp.MicaSense.TriggerMethod"]
 
-dateTimeSpecification = ["Exif.Image.DateTime","Exif.Photo.DateTimeDigitized","Exif.Photo.DateTimeOriginal","Exif.Photo.SubSecTime","Xmp.DLS.TimeStamp"]
-def metadataGrabber(filename):
+dateTimeSpecification = ["Exif.Image.DateTime","Exif.Photo.DateTimeDigitized",
+"Exif.Photo.DateTimeOriginal","Exif.Photo.SubSecTime","Xmp.DLS.TimeStamp"]
+
+def metadataGrabber(filename, RAW=False):
     #sampleimage = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
 
     imagemetadata = GExiv2.Metadata(filename)
+    #print(imagemetadata, type(imagemetadata))
     #print(imagemetadata.sort())
     taglist = imagemetadata.get_tags()
     #print(taglist)
 
     indexlist = (0,3,5,11,14,17,18,19,20,27,33,34,35,36,37,38,39,41,42,43,45,46,47,48,49,50,51,52,53,54,56,69)
     metadatadict = {}
-
     for index in range(len(taglist)):
         specification = taglist[index]
         entry = imagemetadata.get(specification)
         #print(index, specification, entry)
+        if RAW is False:
 
-        #Single Fractions to Float Case
-        if index in ( 0,37,38,39,41,42):
-            split = entry.index('/')
-            entry = float(entry[:split])/float(entry[split+1:])
+            #Single Fractions to Float Case
+            if index in ( 0,37,38,39,41,42):
+                split = entry.index('/')
+                entry = float(entry[:split])/float(entry[split+1:])
 
-        #Three Fractions to Floats Case for GPS Coordinates
-        elif index in (3,5):
-            firstsplit = entry.index('/')
-            secondsplit = entry.index('/',firstsplit+1)
-            thirdsplit = entry.index('/',secondsplit+1)
-            firstspace = entry.index(' ')
-            secondspace = entry.index(' ',firstspace+1)
+            #Three Fractions to Floats Case for GPS Coordinates
+            elif index in (3,5):
+                firstsplit = entry.index('/')
+                secondsplit = entry.index('/',firstsplit+1)
+                thirdsplit = entry.index('/',secondsplit+1)
+                firstspace = entry.index(' ')
+                secondspace = entry.index(' ',firstspace+1)
 
-            divisor = float(entry[firstsplit+1:firstspace])
-            degrees = float(entry[:firstsplit])/divisor
-            minutes = float(entry[firstspace+1:secondsplit])/divisor
-            seconds = float(entry[secondspace+1:thirdsplit])/divisor
+                divisor = float(entry[firstsplit+1:firstspace])
+                degrees = float(entry[:firstsplit])/divisor
+                minutes = float(entry[firstspace+1:secondsplit])/divisor
+                seconds = float(entry[secondspace+1:thirdsplit])/divisor
 
-            entry = (degrees,minutes,seconds)
+                entry = (degrees,minutes,seconds)
 
-        #String to string case for names,date,time
-        elif index in (4,6,19,20,34,45,46,66,68,69,72,73,74):
-            #print(index, specification, entry)
-            pass
-        elif index in (2,7,8,9,10,12,13,14,22,28,29,30,31,33,35):
-            #These Suck
-            continue
-        elif specification == "Xmp.Camera.PerspectiveDistortion":
-            pass
-        elif specification == "Xmp.Camera.ModelType":
-            pass
-        elif specification == "Xmp.Camera.PrincipalPoint":
-            pass
-        elif specification == "Xmp.Camera.VignettingCenter":
-            pass
-        elif specification == "Xmp.Camera.VignettingPolynomial":
-            pass
-        elif specification == "Xmp.MicaSense.CaptureId":
-            pass
-        elif specification == "Xmp.MicaSense.DarkRowValue":
-            pass
-        elif specification == "Xmp.MicaSense.FlightId":
-            pass
-        elif specification == "Xmp.MicaSense.RadiometricCalibration":
-            pass
+            #String to string case for names,date,time
+            elif index in (4,6,14,19,20,34,45,46,66,68,69,72,73,74):
+                #print(index, specification, entry)
+                pass
+            elif index in (2,7,8,9,10,12,13,22,28,29,30,31,33,35):
+                #These Suck
+                #print(index, specification, entry)
+                continue
+            elif specification == "Xmp.Camera.PerspectiveDistortion":
+                pass
+            elif specification == "Xmp.Camera.ModelType":
+                pass
+            elif specification == "Xmp.Camera.PrincipalPoint":
+                pass
+            elif specification == "Xmp.Camera.VignettingCenter":
+                pass
+            elif specification == "Xmp.Camera.VignettingPolynomial":
+                pass
+            elif specification == "Xmp.MicaSense.CaptureId":
+                pass
+            elif specification == "Xmp.MicaSense.DarkRowValue":
+                pass
+            elif specification == "Xmp.MicaSense.FlightId":
+                pass
+            elif specification == "Xmp.MicaSense.RadiometricCalibration":
+                pass
 
-        #All other cases, no integers used for ease later
+            #All other cases, no integers used for ease later
+            else:
+                #print(index)
+                #print(entry)
+                #print(index, specification, entry)
+                #print(entry)
+                entry = float(entry)
         else:
-            #print(index)
-            #print(entry)
-            #print(index, specification, entry)
-            #print(entry)
-            entry = float(entry)
+            if specification in skipSpecification:
+                continue
+            if '/' in entry:
+                if specification == 'Exif.GPSInfo.GPSLatitude' or specification == 'Exif.GPSInfo.GPSLongitude':
+                    gps = entry.split()
+                    dms = 0
+                    for i in range(len(gps)):
+                        numerator, denominator = gps[i].split('/')
+                        value = float(numerator)/float(denominator)
+                        if i == 1 or i == 2:
+                            value /= 60
+                        dms += value
+                    entry = str(dms)
+                else:
+                    numerator, denominator = entry.split('/')
+                    entry = str(float(numerator)/float(denominator))
 
         metadatadict[specification] = entry
 
@@ -195,6 +228,7 @@ if __name__ == '__main__':
     print(metadatadict['timeStamp'], type(metadatadict['timeStamp']))
     print(metadatadict['timeStamp'][-8:])
     t = time.strptime(metadatadict['timeStamp'][-8:],'%H:%M:%S')
+
     minutes = (t.tm_hour - 5) * 60 + t.tm_min
 
     #print(metadatadict)
@@ -204,7 +238,7 @@ if __name__ == '__main__':
     #print(metadatadict['Exif.Photo.FocalPlaneResolutionUnit'])
     #print(metadatadict['Exif.Photo.FocalLength'])
 
-    #print(metadatadict['Exif.Photo.SubSecTime'])
+    #print(metadatadict['Exif.Photo.DateTimeOriginal'])
     #print(metadatadict['Exif.Image.DateTime'])
     #print(metadatadict['Exif.Image.BitsPerSample'])
     #print(metadatadict['Exif.Image.DateTime'])

@@ -13,8 +13,9 @@ copyright::
 """
 
 
-def writeGeoTIFF(image, fileName, geoTiffDir=None):
+def writeGeoTIFF(image, imageList, geoTiffDir=None):
 	from os.path import basename, dirname
+	from geoTIFF.metadataReader import metadataGrabber
 	from osgeo import gdal
 	from osgeo import osr
 	import os
@@ -27,7 +28,7 @@ def writeGeoTIFF(image, fileName, geoTiffDir=None):
 		#If the geoTiff directory does not exist it makes the directory
 		os.makedirs(geoTiffDir)
 
-	fileNumber = basename(fileName)[:-6]
+	fileNumber = basename(imageList[0])[:-6]
 	geoTiff = geoTiffDir + '/' + fileNumber + '.tiff'
 	height, width, channels = image.shape
 
@@ -42,7 +43,6 @@ def writeGeoTIFF(image, fileName, geoTiffDir=None):
 		GDT = gdal.GDT_Float64
 
 	ds = driver.Create( geoTiff, width, height, channels, GDT)
-
 	pWidth, pHeight = 1.0, 1.0
 	X, Y = 0.0, 0.0
 	geoTransform = ([X,pWidth,0,Y,0,pHeight])
@@ -51,7 +51,16 @@ def writeGeoTIFF(image, fileName, geoTiffDir=None):
 	#srs = osr.SpatialReference(wkt = "")
 	ds.SetProjection(wktProjection)
 	for band in range(1, image.shape[2]+1):
-		ds.GetRasterBand(band).WriteArray(image[:,:,band-1])
+		bandNum = ds.GetRasterBand(band)
+		imageDict = metadataGrabber(imageList[band-1], RAW=True)
+		bandNum.SetMetadata(imageDict)
+		bandNum.SetMetadata({'TIFFTAG_DOCUMENTNAME':str(basename(imageList[band-1])),
+						'TIFFTAG_IMAGEDESCRIPTION':str(imageDict['Xmp.Camera.BandName']),
+						'TIFFTAG_DATETIME':str(imageDict['Exif.Photo.DateTimeOriginal']),
+						'TIFFTAG_XRESOLUTION':str(imageDict['Exif.Photo.FocalPlaneXResolution']),
+						'TIFFTAG_YRESOLUTION':str(imageDict['Exif.Photo.FocalPlaneYResolution']),
+						'TIFFTAG_RESOLUTIONUNIT':str(imageDict['Exif.Photo.FocalPlaneResolutionUnit'])})
+		bandNum.WriteArray(image[:,:,band-1])
 	ds.FlushCache()
 	ds = None
 

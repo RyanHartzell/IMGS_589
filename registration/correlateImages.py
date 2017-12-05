@@ -44,6 +44,7 @@ def createCorrelation(images):
 		correlationMatrix = np.corrcoef(flatImageList)
 	except:
 		print("Could not create the correlation matrix for images:", images)
+		return None, None
 	#Creates an absolute value of the correlation matrix to find the maximum
 	absoluteCorrelation = np.absolute(correlationMatrix)
 
@@ -100,6 +101,8 @@ def OrderImagePairs(imageList, addOne=True):
 
 	#Combines the two above methods for easier calling
 	maxIndices, correlationMatrix = createCorrelation(imageList)
+	if maxIndices is None or correlationMatrix is None:
+		return None
 	#Sample maxIndices return where the 1st is the x values any 2nd is y
 	#[0, 0, 1, 0, 3, 2, 1, 1, 2, 0], [2, 1, 2, 3, 4, 3, 4, 3, 4, 4]
 

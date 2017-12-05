@@ -22,6 +22,7 @@ import sys
 from fileStructure.fixMicaSenseStructure import fixNamingStructure
 from geoTIFF.createGeoTIFF import writeGeoTIFF, showGeoTIFF, writeGPSLog
 from geoTIFF.normalizeDC import normalizeISOShutter
+from geoTIFF.metadataReader import metadataGrabber
 from registration.correlateImages import OrderImagePairs
 from registration.createImageStack import stackImages
 
@@ -89,19 +90,25 @@ with open(os.path.split(os.path.split(processedDirectory)[0])[0]+ "/GPSLog.csv",
 	wr = csv.writer(resultFile)
 
 	for images in range(0,len(tiffList),5):
-		im1 = tiffList[images]
-		im2 = tiffList[images+1]
-		im3 = tiffList[images+2]
-		im4 = tiffList[images+3]
-		im5 = tiffList[images+4]
+		imageList = [tiffList[images], tiffList[images+1], tiffList[images+2],
+					tiffList[images+3], tiffList[images+4]]
 
-		imageList = [im1, im2, im3, im4, im5]
+		imageOrderDict = {}
+		for image in imageList:
+			imageDict = metadataGrabber(image)
+			imageWavelength = imageDict['Xmp.DLS.CenterWavelength']
+			imageOrderDict[image] = imageWavelength
+		imageList = sorted(imageOrderDict, key=imageOrderDict.get, reverse=False)
+
 		matchOrder = OrderImagePairs(imageList, addOne=True)
+		if matchOrder is None:
+			continue
 		imageStack, goodCorr = stackImages(imageList, matchOrder,'orb', crop=False)
 		if goodCorr:
 			normStack = normalizeISOShutter(imageStack, imageList)
-			geoTiff = writeGeoTIFF(normStack, im1, geoTiffDir)
-			logLine = writeGPSLog(im1,geoTiff)
+			geoTiff = writeGeoTIFF(normStack, imageList, geoTiffDir)
+			os.chmod(geoTiff, 0o777)
+			logLine = writeGPSLog(imageList[0],geoTiff)
 			wr.writerow(logLine)
 			#showGeoTIFF(geoTiff)
 

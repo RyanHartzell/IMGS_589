@@ -8,25 +8,20 @@ import sys
 '''
 Name:
    LUT related stuff (Might break this up later)
-
 Description::
    Code responsible for interfacing ground truth measurements with field collect imagery to produce
    a reflectance image based upon irradiance for a given frame.
-
 Inputs::
-
 Version History::
    findReflectance function completed                                                       11/26/2017
    Filling in the blanks                                                                    11/24/2017
    Converted field notes to excel for csv possibility
    Started                                                                                  11/23/2017
    Sudo Code
-
 Current Bugs/Questions::
    -Need to create manual input method
    -Find relationship between field note times, SVC times, and micasense times
    -More to be discovered!
-
 Author::
    Kevin Kha
 '''
@@ -88,7 +83,8 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             indextarget4 = np.where((missionData[1] == name) & (missionData[0] == '4'))
             std4 = missionData[10:15,indextarget4[0]]
             DN4 = missionData[5:10,indextarget4[0]]
-            svcfilenumber = missionData[23,indextarget4]
+            svcfilenumber = missionData[31,indextarget4]
+            #print(svcfilenumber)
             framestd['target4'] = std4
             svcdict['target4'] = svcfilenumber
             DNdict['target4'] = DN4
@@ -96,7 +92,7 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             indextarget5 = np.where((missionData[1] == name) & (missionData[0] == '5'))
             std5 = missionData[10:15,indextarget5[0]]
             DN5 = missionData[5:10,indextarget5[0]]
-            svcfilenumber = missionData[23,indextarget5]
+            svcfilenumber = missionData[31,indextarget5]
             framestd['target5'] = std5
             svcdict['target5'] = svcfilenumber
             DNdict['target5'] = DN5
@@ -104,7 +100,7 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             indextarget1 = np.where((missionData[1] == name) & (missionData[0] == '1'))
             std1 = missionData[10:15,indextarget1[0]]
             DN1 = missionData[5:10,indextarget1[0]]
-            svcfilenumber = missionData[23,indextarget1]
+            svcfilenumber = missionData[31,indextarget1]
             framestd['target1'] = std1
             svcdict['target1'] = svcfilenumber
             DNdict['target1'] = DN1
@@ -112,7 +108,7 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             indextarget2 = np.where((missionData[1] == name) & (missionData[0] == '2'))
             std2 = missionData[10:15,indextarget2[0]]
             DN2 = missionData[5:10,indextarget2[0]]
-            svcfilenumber = missionData[23,indextarget2]
+            svcfilenumber = missionData[31,indextarget2]
             framestd['target2'] = std2
             svcdict['target2'] = svcfilenumber
             DNdict['target2'] = DN2
@@ -135,7 +131,7 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
                     del DNdict[key]
             #print(DNdict)
                     #print(DNdict)
-            if len(DNdict) >= 2:
+            if len(DNdict) >= 2 and 'target4' in DNdict.keys():
                 for key,value in DNdict.items():
                     if 'target5' in DNdict:
                         gotoTarget = 'target5'
@@ -144,7 +140,8 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
                     elif 'target2' in DNdict:
                         gotoTarget = 'target2'
                 #print(gotoTarget)
-
+                #print(reflectancedict)
+                #print(DNdict)
                 whiteReflect = np.asarray(reflectancedict[gotoTarget])
                 blackReflect = np.asarray(reflectancedict['target4'])
                 whiteDN = DNdict[gotoTarget].astype(np.float)
@@ -227,6 +224,7 @@ def applyLuts(LUTdict, processedimagedirectory, geoTiff):
 if __name__ == '__main__':
 
     import cv2
+    import glob
     import os
     import time
     import numpy as np
@@ -242,42 +240,44 @@ if __name__ == '__main__':
     processedimagedirectory = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/processed/'
     missionDatafilename = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/Flight_20171109T1345_375ft_kxk8298.csv'
     cameraresponseSR = '/cis/otherstu/gvs6104/DIRS/MonochrometerTiffs/Spectral_Response.csv'
+    reflectanceDir = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
+    imagelist = glob.glob('/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/*')    
+    if not os.path.exists(reflectanceDir):
+        os.makedirs(reflectanceDir)
     LUTdict = findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR)
     print(LUTdict)
     print(time.time() - starttime)
-    sampleimage = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0160.tiff'
-    reflectanceImage = applyLuts(LUTdict, processedimagedirectory, sampleimage)
-    
-    reflectanceDir = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
-    imagename = 'ref' + sampleimage[-13:]
-    print(imagename)
-    if not os.path.exists(reflectanceDir):
-        os.makedirs(reflectanceDir)
-    height, width, channels = reflectanceImage.shape
-    driver = gdal.GetDriverByName( 'GTiff' )
-    if reflectanceImage.dtype == 'uint8':
-        GDT = gdal.GDT_Byte
-    elif reflectanceImage.dtype == 'uint16':
-        GDT = gdal.GDT_UInt16
-    elif reflectanceImage.dtype == 'float32':
-        GDT = gdal.GDT_Float32
-    elif reflectanceImage.dtype == 'float64':
-        GDT = gdal.GDT_Float64
-    ds = driver.Create (reflectanceDir + imagename, width, height, channels, GDT)
-    pWidth, pHeight = 1.0, 1.0
-    X, Y = 0.0, 0.0
-    geoTransform = ([X,pWidth,0,Y,0,pHeight])
-    ds.SetGeoTransform(geoTransform)
-    wktProjection = ''
-    #srs = osr.SpatialReference(wkt = "")
-    ds.SetProjection(wktProjection)
-    for band in range(1, reflectanceImage.shape[2]+1):
-        ds.GetRasterBand(band).WriteArray(reflectanceImage[:,:,band-1])
-    ds.FlushCache()
-    ds = None
+    #sampleimage = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0160.tiff'
+    for image in imagelist:
+        reflectanceImage = applyLuts(LUTdict, processedimagedirectory, image)
+        
+        imagename = 'ref' + image[-13:]
+        print(imagename)
+        height, width, channels = reflectanceImage.shape
+        driver = gdal.GetDriverByName( 'GTiff' )
+        if reflectanceImage.dtype == 'uint8':
+            GDT = gdal.GDT_Byte
+        elif reflectanceImage.dtype == 'uint16':
+            GDT = gdal.GDT_UInt16
+        elif reflectanceImage.dtype == 'float32':
+            GDT = gdal.GDT_Float32
+        elif reflectanceImage.dtype == 'float64':
+            GDT = gdal.GDT_Float64
+        ds = driver.Create (reflectanceDir + imagename, width, height, channels, GDT)
+        pWidth, pHeight = 1.0, 1.0
+        X, Y = 0.0, 0.0
+        geoTransform = ([X,pWidth,0,Y,0,pHeight])
+        ds.SetGeoTransform(geoTransform)
+        wktProjection = ''
+        #srs = osr.SpatialReference(wkt = "")
+        ds.SetProjection(wktProjection)
+        for band in range(1, reflectanceImage.shape[2]+1):
+            ds.GetRasterBand(band).WriteArray(reflectanceImage[:,:,band-1])
+        ds.FlushCache()
+        ds = None
     print(time.time() - starttime)
 
-    
-    #print(missionDataarray)
-    #print(missionDataarray[10:15,80])
-    #print(missionDataarray[:,0])
+        
+        #print(missionDataarray)
+        #print(missionDataarray[10:15,80])
+        #print(missionDataarray[:,0])

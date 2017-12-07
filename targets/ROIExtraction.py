@@ -285,41 +285,22 @@ def targetNumtoStr(targetnumber):
 
 	return targetstring
 
+def targetStrtoNum(targetString):
 
-# def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
-# 	targetstring = targetNumtoStr(targetnumber)
-# 	possibleSVC = np.where(targetdescriptor == targetstring)[0]
-# 	test = np.abs(times[possibleSVC]-frametime)
-# 	tset = test[::-1]
-# 	bestindex = len(tset) - np.argmin(tset) - 1
-# 	filenumberindex = possibleSVC[bestindex]
-# 	filenumber = filenumbers[filenumberindex]
-# 	return filenumber
+	targetList = ['White Tri', 'Medium Gray Tri', 'Dark Gray Tri', 'Black Cal Panel',
+		'White Cal Panel', 'Asphalt', 'Grass', 'Concrete', 'Red Felt (Sun)',
+		'Blue Felt (Sun)', 'Green Felt (Sun)', 'Brown Felt (Sun)', 'White Cal Panel (Shadow)',
+		'Black Cal Panel (Shadow)', 'Red Felt (Shadow)', 'Blue Felt (Shadow)',
+		'Green Felt (Shadow)', 'Brown Felt Shadow']
 
-	return irradianceDict, frametime
+	targetDict = dict(enumerate(targetList))
+	targetDict = {v:k for k,v in targetDict.items()}
+	try:
+		targetNum = targetDict[targetString]
+	except:
+		targetNum = None
 
-def fieldData(tsvFilename):
-	import numpy as np
-
-	fulltext = np.loadtxt(tsvFilename,skiprows = 4, dtype = str, delimiter = '\t')
-
-	times = fulltext[:,0]
-	times = times[1:]
-	for index in np.arange(np.size(times)):
-		timestring =  times[index]
-		hours = int(timestring[0:2])
-		minutes = int(timestring[2:4])
-		totalmin = hours * 60 + minutes
-		times[index] = totalmin
-	times = times.astype(int)
-
-	filenumbers = fulltext[:,2]
-	filenumbers = filenumbers[1:]
-
-	targetdescriptor = fulltext[:,1]
-	targetdescriptor = targetdescriptor[1:]
-
-	return times, filenumbers, targetdescriptor
+	return targetNum
 
 def bestSVC(frametime,targetnumber,times,filenumbers,targetdescriptor):
 	import numpy as np

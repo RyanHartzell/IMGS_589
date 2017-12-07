@@ -41,9 +41,14 @@ root.update()
 parser = argparse.ArgumentParser(description='Create geotiff files for micasense')
 parser.add_argument('-i', '--input', type=str, help="An iput directory with RAW Tiffs")
 parser.add_argument('-o', '--output',type=str, help="An output directory to put GeoTiffs")
+parser.add_argument('-s', '--startIndex',type=int, help="The index at which to start writing")
 args = parser.parse_args()
 flightDirectory = args.input
 geoTiffDir = args.output
+startIndex = args.startIndex
+
+if startIndex is None:
+	startIndex = 0
 
 if flightDirectory is None:
 	#IF MULTIPLE DIRECTORIES ARE SELECTED THEN PARALLEL PROCESS THEM
@@ -92,8 +97,12 @@ root.title("Conversion Progress")
 print("Registering RAW imagery and writing out as geotiff.")
 print(processedDirectory)
 #print(os.path.split(os.path.split(processedDirectory)[0])[0])
+
+tiffList = tiffList[startIndex*5:]
+
 with open(os.path.split(os.path.split(processedDirectory)[0])[0]+ "/GPSLog.csv",'w') as resultFile:
 	wr = csv.writer(resultFile)
+
 
 	for images in range(0,len(tiffList),5):
 		imageList = [tiffList[images], tiffList[images+1], tiffList[images+2],

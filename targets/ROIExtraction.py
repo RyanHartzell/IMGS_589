@@ -291,9 +291,9 @@ def targetStrtoNum(targetString):
 		'White Cal Panel', 'Asphalt', 'Grass', 'Concrete', 'Red Felt (Sun)',
 		'Blue Felt (Sun)', 'Green Felt (Sun)', 'Brown Felt (Sun)', 'White Cal Panel (Shadow)',
 		'Black Cal Panel (Shadow)', 'Red Felt (Shadow)', 'Blue Felt (Shadow)',
-		'Green Felt (Shadow)', 'Brown Felt Shadow']
+		'Green Felt (Shadow)', 'Brown Felt (Shadow)']
 
-	targetDict = dict(enumerate(targetList))
+	targetDict = dict(enumerate(targetList, 1))
 	targetDict = {v:k for k,v in targetDict.items()}
 	try:
 		targetNum = targetDict[targetString]

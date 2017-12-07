@@ -12,7 +12,7 @@ from ROIExtraction import targetStrtoNum
 from ROIExtraction import targetNumtoStr
 
 
-svcSIG = glob.glob('/cis/otherstu/gvs6104/DIRS/**/*.sig', recursive=True)
+#svcSIG = glob.glob('/cis/otherstu/gvs6104/DIRS/**/*.sig', recursive=True)
 tsvList = glob.glob('/cis/otherstu/gvs6104/DIRS/**/Flight_Notes.tsv', recursive=True)
 
 target0 = ["Just for indexing"]

@@ -130,7 +130,7 @@ def register(fixedIm, movingIm, corCoef, feature):
 	featureMovingIm = np.copy(movingIm)
 	#Creates a copy of the image to account for a polarity switch
 	if corCoef < 0:
-		#print("Bitwise Switch")
+		print("Bitwise Switch")
 		featureMovingIm = cv2.bitwise_not(featureMovingIm)
 	if len(fixedIm.shape) > 2:
 		fixedIm = fixedIm[:,:,0]
@@ -144,7 +144,7 @@ def register(fixedIm, movingIm, corCoef, feature):
 	try:
 		sys.stdout = f
 		cc, warpMatrix = cv2.findTransformECC(fixedIm.astype(np.float32),
-                movingIm.astype(np.float32), warpMatrix, cv2.MOTION_EUCLIDEAN)
+                featureMovingIm.astype(np.float32), warpMatrix, cv2.MOTION_EUCLIDEAN)
 		warpedIm = cv2.warpAffine(movingIm, warpMatrix, (fixedIm.shape[1],
 			    fixedIm.shape[0]),flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
 	except cv2.error as e:
@@ -215,7 +215,7 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	from registration.correlateImages import findPairs
 	#from correlateImages import createCorrelation
 	#from correlateImages import findPairs
-
+	print(matchOrder)
 	firstImage = imageList[0][:-5] + str(int(matchOrder[0,0])) + imageList[0][-4:]
 	im1 = cv2.imread(firstImage, cv2.IMREAD_UNCHANGED)
 	height, width = im1.shape
@@ -227,6 +227,7 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	mask = np.ones((height, width), dtype=im1.dtype)
 	for pair in range(matchOrder.shape[0]):
 		correlationCoef = matchOrder[pair,2] #Extracts pair correlation coefficent
+		#print(correlationCoef, matchOrder[pair])
 		fixed = imageStack[:,:,int(matchOrder[pair,0])-1]
 		#Defines the variable fixed as the image at the index of the imagestack
 		#This variable will be stored as an array since it's already read in

@@ -151,7 +151,7 @@ with open(txtDestination, writeMode) as currentTextFile:
 
 		if currentImIndex == imageCount:
 			print('You have reached the end of the imagery. Nice job.')
-			print('You can find the csv file at:' + txtDestination)
+			#print('You can find the csv file at:' + txtDestination)
 			break
 
 		currentFilename = geotiffFolderName + fileNames[currentImIndex]
@@ -233,6 +233,8 @@ with open(txtDestination, writeMode) as currentTextFile:
 			print('Line has been written to file.')
 
 		elif userInput == ord('d'):
+			if currentImIndex + stepNumber > imageCount:
+				stepNumber = 1
 			currentImIndex += stepNumber
 		elif userInput == ord('a'):
 			currentImIndex += -stepNumber
@@ -252,11 +254,6 @@ with open(txtDestination, writeMode) as currentTextFile:
 			break
 		else:
 			continue
-
-
-
-
-
 
 	cv2.destroyWindow(currentIm_tag)
 	currentTextFile.close()

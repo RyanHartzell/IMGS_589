@@ -52,11 +52,17 @@ if flightDirectory is None:
 	initialdir = "/cis/otherstu/gvs6104/DIRS/"
 	flightDirectory = filedialog.askdirectory(initialdir=initialdir,
 				title="Choose the RAW MicaSense .tif directory")
-	if flightDirectory == '':
+	if flightDirectory == '' or type(flightDirectory) == tuple:
 		sys.exit()
 if geoTiffDir is None:
-	geoTiffDir = filedialog.askdirectory(initialdir=os.path.split(flightDirectory)[0],
+	splitted = flightDirectory.split('/')
+	geoTiffDir = '/'.join(splitted[:9]) + os.path.sep
+	if os.path.isdir(geoTiffDir + "geoTiff/"):
+		geoTiffDir = geoTiffDir + "geoTiff/"
+	else:
+		geoTiffDir = filedialog.askdirectory(initialdir=os.path.split(flightDirectory)[0],
 				title="Choose the directory to place the GeoTiffs")
+
 startTime = time.time()
 #print(flightDirectory)
 subdirs = glob.glob(flightDirectory+'/*/')
@@ -103,7 +109,7 @@ with open(os.path.split(os.path.split(processedDirectory)[0])[0]+ "/GPSLog.csv",
 		matchOrder = OrderImagePairs(imageList, addOne=True)
 		if matchOrder is None:
 			continue
-		imageStack, goodCorr = stackImages(imageList, matchOrder,'orb', crop=False)
+		imageStack, goodCorr = stackImages(imageList, matchOrder,'ECC', crop=False)
 		if goodCorr:
 			normStack = normalizeISOShutter(imageStack, imageList)
 			geoTiff = writeGeoTIFF(normStack, imageList, geoTiffDir)

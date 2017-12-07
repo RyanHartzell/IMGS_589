@@ -48,6 +48,7 @@ def getDisplayImage(geotiffFilename, angle=10, scaleFactor=2):
 		displayImage = cv2.resize(displayImage, None,
 			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
 
+
 	#displayImage = ((displayImage/np.max(displayImage))*255).astype(np.uint8)
 	displayImage = displayImage/np.max(displayImage)
 	return imageStack_crop, displayImage

@@ -96,7 +96,7 @@ skipSpecification = ["Exif.Image.0xbb94","Exif.Image.0xbb95","Exif.Image.0xbb96"
     "Exif.Image.NewSubfileType","Exif.Image.OpcodeList3","Exif.Image.XMLPacket",]
 
 slashSplitSpecification = ["Exif.GPSInfo.GPSAltitude","Exif.GPSInfo.GPSDOP",
-"Exif.GPSInfo.GPSLatitude","Exif.GPSInfo.GPSLongitude","Exif.Photo.ExposureTime",
+"Exif.Photo.ExposureTime",
 "Exif.Photo.FNumber","Exif.Photo.FocalLength","Exif.Photo.FocalPlaneXResolution",
 "Exif.Photo.FocalPlaneYResolution",]
 
@@ -133,79 +133,90 @@ def metadataGrabber(filename, RAW=False):
         specification = taglist[index]
         entry = imagemetadata.get(specification)
         #print(index, specification, entry)
-        if RAW is False:
+
+        if specification == "Exif.Image.0xa480":
+            continue
+        if specification in skipSpecification:
+            continue
+        if specification in badSpecification:
+            continue
+        if specification in slashSplitSpecification:
+            #print(entry)
+            numerator, denominator = entry.split('/')
+            entry = float(numerator)/float(denominator)
+
+        if specification in floatSpecification:
+            try:
+                entry = float(entry)
+            except:
+                pass
+
+        if specification == 'Exif.GPSInfo.GPSLatitude' or specification == 'Exif.GPSInfo.GPSLongitude':
+            gps = entry.split()
+            dms = 0
+            for i in range(len(gps)):
+                numerator, denominator = gps[i].split('/')
+                value = float(numerator)/float(denominator)
+                if i == 1:
+                    value /= 60
+                if i == 2:
+                    value /= (60*60)
+                dms += value
+            entry = dms
 
             #Single Fractions to Float Case
-            if index in ( 0,37,38,39,41,42):
-                split = entry.index('/')
-                entry = float(entry[:split])/float(entry[split+1:])
-
-            #Three Fractions to Floats Case for GPS Coordinates
-            elif index in (3,5):
-                firstsplit = entry.index('/')
-                secondsplit = entry.index('/',firstsplit+1)
-                thirdsplit = entry.index('/',secondsplit+1)
-                firstspace = entry.index(' ')
-                secondspace = entry.index(' ',firstspace+1)
-
-                divisor = float(entry[firstsplit+1:firstspace])
-                degrees = float(entry[:firstsplit])/divisor
-                minutes = float(entry[firstspace+1:secondsplit])/divisor
-                seconds = float(entry[secondspace+1:thirdsplit])/divisor
-
-                entry = (degrees,minutes,seconds)
-
-            #String to string case for names,date,time
-            elif index in (4,6,14,19,20,34,45,46,66,68,69,72,73,74):
-                #print(index, specification, entry)
-                pass
-            elif index in (2,7,8,9,10,12,13,22,28,29,30,31,33,35):
-                #These Suck
-                #print(index, specification, entry)
-                continue
-            elif specification == "Xmp.Camera.PerspectiveDistortion":
-                pass
-            elif specification == "Xmp.Camera.ModelType":
-                pass
-            elif specification == "Xmp.Camera.PrincipalPoint":
-                pass
-            elif specification == "Xmp.Camera.VignettingCenter":
-                pass
-            elif specification == "Xmp.Camera.VignettingPolynomial":
-                pass
-            elif specification == "Xmp.MicaSense.CaptureId":
-                pass
-            elif specification == "Xmp.MicaSense.DarkRowValue":
-                pass
-            elif specification == "Xmp.MicaSense.FlightId":
-                pass
-            elif specification == "Xmp.MicaSense.RadiometricCalibration":
-                pass
+            # if index in ( 0,37,38,39,41,42):
+            #     split = entry.index('/')
+            #     entry = float(entry[:split])/float(entry[split+1:])
+            #
+            # #Three Fractions to Floats Case for GPS Coordinates
+            # elif index in (3,5):
+            #     firstsplit = entry.index('/')
+            #     secondsplit = entry.index('/',firstsplit+1)
+            #     thirdsplit = entry.index('/',secondsplit+1)
+            #     firstspace = entry.index(' ')
+            #     secondspace = entry.index(' ',firstspace+1)
+            #
+            #     divisor = float(entry[firstsplit+1:firstspace])
+            #     degrees = float(entry[:firstsplit])/divisor
+            #     minutes = float(entry[firstspace+1:secondsplit])/divisor
+            #     seconds = float(entry[secondspace+1:thirdsplit])/divisor
+            #
+            #     entry = (degrees,minutes,seconds)
+            #
+            # #String to string case for names,date,time
+            # elif index in (4,6,14,19,20,34,45,46,66,68,69,72,73,74):
+            #     #print(index, specification, entry)
+            #     pass
+            # elif index in (2,7,8,9,10,12,13,22,28,29,30,31,33,35):
+            #     #These Suck
+            #     #print(index, specification, entry)
+            #     continue
+            # elif specification == "Xmp.Camera.PerspectiveDistortion":
+            #     pass
+            # elif specification == "Xmp.Camera.ModelType":
+            #     pass
+            # elif specification == "Xmp.Camera.PrincipalPoint":
+            #     pass
+            # elif specification == "Xmp.Camera.VignettingCenter":
+            #     pass
+            # elif specification == "Xmp.Camera.VignettingPolynomial":
+            #     pass
+            # elif specification == "Xmp.MicaSense.CaptureId":
+            #     pass
+            # elif specification == "Xmp.MicaSense.DarkRowValue":
+            #     pass
+            # elif specification == "Xmp.MicaSense.FlightId":
+            #     pass
+            # elif specification == "Xmp.MicaSense.RadiometricCalibration":
+            #     pass
 
             #All other cases, no integers used for ease later
-            else:
-                #print(index)
-                #print(entry)
-                #print(index, specification, entry)
-                #print(entry)
-                entry = float(entry)
-        else:
-            if specification in skipSpecification:
-                continue
-            if '/' in entry:
-                if specification == 'Exif.GPSInfo.GPSLatitude' or specification == 'Exif.GPSInfo.GPSLongitude':
-                    gps = entry.split()
-                    dms = 0
-                    for i in range(len(gps)):
-                        numerator, denominator = gps[i].split('/')
-                        value = float(numerator)/float(denominator)
-                        if i == 1 or i == 2:
-                            value /= 60
-                        dms += value
-                    entry = str(dms)
-                else:
-                    numerator, denominator = entry.split('/')
-                    entry = str(float(numerator)/float(denominator))
+            #else:
+                #try:
+                #    entry = float(entry)
+                #except:
+                #    pass
 
         metadatadict[specification] = entry
 
@@ -213,6 +224,7 @@ def metadataGrabber(filename, RAW=False):
     dateTime = dateTime.replace(' ', 'T')
     dateTime = dateTime.replace(':','-',2)
     subSec = metadatadict['Exif.Photo.SubSecTime']
+    #print(subSec, type(subSec))
     timeStamp = dateTime# + '.' + subSec[1:]
     metadatadict['timeStamp'] = timeStamp
 
@@ -221,6 +233,7 @@ def metadataGrabber(filename, RAW=False):
 if __name__ == '__main__':
     import metadataReader
     filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
+    filename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1400/micasense/geoTiff/IMG_0272.tiff'
     metadatadict = metadataReader.metadataGrabber(filename)
 
     import time

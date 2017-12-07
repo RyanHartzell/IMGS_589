@@ -123,6 +123,8 @@ def computeMatches(im1, im2, feature="orb"):
 
 def register(fixedIm, movingIm, corCoef, feature):
 	import cv2
+	import sys
+	import os
 	import numpy as np
 
 	featureMovingIm = np.copy(movingIm)
@@ -135,43 +137,75 @@ def register(fixedIm, movingIm, corCoef, feature):
 	if len(movingIm.shape) > 2:
 		featureMovingIm = featureMovingIm[:,:,0]
 
-	kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature)
+	warpedIm, registerIm = movingIm, movingIm
+	warpMatrix = np.eye(2,3, dtype=np.float32)
+	f = open(os.devnull, 'w')
+	warpedCorCoef = 0
+	try:
+		sys.stdout = f
+		cc, warpMatrix = cv2.findTransformECC(fixedIm.astype(np.float32),
+                movingIm.astype(np.float32), warpMatrix, cv2.MOTION_EUCLIDEAN)
+		warpedIm = cv2.warpAffine(movingIm, warpMatrix, (fixedIm.shape[1],
+			    fixedIm.shape[0]),flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
+	except cv2.error as e:
+		f.close()
+		sys.stdout = sys.__stdout__
 
-	registerIm = movingIm
-	if goodMatches is not None:
-		match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
-		match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
+		kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature="orb")
+		if goodMatches is not None:
+			match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
+			match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
 
-		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
-		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None,
-		#							matchesMask=mask.ravel().tolist(),flags=2)
-		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
-		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None, flags=2)
-		#cv2.imshow('Distance Filtered Match Image',
-		#				cv2.resize(goodMatchIm, None, fx=0.5, fy=0.5,
-		#								interpolation=cv2.INTER_AREA))
-		#cv2.waitKey(0)
+			#So according to the documentation, this funtion uses RANSAC to filter
+			M = cv2.estimateRigidTransform(match2, match1, False)
+			if M is not None:
+				warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
 
-		#So according to the documentation, this funtion uses RANSAC to filter
-		M = cv2.estimateRigidTransform(match2, match1, False)
-		if M is not None:
-			warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
-			#print("Used Affine")
-			#cv2.imshow("Overlay", cv2.resize(cv2.addWeighted(fixedIm, .5, warpedIm, .5, 0), None,
-			#									 fx=0.5, fy=0.5,interpolation=cv2.INTER_AREA))
-			#cv2.waitKey(0)
+			else: #If the affine transformation matrix was not able to be calculated
+				homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
+				if homography is not None:
+					warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
 
-			warpedCorCoef = np.absolute(np.corrcoef(np.ravel(movingIm), np.ravel(warpedIm)))[0,1]
-			if warpedCorCoef > 0.2:
-				registerIm = np.reshape(warpedIm, movingIm.shape)
-		else: #If the affine transformation matrix was not able to be calculated
-			#print("Used Homography")
-			homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
-			if homography is not None:
-				warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
-				warpedCorCoef = np.absolute(np.corrcoef(np.ravel(movingIm), np.ravel(warpedIm)))[0,1]
-				if warpedCorCoef > 0.2:
-					registerIm = np.reshape(warpedIm, movingIm.shape)
+	warpedCorCoef = np.absolute(np.corrcoef(np.ravel(fixedIm), np.ravel(warpedIm)))[0,1]
+	if warpedCorCoef > 0.2:
+		registerIm = np.reshape(warpedIm, fixedIm.shape).astype(fixedIm.dtype)
+	# else:
+	# 	kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature)
+	# 	registerIm = movingIm
+	# 	if goodMatches is not None:
+	# 		match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
+	# 		match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
+    #
+	# 		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
+	# 		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None,
+	# 		#							matchesMask=mask.ravel().tolist(),flags=2)
+	# 		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
+	# 		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None, flags=2)
+	# 		#cv2.imshow('Distance Filtered Match Image',
+	# 		#				cv2.resize(goodMatchIm, None, fx=0.5, fy=0.5,
+	# 		#								interpolation=cv2.INTER_AREA))
+	# 		#cv2.waitKey(0)
+    #
+	# 		#So according to the documentation, this funtion uses RANSAC to filter
+	# 		M = cv2.estimateRigidTransform(match2, match1, False)
+	# 		if M is not None:
+	# 			warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
+	# 			#print("Used Affine")
+	# 			#cv2.imshow("Overlay", cv2.resize(cv2.addWeighted(fixedIm, .5, warpedIm, .5, 0), None,
+	# 			#									 fx=0.5, fy=0.5,interpolation=cv2.INTER_AREA))
+	# 			#cv2.waitKey(0)
+    #
+	# 			warpedCorCoef = np.absolute(np.corrcoef(np.ravel(movingIm), np.ravel(warpedIm)))[0,1]
+	# 			if warpedCorCoef > 0.2:
+	# 				registerIm = np.reshape(warpedIm, movingIm.shape)
+	# 		else: #If the affine transformation matrix was not able to be calculated
+	# 			#print("Used Homography")
+	# 			homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
+	# 			if homography is not None:
+	# 				warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
+	# 				warpedCorCoef = np.absolute(np.corrcoef(np.ravel(movingIm), np.ravel(warpedIm)))[0,1]
+	# 				if warpedCorCoef > 0.2:
+	# 					registerIm = np.reshape(warpedIm, movingIm.shape)
 	return registerIm
 
 def stackImages(imageList, matchOrder, feature='orb', crop=True):

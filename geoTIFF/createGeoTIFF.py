@@ -52,14 +52,14 @@ def writeGeoTIFF(image, imageList, geoTiffDir=None):
 	ds.SetProjection(wktProjection)
 	for band in range(1, image.shape[2]+1):
 		bandNum = ds.GetRasterBand(band)
-		imageDict = metadataGrabber(imageList[band-1], RAW=True)
-		bandNum.SetMetadata(imageDict)
-		bandNum.SetMetadata({'TIFFTAG_DOCUMENTNAME':str(basename(imageList[band-1])),
-						'TIFFTAG_IMAGEDESCRIPTION':str(imageDict['Xmp.Camera.BandName']),
-						'TIFFTAG_DATETIME':str(imageDict['Exif.Photo.DateTimeOriginal']),
-						'TIFFTAG_XRESOLUTION':str(imageDict['Exif.Photo.FocalPlaneXResolution']),
-						'TIFFTAG_YRESOLUTION':str(imageDict['Exif.Photo.FocalPlaneYResolution']),
-						'TIFFTAG_RESOLUTIONUNIT':str(imageDict['Exif.Photo.FocalPlaneResolutionUnit'])})
+		#imageDict = metadataGrabber(imageList[band-1], RAW=True)
+		#bandNum.SetMetadata(imageDict)
+		#bandNum.SetMetadata({'TIFFTAG_DOCUMENTNAME':str(basename(imageList[band-1])),
+		#				'TIFFTAG_IMAGEDESCRIPTION':str(imageDict['Xmp.Camera.BandName']),
+		#				'TIFFTAG_DATETIME':str(imageDict['Exif.Photo.DateTimeOriginal']),
+		#				'TIFFTAG_XRESOLUTION':str(imageDict['Exif.Photo.FocalPlaneXResolution']),
+		#				'TIFFTAG_YRESOLUTION':str(imageDict['Exif.Photo.FocalPlaneYResolution']),
+		#				'TIFFTAG_RESOLUTIONUNIT':str(imageDict['Exif.Photo.FocalPlaneResolutionUnit'])})
 		bandNum.WriteArray(image[:,:,band-1])
 	ds.FlushCache()
 	ds = None
@@ -73,12 +73,12 @@ def writeGPSLog(rawImage, geoTiff):
 	mDict = metadataGrabber(rawImage)
 	gName = basename(geoTiff)
 	longitude = mDict['Exif.GPSInfo.GPSLongitude']
-	longitude = longitude[0] + longitude[1]/60 + longitude[2]/3600
+	#longitude = longitude[0] + longitude[1]/60 + longitude[2]/3600
 	strLong = '{0:.8f}'.format(longitude)
 	latitude = mDict['Exif.GPSInfo.GPSLatitude']
-	latitude = latitude[0] + latitude[1]/60 + latitude[2]/3600
+	#latitude = latitude[0] + latitude[1]/60 + latitude[2]/3600
 	strLat = '{0:.8f}'.format(latitude)
-	altitude = mDict['Exif.GPSInfo.GPSAltitude']
+	altitude = float(mDict['Exif.GPSInfo.GPSAltitude'])
 	strAlt = '{0:.2f}'.format(altitude)
 	time = mDict['Exif.Photo.DateTimeOriginal']
 	subSec = mDict['Exif.Photo.SubSecTime']

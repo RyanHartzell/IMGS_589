@@ -11,7 +11,7 @@ def normalizeISOShutter(image, filename):
 		normalizedImage = np.zeros_like(image)
 		for i in range(image.shape[2]):
 			mDict = metadataGrabber(filename[i])
-			eTime = mDict['Exif.Photo.ExposureTime']
+			eTime = float(mDict['Exif.Photo.ExposureTime'])
 			iso = mDict['Exif.Photo.ISOSpeed']
 			bDepth = mDict['Exif.Image.BitsPerSample']
 			maxCount = float(2**bDepth)-1

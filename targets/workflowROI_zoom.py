@@ -64,14 +64,19 @@ if geotiffFolderName is None:
 	else:
 		geotiffFolderName = geotiffFolderName + os.path.sep
 if tsvFilename is None:
-	tsvFilename = filedialog.askopenfilename(initialdir = "/cis/otherstu/gvs6104/DIRS/", title="Choose the Flight Notes [.tsv]",
+	splitted = geotiffFolderName.split('/')
+	tsvDirectory = '/'.join(splitted[:6]) + os.path.sep + 'GroundDocumentation/datasheets/'
+	if os.path.isfile(tsvDirectory + 'Flight_Notes.tsv'):
+		tsvFilename = tsvDirectory + 'Flight_Notes.tsv'
+	else:
+		tsvFilename = filedialog.askopenfilename(initialdir = tsvDirectory, title="Choose the Flight Notes [.tsv]",
 			filetypes=[("Tab Seperated Values", "*.tsv"), ("Comma Seperated Values", "*.csv"),("Excel Files", "*.xlsx *.xls")])
-
-	if tsvFilename == "":
-		sys.exit()
+		if tsvFilename == "":
+			sys.exit()
 
 if stepNumber is None:
-	stepNumber = int(input('Type number for how many images you want to skip \n'))
+	stepNumber = 2
+	#stepNumber = int(input('Type number for how many images you want to skip \n'))
 if scaleFactor is None:
 	scaleFactor = 2
 if angle is None:
@@ -102,6 +107,8 @@ imageNameDict = {v:k for k,v in imageNameDict.items()}
 
 try:
 	startFrameNumber= int(startFrameNumber)
+	if startFrameNumber > imageCount:
+		startFrameNumber = 0
 except Exception as e:
 	pass
 
@@ -148,13 +155,21 @@ with open(txtDestination, writeMode) as currentTextFile:
 			break
 
 		currentFilename = geotiffFolderName + fileNames[currentImIndex]
-		currentGeotiff, displayImage = getDisplayImage(currentFilename, angle, scaleFactor)
-		##RESIZE DISPLAY
-		im = cv2.imshow(currentIm_tag, displayImage)
+		currentCroppedIm, displayImage = getDisplayImage(currentFilename, angle, scaleFactor)
 
+		splitIm = np.dsplit(currentCroppedIm, 5)
+		falseRE = np.dstack((splitIm[1], splitIm[2], splitIm[3]))
+		falseIR = np.dstack((splitIm[1], splitIm[2], splitIm[4]))
+		weighted = cv2.addWeighted(splitIm[0],0.2,splitIm[1],0.2,0)
+		weighted = cv2.addWeighted(weighted,0,splitIm[2],0.2,0)
+		weighted = cv2.addWeighted(weighted,0,splitIm[3],0.2,0)
+		weighted = cv2.addWeighted(weighted,0,splitIm[4],0.2,0)
 
-		#im = cv2.imshow(currentIm_tag, cv2.resize(displayImage, None,
-		#		fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4))
+		cv2.imshow(currentIm_tag, displayImage)
+
+		cv2.imshow("False Color [Red Edge]", falseRE/np.max(falseRE))
+		cv2.imshow("False Color [Near IR]", falseIR/np.max(falseIR))
+		cv2.imshow("Blended", weighted/np.max(weighted))
 
 		print("Do you want to get ROIs in this frame? 'w' for yes, 'a' for back, 'd' for forward.")
 		print(fileNames[currentImIndex], 'Index = ', currentImIndex,'/', imageCount)
@@ -184,8 +199,12 @@ with open(txtDestination, writeMode) as currentTextFile:
 			pointsX = pointsX_resize
 			pointsY = pointsY_resize
 
+			#diffX = (currentGeotiff.shape[1]-displayImage.shape[1])
+			#diffY = (currentGeotiff.shape[0]-displayImage.shape[0])
+
+			#currentCroppedIm = currentGeotiff[diffY//2:(diffY//2)+diffY, diffX//2:(diffX//2)+diffX]
 			#compute the statistics that will be written out, from the ROI coords
-			maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentGeotiff,
+			maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentCroppedIm,
 												currentFilename, pointsX, pointsY)
 
 			#get metadata
@@ -217,6 +236,12 @@ with open(txtDestination, writeMode) as currentTextFile:
 			currentImIndex += stepNumber
 		elif userInput == ord('a'):
 			currentImIndex += -stepNumber
+		elif userInput == ord('t'):
+			newAngle = input("What is the new angle?")
+			try:
+				angle = float(newAngle)
+			except:
+				pass
 		elif userInput == ord('r'):
 			newScaleFactor = input("What is the new scale factor?")
 			try:

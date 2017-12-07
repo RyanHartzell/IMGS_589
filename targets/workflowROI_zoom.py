@@ -204,8 +204,8 @@ with open(txtDestination, writeMode) as currentTextFile:
 
 			#currentCroppedIm = currentGeotiff[diffY//2:(diffY//2)+diffY, diffX//2:(diffX//2)+diffX]
 			#compute the statistics that will be written out, from the ROI coords
-			maskedIm, ROI_image, mean, stdev, centroid = computeStats(currentCroppedIm,
-												currentFilename, pointsX, pointsY)
+			maskedIm, ROI_image, mean, stdev, centroid, pointsX, pointsY = computeStats(currentCroppedIm,
+																		   currentFilename, pointsX, pointsY)
 
 			#get metadata
 			irradianceDict, frametime, altitude, resolution= micasenseRawData(currentFilename)

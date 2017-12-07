@@ -196,7 +196,7 @@ def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
 	pointsY = np.array(pointsY)+orignalImage.shape[0]//2-currentCroppedIm.shape[0]//2
 	centroid = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
 
-	return mask, ROI_image, mean, stdev, centroid
+	return mask, ROI_image, mean, stdev, centroid , pointsX, pointsY
 
 def micasenseRawData(geotiffFilename):
 	from geoTIFF import metadataReader
@@ -353,16 +353,18 @@ if __name__ == '__main__':
 
 	#select the points for a target in the scene
 	pointsX, pointsY, currentTargetNumber = selectROI(mapName, displayImage)
+	print('first set of points', pointsX, pointsY)
 	# call updater for zoomed function each time in the while loop (and in selectROI!!!)
 
 	#ask user for input of the current target
 	#currentTargetNumber = assignTargetNumber()
 
-	maskedIm, ROI_image, mean, stdev, centroid = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
+	maskedIm, ROI_image, mean, stdev, centroid , pointsX, pointsY = computeStats(geoTiffImage, geotiffFilename, pointsX, pointsY)
 
 	cv2.destroyWindow(mapName)
 
 	print(mean, stdev, centroid)
+	print('second set of points', pointsX, pointsY)
 
 	# tsvFilename = '/cis/otherstu/gvs6104/DIRS/20171109/GroundDocumentation/datasheets/Flight_Notes.tsv'
 	# times,targets,targetdescriptor = fieldData(tsvFilename)

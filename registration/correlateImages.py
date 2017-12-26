@@ -136,7 +136,7 @@ def OrderImagePairs(imageList, addOne=True):
 
 if __name__ == '__main__':
 
-	imageDir = '/Users/Geoffrey/Desktop/UAS Class Data/150 ft flight/'
+	imageDir = '/research/imgs589/'
 
 	im1 = imageDir + '/band1/IMG_0459_1.tif'
 	im2 = imageDir + '/band2/IMG_0459_2.tif'

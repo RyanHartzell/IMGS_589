@@ -165,6 +165,8 @@ def register(fixedIm, movingIm, corCoef, feature):
 				homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
 				if homography is not None:
 					warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
+				else: #If the homography matrix was not able to be calculated
+					warpedIm = mapGCP(fixedIm, movingIm)
 
 	warpedCorCoef = np.absolute(np.corrcoef(np.ravel(fixedIm), np.ravel(warpedIm)))[0,1]
 	if warpedCorCoef > 0.2:

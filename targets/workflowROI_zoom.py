@@ -27,7 +27,7 @@ userName = getpass.getuser()
 
 #example:
 #python3 workflowROI.py -g /cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/ -t /cis/otherstu/gvs6104/DIRS/20171102/GroundDocumentation/datasheets/Flight_Notes.tsv -s 2 -f IMG_0180.tiff
-
+#python3 workflowROI_zoom.py -g /research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/geoTiff/ -t /research/imgs589/imageLibrary/DIRS/20171109/GroundDocumentation/datasheets/Flight_Notes.tsv -s 2 -f IMG_0000.tiff
 
 # individual example inputs
 # geotiffFolderName = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1445/micasense/geoTiff/'

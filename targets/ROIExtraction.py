@@ -111,7 +111,7 @@ def selectROI(mapName, im):
 				if (chr(response)) == '0':
 					targetNumber = (chr(response_2))
 				print(targetNumber)
-				pointsX, point
+				pointsX, pointY = p.x(), p.y()
 				sY = p.x(p), p.y(p)
 
 				print('Running ROI calculations...')

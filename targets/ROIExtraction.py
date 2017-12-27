@@ -60,25 +60,25 @@ def selectROI(mapName, im):
 	import PointsSelected
 	#utilize 'PointsSelected' to get the search window, manual input
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
-	p.clearPoints()
+	p.clearPoints(p)
 	original = im.copy()
 
 	while True:
-		if p.number() > 4:
-			p.restrict_len(4)
+		if p.number(p) > 4:
+			p.restrict_len(p,4)
 
-		if p.number() == 1:
-			im = cv2.circle(original.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
+		if p.number(p) == 1:
+			im = cv2.circle(original.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
 			cv2.imshow(mapName, im)
 
-		if (p.number() == 2) or (p.number() == 3):
-			im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
-			im = cv2.line(im.copy(),(p.x()[-2],p.y()[-2]),(p.x()[-1],p.y()[-1]),(255,0,0),1)
+		if (p.number(p) == 2) or (p.number(p) == 3):
+			im = cv2.circle(im.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			im = cv2.line(im.copy(),(p.x(p)[-2],p.y(p)[-2]),(p.x(p)[-1],p.y(p)[-1]),(255,0,0),1)
 			cv2.imshow(mapName, im)
 
-		if p.number() == 4:
-			im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
-			points = np.asarray(list(zip(p.x(), p.y())), np.int32)
+		if p.number(p) == 4:
+			im = cv2.circle(im.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			points = np.asarray(list(zip(p.x(p), p.y(p))), np.int32)
 			points = points.reshape((-1,1,2))
 			im = cv2.polylines(im.copy(), [points], True, (255,0,0))
 			cv2.imshow(mapName, im)
@@ -86,7 +86,7 @@ def selectROI(mapName, im):
 
 		response = cv2.waitKey(100)
 		if response == ord('n'):
-			p.clearPoints()
+			p.clearPoints(p)
 			cv2.imshow(mapName, original)
 			print('Clearing selected points...')
 			print('Press n again [1/2 sec] to exit point selection')
@@ -104,14 +104,15 @@ def selectROI(mapName, im):
 
 
 		elif response == ord('0') or response == ord('1'):
-			if (p.number() == 4):
+			if (p.number(p) == 4):
 				print(chr(response))
 				response_2 = cv2.waitKey(0)
 				targetNumber = ((chr(response)) + (chr(response_2)))
 				if (chr(response)) == '0':
 					targetNumber = (chr(response_2))
 				print(targetNumber)
-				pointsX, pointsY = p.x(), p.y()
+				pointsX, point
+				sY = p.x(p), p.y(p)
 
 				print('Running ROI calculations...')
 				break

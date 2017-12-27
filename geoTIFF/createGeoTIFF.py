@@ -21,7 +21,7 @@ def writeGeoTIFF(image, imageList, geoTiffDir=None):
 	import os
 
 	if geoTiffDir is None:
-		geoTiffDir = dirname(fileName) + "/geoTiff"
+		geoTiffDir = dirname(fileName) + "/geoTiff/"
 		#Creates a geotiff directory
 
 	if not os.path.exists(geoTiffDir):
@@ -29,7 +29,7 @@ def writeGeoTIFF(image, imageList, geoTiffDir=None):
 		os.makedirs(geoTiffDir)
 
 	fileNumber = basename(imageList[0])[:-6]
-	geoTiff = geoTiffDir + '/' + fileNumber + '.tiff'
+	geoTiff = geoTiffDir + fileNumber + '.tiff'
 	height, width, channels = image.shape
 
 	driver = gdal.GetDriverByName( 'GTiff' )

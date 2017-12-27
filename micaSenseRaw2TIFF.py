@@ -54,7 +54,7 @@ if flightDirectory is None:
 	#IF MULTIPLE DIRECTORIES ARE SELECTED THEN PARALLEL PROCESS THEM
 	#flightDirectory = "/cis/otherstu/gvs6104/DIRS/20170928/150flight"
 	initialdir = os.getcwd()
-	initialdir = "/cis/otherstu/gvs6104/DIRS/"
+	initialdir = "/research/imgs589/imageLibrary/DIRS/"
 	flightDirectory = filedialog.askdirectory(initialdir=initialdir,
 				title="Choose the RAW MicaSense .tif directory")
 	if flightDirectory == '' or type(flightDirectory) == tuple:

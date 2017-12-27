@@ -148,9 +148,6 @@ def register(fixedIm, movingIm, corCoef, feature):
 		warpedIm = cv2.warpAffine(movingIm, warpMatrix, (fixedIm.shape[1],
 			    fixedIm.shape[0]),flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
 	except cv2.error as e:
-		f.close()
-		sys.stdout = sys.__stdout__
-
 		kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature="orb")
 		if goodMatches is not None:
 			match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
@@ -166,8 +163,9 @@ def register(fixedIm, movingIm, corCoef, feature):
 				if homography is not None:
 					warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
 				else: #If the homography matrix was not able to be calculated
-					warpedIm = mapGCP(fixedIm, movingIm)
-
+					warpedIm = userMove(fixedIm, movingIm) #User Moves the image
+	f.close()
+	sys.stdout = sys.__stdout__
 	warpedCorCoef = np.absolute(np.corrcoef(np.ravel(fixedIm), np.ravel(warpedIm)))[0,1]
 	if warpedCorCoef > 0.2:
 		registerIm = np.reshape(warpedIm, fixedIm.shape).astype(fixedIm.dtype)
@@ -217,7 +215,7 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	from registration.correlateImages import findPairs
 	#from correlateImages import createCorrelation
 	#from correlateImages import findPairs
-	print(matchOrder)
+	#print(matchOrder)
 	firstImage = imageList[0][:-5] + str(int(matchOrder[0,0])) + imageList[0][-4:]
 	im1 = cv2.imread(firstImage, cv2.IMREAD_UNCHANGED)
 	height, width = im1.shape

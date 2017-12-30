@@ -121,11 +121,12 @@ def computeMatches(im1, im2, feature="orb"):
 
 	return kp1, kp2, goodMatches
 
-def register(fixedIm, movingIm, corCoef, feature):
+def register(fixedIm, movingIm, corCoef, feature, bandQC=False):
 	import cv2
 	import sys
 	import os
 	import numpy as np
+	from registration import userMove
 
 	featureMovingIm = np.copy(movingIm)
 	#Creates a copy of the image to account for a polarity switch
@@ -139,86 +140,70 @@ def register(fixedIm, movingIm, corCoef, feature):
 
 	warpedIm, registerIm = movingIm, movingIm
 	warpMatrix = np.eye(2,3, dtype=np.float32)
-	f = open(os.devnull, 'w')
 	warpedCorCoef = 0
 	try:
-		sys.stdout = f
 		cc, warpMatrix = cv2.findTransformECC(fixedIm.astype(np.float32),
                 featureMovingIm.astype(np.float32), warpMatrix, cv2.MOTION_EUCLIDEAN)
-		warpedIm = cv2.warpAffine(movingIm, warpMatrix, (fixedIm.shape[1],
+	except:
+		scaleRotate = np.around(warpMatrix[:2,:2]).astype(int)
+		perfect = np.matrix([[1,0],[0,1]])
+		if np.sum(scaleRotate==perfect) == 4:
+			warpedIm = cv2.warpAffine(movingIm, warpMatrix, (fixedIm.shape[1],
 			    fixedIm.shape[0]),flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
-	except cv2.error as e:
-		kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature="orb")
-		if goodMatches is not None:
-			match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
-			match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
+		else:
+			kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature="orb")
+			if goodMatches is not None:
+				match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
+				match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
 
-			#So according to the documentation, this funtion uses RANSAC to filter
-			M = cv2.estimateRigidTransform(match2, match1, False)
-			if M is not None:
-				warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
+				#So according to the documentation, this funtion uses RANSAC to filter
+				M = cv2.estimateRigidTransform(match2, match1, False)
+				scaleRotate = np.around(warpMatrix[:2,:2]).astype(int)
 
-			else: #If the affine transformation matrix was not able to be calculated
-				homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
-				if homography is not None:
-					warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
-				else: #If the homography matrix was not able to be calculated
-					warpedIm = userMove(fixedIm, movingIm) #User Moves the image
-	f.close()
-	sys.stdout = sys.__stdout__
+				if M is not None and np.sum(scaleRotate==perfect) == 4:
+					warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
+
 	warpedCorCoef = np.absolute(np.corrcoef(np.ravel(fixedIm), np.ravel(warpedIm)))[0,1]
 	if warpedCorCoef > 0.2:
 		registerIm = np.reshape(warpedIm, fixedIm.shape).astype(fixedIm.dtype)
-	# else:
-	# 	kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature)
-	# 	registerIm = movingIm
-	# 	if goodMatches is not None:
-	# 		match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
-	# 		match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
-    #
-	# 		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
-	# 		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None,
-	# 		#							matchesMask=mask.ravel().tolist(),flags=2)
-	# 		#goodMatchIm = cv2.drawMatches((fixedIm/256).astype(np.uint8), kp1,
-	# 		#			(movingIm/256).astype(np.uint8), kp2, goodMatches, None, flags=2)
-	# 		#cv2.imshow('Distance Filtered Match Image',
-	# 		#				cv2.resize(goodMatchIm, None, fx=0.5, fy=0.5,
-	# 		#								interpolation=cv2.INTER_AREA))
-	# 		#cv2.waitKey(0)
-    #
-	# 		#So according to the documentation, this funtion uses RANSAC to filter
-	# 		M = cv2.estimateRigidTransform(match2, match1, False)
-	# 		if M is not None:
-	# 			warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
-	# 			#print("Used Affine")
-	# 			#cv2.imshow("Overlay", cv2.resize(cv2.addWeighted(fixedIm, .5, warpedIm, .5, 0), None,
-	# 			#									 fx=0.5, fy=0.5,interpolation=cv2.INTER_AREA))
-	# 			#cv2.waitKey(0)
-    #
-	# 			warpedCorCoef = np.absolute(np.corrcoef(np.ravel(movingIm), np.ravel(warpedIm)))[0,1]
-	# 			if warpedCorCoef > 0.2:
-	# 				registerIm = np.reshape(warpedIm, movingIm.shape)
-	# 		else: #If the affine transformation matrix was not able to be calculated
-	# 			#print("Used Homography")
-	# 			homography, mask = cv2.findHomography(match2, match1, cv2.RANSAC)
-	# 			if homography is not None:
-	# 				warpedIm = cv2.warpPerspective(movingIm, homography, (movingIm.shape[1], movingIm.shape[0]))
-	# 				warpedCorCoef = np.absolute(np.corrcoef(np.ravel(movingIm), np.ravel(warpedIm)))[0,1]
-	# 				if warpedCorCoef > 0.2:
-	# 					registerIm = np.reshape(warpedIm, movingIm.shape)
+
+	if bandQC:
+		imageStack = cv2.addWeighted(fixedIm, .5, registerIm, .5, 0)
+		#imageStack = cv2.resize(imageStack, None, fx=.5, fy=.5,
+		#					interpolation=cv2.INTER_AREA)
+		while True:
+			cv2.imshow("Quality Control: Press 'n' to reject | 'r' to reset | ' ' to accept", imageStack)
+			approve = cv2.waitKey(0)
+			wasdList = [ord('w'), ord('W'), ord('a'), ord('A'), ord('s'), ord('S'),
+						ord('d'), ord('D')]
+			if approve == ord(' '):
+				break
+			elif approve == ord('n') or approve in wasdList:
+				registerIm = userMove(fixedIm, registerIm)
+				break
+			elif approve == ord('r'):
+				registerIm = userMove(fixedIm, movingIm)
+				break
+		cv2.destroyWindow("Quality Control: Press 'n' to reject | 'r' to reset | ' ' to accept")
+
 	return registerIm
 
-def stackImages(imageList, matchOrder, feature='orb', crop=True):
+def stackImages(imageList, matchOrder, preRegisterDict, feature='orb', crop=True, bandQC=False):
 	import cv2
 	import numpy as np
 	from registration.correlateImages import createCorrelation
 	from registration.correlateImages import findPairs
+	#import context
+	#from context import geoTIFF
+	import geoTIFF
 	#from correlateImages import createCorrelation
 	#from correlateImages import findPairs
 	#print(matchOrder)
 	firstImage = imageList[0][:-5] + str(int(matchOrder[0,0])) + imageList[0][-4:]
 	im1 = cv2.imread(firstImage, cv2.IMREAD_UNCHANGED)
 	height, width = im1.shape
+	im1Metadata = geoTIFF.metadataGrabber(firstImage)
+	im1band = im1Metadata['Xmp.Camera.BandName']
 	imageStack = np.zeros((height, width, len(imageList)), dtype=im1.dtype)
 	imageStack[:,:,int(matchOrder[0,0])-1] = im1
 	#Puts the first image into the respective place in the image stack.
@@ -233,10 +218,14 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 		#This variable will be stored as an array since it's already read in
 		moving = imageList[pair][:-5] + str(int(matchOrder[pair,1])) \
 				+ imageList[pair][-4:]
+		movingMetadata = geoTIFF.metadataGrabber(moving)
+		movingBand = movingMetadata['Xmp.Camera.BandName']
+		affineMatrix = preRegisterDict[(im1band+'/'+movingBand)]
 		#Defines the variable moving as the name of the image to be matched against
 		moving = cv2.imread(moving, cv2.IMREAD_UNCHANGED)
+		moving = cv2.warpAffine(moving, affineMatrix, (fixed.shape[1], fixed.shape[0]))
 		#Then reads in the image as an array
-		warped = register(fixed, moving, correlationCoef, feature)
+		warped = register(fixed, moving, correlationCoef, feature, bandQC)
 		#Registers the image and returns a warped version of the moving image
 		#Typically this will be used using an ORB Feature detector
 		#If the correlation coefficent is negative it will switch the polarity
@@ -251,9 +240,11 @@ def stackImages(imageList, matchOrder, feature='orb', crop=True):
 	matchOrder = findPairs(maxIndices, correlationMatrix)
 	bestCorrelation = matchOrder[:,-1]
 
-	if sum(bestCorrelation>.2) != bestCorrelation.size:
+	#if sum(bestCorrelation>.2) != bestCorrelation.size:
 		#Are all the correlation's greater than .2?
-		goodCorr = False
+		#print(bestCorrelation.size)
+		#print(bestCorrelation)
+		#goodCorr = False
 
 	if goodCorr is True and crop is True:
 		borderPix = 0

@@ -5,3 +5,5 @@ from .createImageStack import computeMatches
 from .createImageStack import register
 from .createImageStack import stackImages
 from .userMove import userMove
+from .preRegister import preRegister
+from registration import context

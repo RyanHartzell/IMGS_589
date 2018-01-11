@@ -53,8 +53,8 @@ def targetanalysis(csvfile,cameraResponseSR,svcdirectory,reflectanceimagedirecto
 	print(stdev)
 
 if __name__ == '__main__':
-	csvfile = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/' + 'Flight_20171109T1345_375ft_kxk8298.csv'
-	cameraresponseSR = '/cis/otherstu/gvs6104/DIRS/MonochrometerTiffs/Spectral_Response.csv'
-	svcdirectory = '/cis/otherstu/gvs6104/DIRS/20171109/SVC/'
-	reflectanceimagedirectory = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
+	csvfile = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/Flight_20171109T1230_150ft_kxk8298.csv'
+	cameraresponseSR = '/research/imgs589/imageLibrary/DIRS/MonochrometerTiffs/Spectral_Response.csv'
+	svcdirectory = '/research/imgs589/imageLibrary/DIRS/20171109/SVC/'
+	reflectanceimagedirectory = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/reflectanceproduct/'
 	targetanalysis(csvfile,cameraresponseSR,svcdirectory,reflectanceimagedirectory)

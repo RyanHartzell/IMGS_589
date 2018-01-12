@@ -236,12 +236,25 @@ if __name__ == '__main__':
     starttime = time.time()
     sys.path.append("..")
 
-    SVCdirectory = '/cis/otherstu/gvs6104/DIRS/20171109/SVC/'
-    processedimagedirectory = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/processed/'
-    missionDatafilename = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/Flight_20171109T1345_375ft_kxk8298.csv'
-    cameraresponseSR = '/cis/otherstu/gvs6104/DIRS/MonochrometerTiffs/Spectral_Response.csv'
-    reflectanceDir = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
-    imagelist = glob.glob('/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/*')    
+    #SVCdirectory = '/cis/otherstu/gvs6104/DIRS/20171109/SVC/'
+    #processedimagedirectory = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/processed/'
+    #missionDatafilename = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/Flight_20171109T1345_375ft_kxk8298.csv'
+    #cameraresponseSR = '/cis/otherstu/gvs6104/DIRS/MonochrometerTiffs/Spectral_Response.csv'
+    #reflectanceDir = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
+    #imagelist = glob.glob('/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/*') 
+
+    #Time Specific
+    processedimagedirectory = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/processed/'
+    missionDatafilename = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/Flight_20171109T1230_150ft_kxk8298.csv'
+    reflectanceDir = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/reflectanceproduct/'
+    imagelist = glob.glob('/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/geoTiff/*') 
+
+    #Date Specific
+    SVCdirectory = '/research/imgs589/imageLibrary/DIRS/20171109/SVC/'    
+    
+    #Device Specific
+    cameraresponseSR = '/research/imgs589/imageLibrary/DIRS/MonochrometerTiffs/Spectral_Response.csv'
+
     if not os.path.exists(reflectanceDir):
         os.makedirs(reflectanceDir)
     LUTdict = findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR)

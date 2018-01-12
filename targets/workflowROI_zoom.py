@@ -75,12 +75,12 @@ if tsvFilename is None:
 			sys.exit()
 
 if stepNumber is None:
-	stepNumber = 2
+	stepNumber = 1
 	#stepNumber = int(input('Type number for how many images you want to skip \n'))
 if scaleFactor is None:
 	scaleFactor = 2
 if angle is None:
-	angle = 10
+	angle = 20
 
 if startFrameNumber is None:
 	startFrameNumber = input('Type number (index) or filename (string) for which image to start at \n')

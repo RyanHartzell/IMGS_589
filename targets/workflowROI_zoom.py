@@ -5,6 +5,7 @@ import cv2
 import os
 import numpy as np
 from osgeo import gdal
+import regionGrow
 from ROIExtraction import *
 import sys
 sys.path.append("..")
@@ -57,7 +58,7 @@ scaleFactor = args.scaleFactor
 angle = args.angle
 
 if geotiffFolderName is None:
-	geotiffFolderName = filedialog.askdirectory(initialdir = "/cis/otherstu/gvs6104/DIRS/",
+	geotiffFolderName = filedialog.askdirectory(initialdir = "/research/imgs589/imageLibrary/DIRS/",
 											title="Choose the geotiff image directory")
 	if geotiffFolderName == "":
 		sys.exit()
@@ -75,7 +76,7 @@ if tsvFilename is None:
 			sys.exit()
 
 if stepNumber is None:
-	stepNumber = 1
+	stepNumber = 2
 	#stepNumber = int(input('Type number for how many images you want to skip \n'))
 if scaleFactor is None:
 	scaleFactor = 2
@@ -119,8 +120,7 @@ if type(startFrameNumber) == str:
 		startFrameNumber = 0
 
 ##Create windows outside of loop so they aren't constantly being deleted/created
-currentIm_tag = 'Current Geotiff'
-cv2.namedWindow(currentIm_tag, cv2.WINDOW_AUTOSIZE) #resize and display the image
+
 
 #zoomName = 'Zoomed region for easier point selection.'
 #cv2.namedWindow(zoomName, cv2.WINDOW_AUTOSIZE)
@@ -128,6 +128,8 @@ cv2.namedWindow(currentIm_tag, cv2.WINDOW_AUTOSIZE) #resize and display the imag
 
 ## Data to be read in once-per-flight
 times,targets,targetdescriptor = fieldData(tsvFilename)
+currentIm_tag = 'Current Geotiff'
+cv2.namedWindow(currentIm_tag, cv2.WINDOW_AUTOSIZE) #resize and display the image
 
 ##Create the textfile that the data will be written out to
 if os.path.isfile(txtDestination) == True:
@@ -147,6 +149,7 @@ with open(txtDestination, writeMode) as currentTextFile:
 
 	##START MAIN LOOP
 	currentImIndex = startFrameNumber
+	centroidList = []
 	while True:
 
 		if currentImIndex == imageCount:
@@ -155,37 +158,32 @@ with open(txtDestination, writeMode) as currentTextFile:
 			break
 
 		currentFilename = geotiffFolderName + fileNames[currentImIndex]
+
 		currentCroppedIm, displayImage = getDisplayImage(currentFilename, angle, scaleFactor)
 
-		splitIm = np.dsplit(currentCroppedIm, 5)
-		falseRE = np.dstack((splitIm[1], splitIm[2], splitIm[3]))
-		falseIR = np.dstack((splitIm[1], splitIm[2], splitIm[4]))
-		weighted = cv2.addWeighted(splitIm[0],0.2,splitIm[1],0.2,0)
-		weighted = cv2.addWeighted(weighted,0,splitIm[2],0.2,0)
-		weighted = cv2.addWeighted(weighted,0,splitIm[3],0.2,0)
-		weighted = cv2.addWeighted(weighted,0,splitIm[4],0.2,0)
+		if len(centroidList) > 0:
+			for t in range(len(centroidList)):
+				#print(centroidList[t])
+				font = cv2.FONT_HERSHEY_SIMPLEX
+				cv2.putText(displayImage, centroidList[t][1], centroidList[t][0],
+					font, 1, (0, 165, 255), 1, cv2.LINE_AA)
 
 		cv2.imshow(currentIm_tag, displayImage)
 
-		cv2.imshow("False Color [Red Edge]", falseRE/np.max(falseRE))
-		cv2.imshow("False Color [Near IR]", falseIR/np.max(falseIR))
-		cv2.imshow("Blended", weighted/np.max(weighted))
-
 		print("Do you want to get ROIs in this frame? 'w' for yes, 'a' for back, 'd' for forward.")
 		print(fileNames[currentImIndex], 'Index = ', currentImIndex,'/', imageCount)
+
 		userInput = cv2.waitKey(0)
 		if userInput == ord('w'):
 			print('Ready to accept points.')
 			print("Once you are done, enter target number with 2 digits [04], 'n' to redo.")
 
-			#get the coordinates of the ROI from the user
-			##RESIZE DISPLAY
 			pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage)
 			if pointsX is None or pointsY is None or currentTargetNumber is None:
 				continue
-			#pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag,
-			#		cv2.resize(displayImage, None, fx=scaleFactor, fy=scaleFactor,
-			#		interpolation=cv2.INTER_LANCZOS4))
+
+			partCenter = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
+			centroidList.append(((partCenter[0],partCenter[1]),currentTargetNumber))
 
 			#RESIZE DISPLAY
 			pointsX_resize = []
@@ -199,14 +197,9 @@ with open(txtDestination, writeMode) as currentTextFile:
 			pointsX = pointsX_resize
 			pointsY = pointsY_resize
 
-			#diffX = (currentGeotiff.shape[1]-displayImage.shape[1])
-			#diffY = (currentGeotiff.shape[0]-displayImage.shape[0])
-
-			#currentCroppedIm = currentGeotiff[diffY//2:(diffY//2)+diffY, diffX//2:(diffX//2)+diffX]
 			#compute the statistics that will be written out, from the ROI coords
 			maskedIm, ROI_image, mean, stdev, centroid, pointsX, pointsY = computeStats(currentCroppedIm,
 																		   currentFilename, pointsX, pointsY)
-
 			#get metadata
 			irradianceDict, frametime, altitude, resolution= micasenseRawData(currentFilename)
 			filenumber = bestSVC(frametime,currentTargetNumber,times,targets,targetdescriptor)
@@ -231,13 +224,16 @@ with open(txtDestination, writeMode) as currentTextFile:
 			str(pointsY[2]), str(pointsY[3]), '', str(filenumber)])
 
 			print('Line has been written to file.')
+			#cv2.destroyWindow(currentIm_tag)
 
 		elif userInput == ord('d'):
 			if currentImIndex + stepNumber > imageCount:
 				stepNumber = 1
 			currentImIndex += stepNumber
+			centroidList =[]
 		elif userInput == ord('a'):
 			currentImIndex += -stepNumber
+			centroidList = []
 		elif userInput == ord('t'):
 			newAngle = input("What is the new angle?")
 			try:
@@ -248,6 +244,7 @@ with open(txtDestination, writeMode) as currentTextFile:
 			newScaleFactor = input("What is the new scale factor?")
 			try:
 				scaleFactor = float(newScaleFactor)
+				centroidList = []
 			except:
 				pass
 		elif userInput == 27:

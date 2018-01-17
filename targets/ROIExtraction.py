@@ -58,12 +58,41 @@ def selectROI(mapName, im):
 	import numpy as np
 	import cv2
 	import PointsSelected
+	import sys
+	from regionGrow import regionGrow
 	#utilize 'PointsSelected' to get the search window, manual input
+
+	pointsX, pointsY = None, None
+	pointsX, pointsY = regionGrow(im)
+
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints(p)
 	original = im.copy()
-
 	while True:
+		if pointsX is not None and pointsY is not None:
+			points = np.asarray(list(zip(pointsX, pointsY)),np.int32)
+			points = points.reshape((-1,1,2))
+			im = cv2.polylines(im.copy(), [points], True, (.9, 0, 0))
+			cv2.imshow(mapName, im)
+			# cv2.imshow("Type 0 or 1 to begin the target number", lineIm)
+			# numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
+			# 			ord('6'), ord('7'), ord('8'), ord('9'), 27]
+			# response = cv2.waitKey(0)
+			# if response == ord('0') or response == ord('1'):
+			# 	print(chr(response))
+			# 	response_2 = cv2.waitKey(0)
+			# 	targetNumber = ((chr(response)) + (chr(response_2)))
+			# 	if (chr(response)) == '0':
+			# 		targetNumber = (chr(response_2))
+			# 	elif chr(response) == '1' and response_2 not in numberList:
+			# 		targetNumber = chr(response)
+			# 	elif response_2 == 27:
+			# 		sys.exit(0)
+			# 	print(targetNumber)
+			# elif response == 27:
+			# 	sys.exit(0)
+			# cv2.destroyWindow("Type 0 or 1 to begin the target number")
+			# break
 		if p.number(p) > 4:
 			p.restrict_len(p,4)
 
@@ -82,10 +111,13 @@ def selectROI(mapName, im):
 			points = points.reshape((-1,1,2))
 			im = cv2.polylines(im.copy(), [points], True, (255,0,0))
 			cv2.imshow(mapName, im)
+			pointsX, pointsY = p.x(p), p.y(p)
 
 
 		response = cv2.waitKey(100)
 		if response == ord('n'):
+			pointsX = None
+			pointsY = None
 			p.clearPoints(p)
 			cv2.imshow(mapName, original)
 			print('Clearing selected points...')
@@ -94,41 +126,42 @@ def selectROI(mapName, im):
 			if confirm == ord('n'):
 				pointsX, pointsY, targetNumber = None, None, None
 				break
-
-		# elif (response == ord('y')):
-		# 	if (p.number() == 4):
-		# 		print('Running ROI calculations...')
-		# 		break
-		# 	else:
-		# 		print('Must select 4 points!!!')
+			elif confirm == 27:
+				sys.exit(0)
 
 
 		elif response == ord('0') or response == ord('1'):
-			if (p.number(p) == 4):
+			if pointsX is not None and pointsY is not None:
 				print(chr(response))
 				response_2 = cv2.waitKey(0)
 				targetNumber = ((chr(response)) + (chr(response_2)))
-				if (chr(response)) == '0':
-					targetNumber = (chr(response_2))
+				numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
+				 			ord('6'), ord('7'), ord('8'), ord('9'), 27]
+
+				if chr(response) == '0' and response_2 not in numberList:
+					continue
+				elif (chr(response)) == '0':
+					if response_2 in numberList:
+						targetNumber = (chr(response_2))
+					else:
+						continue
+				elif response_2 == ord('n'):
+					p.clearPoints(p)
+					continue
+				elif chr(response) == '1' and response_2 not in numberList:
+				 		targetNumber = chr(response)
+				elif response == 27:
+				 	sys.exit(0)
 				print(targetNumber)
-				pointsX, pointsY = p.x(p), p.y(p)
-				#sY = p.x(p), p.y(p)
 
 				print('Running ROI calculations...')
 				break
 			else:
 				print('Must select 4 points!!!')
 
+		elif response == 27:
+			sys.exit(0)
 
-		# cv2.waitKey(100)
-
-	# draw final point
-	# im = cv2.circle(im.copy(),(p.x()[-1],p.y()[-1]), 2, (0,0,255), -1)
-	# points = np.asarray(list(zip(p.x(), p.y())), np.int32)
-	# points = points.reshape((-1,1,2))
-	# im = cv2.polylines(im.copy(), [points], True, (255,0,0))
-	# cv2.imshow(mapName, im)
-	# cv2.waitKey(100)
 
 	return pointsX, pointsY, targetNumber
 

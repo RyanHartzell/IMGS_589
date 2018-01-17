@@ -145,7 +145,7 @@ with open(txtDestination, writeMode) as currentTextFile:
 		 'Mean IR', 'Std B', 'Std G', 'Std R', 'Std RE', 'Std IR', 'Irradiance B',
 		 'Irradiance G', 'Irradiance R','Irradiance RE', 'Irradiance IR',
 		 'Centroid Coord X', 'Centroid Coord Y','Point X1','Point X2','Point X3','Point X4',
-		 'Point Y1','Point Y2','Point Y3', 'Points Y4', 'Nadir Angle','SVC filenumber'])
+		 'Point Y1','Point Y2','Point Y3', 'Point Y4', 'Nadir Angle','SVC filenumber'])
 
 	##START MAIN LOOP
 	currentImIndex = startFrameNumber

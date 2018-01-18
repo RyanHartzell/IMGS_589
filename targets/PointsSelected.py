@@ -59,8 +59,8 @@ class PointsSelected(object):
 
    @staticmethod
    def restrict_len(self, bound):
-       self.xList[:bound]
-       self.yList[:bound]
+       self._x[:bound]
+       self._y[:bound]
 
    @staticmethod
    def select_point(event,currentX,currentY,flags, params):

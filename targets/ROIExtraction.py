@@ -63,17 +63,13 @@ def selectROI(mapName, im):
 	#utilize 'PointsSelected' to get the search window, manual input
 
 	pointsX, pointsY = None, None
-	pointsX, pointsY = regionGrow(im)
+	pointsX, pointsY = regionGrow(im, mapName)
 
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints(p)
 	original = im.copy()
 	while True:
-		if pointsX is not None and pointsY is not None:
-			points = np.asarray(list(zip(pointsX, pointsY)),np.int32)
-			points = points.reshape((-1,1,2))
-			im = cv2.polylines(im.copy(), [points], True, (.9, 0, 0))
-			cv2.imshow(mapName, im)
+
 			# cv2.imshow("Type 0 or 1 to begin the target number", lineIm)
 			# numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
 			# 			ord('6'), ord('7'), ord('8'), ord('9'), 27]
@@ -94,10 +90,17 @@ def selectROI(mapName, im):
 			# cv2.destroyWindow("Type 0 or 1 to begin the target number")
 			# break
 		if p.number(p) > 4:
+			pointsX, pointsY = None, None
 			p.restrict_len(p,4)
 
 		if p.number(p) == 1:
+			pointsX, pointsY = None, None
 			im = cv2.circle(original.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			cv2.imshow(mapName, im)
+		if pointsX is not None and pointsY is not None:
+			points = np.asarray(list(zip(pointsX, pointsY)),np.int32)
+			points = points.reshape((-1,1,2))
+			im = cv2.polylines(im.copy(), [points], True, (.9, 0, 0))
 			cv2.imshow(mapName, im)
 
 		if (p.number(p) == 2) or (p.number(p) == 3):
@@ -284,16 +287,22 @@ def targetNumtoStr(targetnumber):
 		targetstring = 'Medium Gray Tri'
 	elif targetnumber == '3':
 		targetstring = 'Dark Gray Tri'
+
+
 	elif targetnumber == '4':
 		targetstring = 'Black Cal Panel'
 	elif targetnumber == '5':
 		targetstring = 'White Cal Panel'
+
+
 	elif targetnumber == '6':
 		targetstring = 'Asphalt'
 	elif targetnumber == '7':
 		targetstring = 'Grass'
 	elif targetnumber == '8':
 		targetstring = 'Concrete'
+
+
 	elif targetnumber == '9':
 		targetstring = 'Red Felt (Sun)'
 	elif targetnumber == '10':
@@ -302,10 +311,14 @@ def targetNumtoStr(targetnumber):
 		targetstring = 'Green Felt (Sun)'
 	elif targetnumber == '12':
 		targetstring = 'Brown Felt (Sun)'
+
+
 	elif targetnumber == '13':
 		targetstring = 'White Cal Panel (Shadow)'
 	elif targetnumber == '14':
 		targetstring = 'Black Cal Panel (Shadow)'
+
+
 	elif targetnumber == '15':
 		targetstring = 'Red Felt (Shadow)'
 	elif targetnumber == '16':

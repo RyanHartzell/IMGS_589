@@ -1,9 +1,11 @@
 #A method to use morphology to use a single click to get a target
 
-def regionGrow(image, mapName=None, seedPoint=None, threshVar=None):
+def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     import cv2
     import PointsSelected
     import numpy as np
+    import scipy
+    from scipy.spatial.distance import mahalanobis
 
     if image is None:
         print("No image was found, please check the path or the read in.")
@@ -51,43 +53,46 @@ def regionGrow(image, mapName=None, seedPoint=None, threshVar=None):
         #print(seedPoint)
         #print(image[seedPoint[1],seedPoint[0]])
 
-    if threshVar is None:
+    if threshMahal is None:
         if image.dtype == np.uint8:
-            threshVar = 1
+            threshMahal = 7
         elif image.dtype == np.uint16:
-            threshVar = 10
+            threshMahal = 7
         else:
-            threshVar = .1
+            threshMahal = 10
         #print("Using default threshold variance of {0}".format(threshVar))
-    #print(threshVar)
+
     thresh = np.zeros(image.shape[:2])
-    for c in range(image.shape[2]):
-        mask = np.zeros(image.shape[:2])
-        seedValue = image[seedPoint[1], seedPoint[0],c]
-        mask[((image[:,:,c] > seedValue-threshVar)&(image[:,:,c] < seedValue+threshVar))] =1
-        thresh += mask
 
-    thresh = (np.around(thresh/image.shape[2])*255).astype(np.uint8)
+    #Create the 3x3 inverse covariance matrix
+    seedArea = image[seedPoint[1]-1:seedPoint[1]+2, seedPoint[0]-1:seedPoint[0]+2]
+    flatSeed = seedArea.reshape(-1,seedArea.shape[-1])
+    V = np.cov(flatSeed.T)
+    VI = np.linalg.inv(V)
+
+    newPixels = True
+    listOfGoodPoints = [seedPoint]
+    thresh[seedPoint[1],seedPoint[0]] = 1
+    #movement is defined in xy coordinates to be consistant with the seed
+    for point in listOfGoodPoints:
+        movement = [(0,1), (1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1)]
+        for m in range(len(movement)):
+            movingPoint = (point[0]+movement[m][0], point[1]+movement[m][1])
+            inputValue = image[movingPoint[1], movingPoint[0]]
+            zscore = mahalanobis(inputValue, image[seedPoint[1],seedPoint[0]], VI)
+            if zscore < threshMahal:
+                thresh[movingPoint[1], movingPoint[0]] = 1
+                if movingPoint not in listOfGoodPoints:
+                    listOfGoodPoints.append(movingPoint)
+        listOfGoodPoints.pop(0)
 
     kernel = np.ones((2,2), np.uint8)
-    #thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-    #cv2.imshow("thresh", thresh)
-    mask = np.zeros((thresh.shape[0]+2, thresh.shape[1]+2),np.uint8)
+    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    thresh = (thresh*255).astype(np.uint8)
 
-    floodflags = 4
-    floodflags |= cv2.FLOODFILL_MASK_ONLY
-    floodflags |= (1 << 8)
+    kernel = np.ones((3,3), np.uint8)
+    floodmask = cv2.erode(thresh,kernel,iterations = 2)
 
-    num,thresh,floodmask,rect = cv2.floodFill(thresh, mask, seedPoint, 1, (10,)*3, (10,)*3, floodflags)
-    #num,thresh,floodmask,rect = cv2.floodFill(thresh, mask, seedPoint, 1)
-    floodmask = floodmask[1:floodmask.shape[0]-1, 1:floodmask.shape[1]-1]
-    kernel = np.ones((2,2), np.uint8)
-    floodmask = cv2.erode(floodmask,kernel,iterations = 3)
-    #cv2.imshow("FloodMask", floodmask.astype(np.float64))
-    #print(np.sum(floodmask))
-    #floodmask = cv2.resize(floodmask, None,fx=.95, fy=.95,interpolation=cv2.INTER_AREA)
-    #floodmask = cv2.erode(floodmask, )
     _, contours, hierarchy = cv2.findContours(floodmask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     #c = max(contours[0], key=cv2.contourArea)
     cpoints = contours[0]
@@ -99,31 +104,6 @@ def regionGrow(image, mapName=None, seedPoint=None, threshVar=None):
     x = [top[0], right[0], bot[0], left[0]]
     y = [top[1], right[1], bot[1], left[1]]
 
-    #disp = displayImage[:,:,:3].copy()
-    #points = np.asarray(list(zip(x, y)),np.int32)
-    #points = points.reshape((-1,1,2))
-    #cv2.polylines(disp, [points], True, (1, 0, 0))
-
-    #cv2.circle(disp, left, 1, (0, 0, 1), -1)
-    #cv2.circle(disp, right, 1, (0, 1, 0), -1)
-    #cv2.circle(disp, top, 1, (1, 0, 0), -1)
-    #cv2.circle(disp, bot, 1, (1, 1, 0), -1)
-    #disp = cv2.drawContours(disp, contours, -1, (0,0,1), 1)
-    #cv2.imshow("Press 'y' to accept the contours, 'n' to reject", disp)
-
-    #ans = None
-    #while ans is None:
-    #    resp = cv2.waitKey(10)
-    #    if resp == ord('y'):
-    #        ans = True
-    #    elif resp == ord('n'):
-    #        ans = False
-    #    elif resp == 27:
-    #        sys.exit(0)
-    #cv2.destroyWindow("Press 'y' to accept the contours, 'n' to reject")
-
-
-    #cv2.destroyAllWindows()
     return x, y
 
 if __name__ == '__main__':
@@ -132,12 +112,13 @@ if __name__ == '__main__':
     import time
     import numpy as np
     from osgeo import gdal
-    geotiffFilename = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0106.tiff'
+    #geotiffFilename = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0106.tiff'
+    geotiffFilename = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0020.tiff'
 
     imageStack = gdal.Open(geotiffFilename).ReadAsArray()
     imageStack = np.moveaxis(imageStack, 0, -1)
-
-    radius = 175
+    imageStack = imageStack/np.max(imageStack)
+    #radius = 175
     #imageCenter = (imageStack.shape[0]//2, imageStack.shape[1]//2)
     #iSCrop = imageStack[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
     #blue = imageStack[:,:,0]

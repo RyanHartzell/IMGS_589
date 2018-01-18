@@ -97,6 +97,7 @@ def selectROI(mapName, im):
 			pointsX, pointsY = None, None
 			im = cv2.circle(original.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
 			cv2.imshow(mapName, im)
+
 		if pointsX is not None and pointsY is not None:
 			points = np.asarray(list(zip(pointsX, pointsY)),np.int32)
 			points = points.reshape((-1,1,2))
@@ -167,15 +168,6 @@ def selectROI(mapName, im):
 
 
 	return pointsX, pointsY, targetNumber
-
-def selectZoomWindow(mapName, zoomName):
-	#mapName, (str)
-	import numpy as np
-	import cv2
-
-	# draw zoom region on RIGHT MOUSE CLICK (make separate class for this)
-
-	pass
 
 def assignTargetNumber():
 	import cv2

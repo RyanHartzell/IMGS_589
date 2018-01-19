@@ -1,6 +1,10 @@
 #A method to use morphology to use a single click to get a target
 
+<<<<<<< HEAD
 def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
+=======
+def regionGrow(image, seedPoint=None, threshVar=None):
+>>>>>>> parent of 08071ca... fixed up the region growing
     import cv2
     import PointsSelected
     import numpy as np
@@ -30,25 +34,13 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
 
     if seedPoint is None:
         if len(displayImage.shape) > 2:
-            if mapName is not None:
-                cv2.imshow(mapName, displayImage[:,:,:3])
-            else:
-                cv2.imshow("Choose Seed Point", displayImage[:,:,:3])
-
+            cv2.imshow("Choose Seed Point", displayImage[:,:,:3])
         else:
-            if mapName is not None:
-                cv2.imshow(mapName, displayImage)
-            else:
-                cv2.imshow("Choose Seed Point", displayImage)
-
-        if mapName is not None:
-            p = PointsSelected.PointsSelected(mapName, verbose=False)
-        else:
-            p = PointsSelected.PointsSelected("Choose Seed Point", verbose=False)
+            cv2.imshow("Choose Seed Point", displayImage)
+        p = PointsSelected.PointsSelected("Choose Seed Point", verbose=False)
         while p.number(p) < 1:
             cv2.waitKey(10)
-        if mapName is None:
-            cv2.destroyWindow("Choose Seed Point")
+        cv2.destroyWindow("Choose Seed Point")
         seedPoint = (p.x(p)[0], p.y(p)[0])
         #print(seedPoint)
         #print(image[seedPoint[1],seedPoint[0]])

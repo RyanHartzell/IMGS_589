@@ -69,7 +69,10 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
         movement = [(0,1), (1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1)]
         for m in range(len(movement)):
             movingPoint = (point[0]+movement[m][0], point[1]+movement[m][1])
-            inputValue = image[movingPoint[1], movingPoint[0]]
+            try:
+                inputValue = image[movingPoint[1], movingPoint[0]]
+            except:
+                continue
             zscore = mahalanobis(inputValue, image[seedPoint[1],seedPoint[0]], VI)
             if zscore < threshMahal:
                 thresh[movingPoint[1], movingPoint[0]] = 1

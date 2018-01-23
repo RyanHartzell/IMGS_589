@@ -171,7 +171,7 @@ def assignTargetNumber():
 
 def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
    #currentCroppedIm, (array)
-   #geotiffFilename, (str)
+   #geotiffFilename, (str),
 
    import numpy as np
    import cv2

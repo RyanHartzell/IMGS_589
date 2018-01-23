@@ -90,14 +90,16 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
 
     _, contours, hierarchy = cv2.findContours(floodmask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     #c = max(contours[0], key=cv2.contourArea)
-    cpoints = contours[0]
-    left = tuple(cpoints[cpoints[:, :, 0].argmin()][0])
-    right = tuple(cpoints[cpoints[:, :, 0].argmax()][0])
-    top = tuple(cpoints[cpoints[:, :, 1].argmin()][0])
-    bot = tuple(cpoints[cpoints[:, :, 1].argmax()][0])
+    x, y = None, None
+    if len(contours) > 0:
+        cpoints = contours[0]
+        left = tuple(cpoints[cpoints[:, :, 0].argmin()][0])
+        right = tuple(cpoints[cpoints[:, :, 0].argmax()][0])
+        top = tuple(cpoints[cpoints[:, :, 1].argmin()][0])
+        bot = tuple(cpoints[cpoints[:, :, 1].argmax()][0])
 
-    x = [top[0], right[0], bot[0], left[0]]
-    y = [top[1], right[1], bot[1], left[1]]
+        x = [top[0], right[0], bot[0], left[0]]
+        y = [top[1], right[1], bot[1], left[1]]
 
     return x, y
 

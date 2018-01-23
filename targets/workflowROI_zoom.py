@@ -44,7 +44,7 @@ userName = getpass.getuser()
 parser = argparse.ArgumentParser(description='Collect user inputs for ROI extraction process')
 parser.add_argument('-g', '--geotiffFolderName', type=str, help='The geotiff image directory')
 parser.add_argument('-t', '--tsvFilename', type=str, help='The filename with the .tsv')
-parser.add_argument('-s', '--stepNupreRegisterLogmber', type=int, help='How many images you want to skip')
+parser.add_argument('-s', '--stepNumber', type=int, help='How many images you want to skip')
 parser.add_argument('-r', '--scaleFactor', type=float, help='How much would you like to resize the images by for viewing default: 2')
 parser.add_argument('-a', '--angle', type=float, help='The angle away from nadir to crop the images to')
 parser.add_argument('-f', '--startFrameNumber', help='Image to start at, can be string or index (int)')
@@ -69,7 +69,7 @@ if tsvFilename is None:
     tsvDirectory = '/'.join(splitted[:6]) + os.path.sep + 'GroundDocumentation/datasheets/'
     if os.path.isfile(tsvDirectory + 'Flight_Notes.tsv'):
         tsvFilename = tsvDirectory + 'Flight_Notes.tsv'
-    else:preRegisterLog
+    else:
         tsvFilename = filedialog.askopenfilename(initialdir = tsvDirectory, title="Choose the Flight Notes [.tsv]",
             filetypes=[("Tab Seperated Values", "*.tsv"), ("Comma Seperated Values", "*.csv"),("Excel Files", "*.xlsx *.xls")])
         if tsvFilename == "":
@@ -79,13 +79,13 @@ if stepNumber is None:
     stepNumber = 2
     #stepNumber = int(input('Type number for how many images you want to skip \n'))
 if scaleFactor is None:
-    scaleFactor = 1.5preRegisterLog
+    scaleFactor = 1.5
 if angle is None:
     angle = 20
 
 if startFrameNumber is None:
     startFrameNumber = input('Type number (index) or filename (string) for which image to start at \n')
-    try:preRegisterLog
+    try:
         startFrameNumber = int(startFrameNumber) #this will only work (convert to int) if it is an index
     except Exception:
         pass
@@ -118,7 +118,7 @@ if type(startFrameNumber) == str:
         startFrameNumber = int(imageNameDict[startFrameNumber])
     except:
         startFrameNumber = 0
-preRegisterLog
+
 ##Create windows outside of loop so they aren't constantly being deleted/created
 
 
@@ -151,7 +151,6 @@ with open(txtDestination, writeMode) as currentTextFile:
     currentImIndex = startFrameNumber
     centroidList = []
     while True:
-preRegisterLog
         if currentImIndex == imageCount:
             print('You have reached the end of the imagery. Nice job.')
             #print('You can find the csv file at:' + txtDestination)
@@ -215,8 +214,7 @@ preRegisterLog
 
             writer.writerow([currentTargetNumber, fileNames[currentImIndex],
             '', resolution, altitude, str(mean[0]), str(mean[1]), str(mean[2]),
-            str(mean[3]), str(mean[4]), str(stdev[0]		os.chmod(preRegisterLog, 0o775)
-), str(stdev[1]), str(stdev[2]),
+            str(mean[3]), str(mean[4]), str(stdev[0]), str(stdev[1]), str(stdev[2]),
             str(stdev[3]), str(stdev[4]), str(irradianceDict[1]), str(irradianceDict[2]),
             str(irradianceDict[3]), str(irradianceDict[4]), str(irradianceDict[5]),
             str(centroid[0]), str(centroid[1]), str(pointsX[0]), str(pointsX[1]),

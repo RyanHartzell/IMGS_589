@@ -80,7 +80,6 @@ sampleImageDirectory = '/'.join(splitted[:6]) + os.path.sep + 'GroundDocumentati
 sampleImage = sorted(glob.glob(sampleImageDirectory+'TargetNumbers*'))
 if len(sampleImage) > 0:
     targetImage = cv2.imread(sampleImage[0], cv2.IMREAD_UNCHANGED)
-    print(targetImage.shape)
     targetImage = cv2.resize(targetImage, None,
             fx=.75, fy=.75,interpolation=cv2.INTER_AREA)
     cv2.imshow("Sample Image", targetImage)

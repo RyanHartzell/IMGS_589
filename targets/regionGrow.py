@@ -55,6 +55,7 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     flatSeed = seedArea.reshape(-1,seedArea.shape[-1])
     V = np.cov(flatSeed.T)
     try:
+        #THIS DOES NOT WORK FOR TARGETS THAT ARE SATURATED
         VI = np.linalg.inv(V)
     except:
         print("Seed did not grow, please select points as usual.")

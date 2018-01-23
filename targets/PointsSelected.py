@@ -59,14 +59,9 @@ class PointsSelected(object):
 
    @staticmethod
    def restrict_len(self, bound):
-<<<<<<< HEAD
        self._x = self._x[:bound]
        self._y = self._y[:bound]
        self._points = self._points[:bound]
-=======
-       self.xList[:bound]
-       self.yList[:bound]
->>>>>>> parent of 08071ca... fixed up the region growing
 
    @staticmethod
    def select_point(event,currentX,currentY,flags, params):

@@ -63,41 +63,19 @@ def selectROI(mapName, im):
 	#utilize 'PointsSelected' to get the search window, manual input
 
 	pointsX, pointsY = None, None
-	pointsX, pointsY = regionGrow(im)
+	pointsX, pointsY = regionGrow(im, mapName)
 
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints(p)
 	original = im.copy()
 	while True:
-		if pointsX is not None and pointsY is not None:
-			points = np.asarray(list(zip(pointsX, pointsY)),np.int32)
-			points = points.reshape((-1,1,2))
-			im = cv2.polylines(im.copy(), [points], True, (.9, 0, 0))
-			cv2.imshow(mapName, im)
-			# cv2.imshow("Type 0 or 1 to begin the target number", lineIm)
-			# numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
-			# 			ord('6'), ord('7'), ord('8'), ord('9'), 27]
-			# response = cv2.waitKey(0)
-			# if response == ord('0') or response == ord('1'):
-			# 	print(chr(response))
-			# 	response_2 = cv2.waitKey(0)
-			# 	targetNumber = ((chr(response)) + (chr(response_2)))
-			# 	if (chr(response)) == '0':
-			# 		targetNumber = (chr(response_2))
-			# 	elif chr(response) == '1' and response_2 not in numberList:
-			# 		targetNumber = chr(response)
-			# 	elif response_2 == 27:
-			# 		sys.exit(0)
-			# 	print(targetNumber)
-			# elif response == 27:
-			# 	sys.exit(0)
-			# cv2.destroyWindow("Type 0 or 1 to begin the target number")
-			# break
 
 		if p.number(p) > 4:
+			pointsX, pointsY = None, None
 			p.restrict_len(p,4)
 
 		if p.number(p) == 1:
+			pointsX, pointsY = None, None
 			im = cv2.circle(original.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
 			cv2.imshow(mapName, im)
 

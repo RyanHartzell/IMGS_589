@@ -1,10 +1,6 @@
 #A method to use morphology to use a single click to get a target
 
-<<<<<<< HEAD
 def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
-=======
-def regionGrow(image, seedPoint=None, threshVar=None):
->>>>>>> parent of 08071ca... fixed up the region growing
     import cv2
     import time
     import PointsSelected
@@ -16,33 +12,28 @@ def regionGrow(image, seedPoint=None, threshVar=None):
         print("No image was found, please check the path or the read in.")
         sys.exit(1)
     displayImage = image.copy()
-    #elif len(image.shape) > 2:
-    #    displayImage = np.zeros_like(image,dtype=np.float64)
-    #    for channel in range(image.shape[2]):
-    #        displayImage[:,:,channel] = image[:,:,channel]/np.max(image[:,:,channel])
-    #else:
-    #    displayImage = image/np.max(image)
-
-    # windowName = "Sobel"
-    #
-    # if windowName == "Sobel":
-    #     #Sobel works on color images, just does it by layer
-    #     sobelx = np.absolute(cv2.Sobel(displayImage,cv2.CV_64F,1,0,ksize=3))
-    #     sobely = np.absolute(cv2.Sobel(displayImage,cv2.CV_64F,0,1,ksize=3))
-    #     gradient = sobely*sobelx
-    # elif windowName == "Laplacian":
-    #     gradient = cv2.Laplacian(displayImage, cv2.CV_64F)
 
     if seedPoint is None:
-        print("Waiting for seed point selection")
         if len(displayImage.shape) > 2:
-            cv2.imshow("Choose Seed Point", displayImage[:,:,:3])
+            if mapName is not None:
+                cv2.imshow(mapName, displayImage[:,:,:3])
+            else:
+                cv2.imshow("Choose Seed Point", displayImage[:,:,:3])
         else:
-            cv2.imshow("Choose Seed Point", displayImage)
-        p = PointsSelected.PointsSelected("Choose Seed Point", verbose=False)
+            if mapName is not None:
+                cv2.imshow(mapName, displayImage)
+            else:
+                cv2.imshow("Choose Seed Point", displayImage)
+
+        if mapName is not None:
+            p = PointsSelected.PointsSelected(mapName, verbose=False)
+        else:
+            p = PointsSelected.PointsSelected("Choose Seed Point", verbose=False)
+
         while p.number(p) < 1:
             cv2.waitKey(10)
-        cv2.destroyWindow("Choose Seed Point")
+        if mapName is None:
+            cv2.destroyWindow("Choose Seed Point")
         seedPoint = (p.x(p)[0], p.y(p)[0])
         #print(seedPoint)
         #print(image[seedPoint[1],seedPoint[0]])

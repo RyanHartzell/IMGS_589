@@ -39,14 +39,14 @@ def getDisplayImage(geotiffFilename, angle=10, scaleFactor=2):
 	displayImage = cv2.resize(displayImage, None,
 			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
 
-	if displayImage.shape[1] > screenWidth:
-		scaleFactor = (screenWidth/displayImage.shape[1])*.9
-		displayImage = cv2.resize(displayImage, None,
-			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
-	if displayImage.shape[0] > screenHeight:
-		scaleFactor = (screenHeight/displayImage.shape[0])*.9
-		displayImage = cv2.resize(displayImage, None,
-			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
+	# if displayImage.shape[1] > screenWidth:
+	# 	scaleFactor = (screenWidth/displayImage.shape[1])*.9
+	# 	displayImage = cv2.resize(displayImage, None,
+	# 		fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
+	# if displayImage.shape[0] > screenHeight:
+	# 	scaleFactor = (screenHeight/displayImage.shape[0])*.9
+	# 	displayImage = cv2.resize(displayImage, None,
+	# 		fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
 
 
 	#displayImage = ((displayImage/np.max(displayImage))*255).astype(np.uint8)
@@ -89,6 +89,7 @@ def selectROI(mapName, im):
 			# 	sys.exit(0)
 			# cv2.destroyWindow("Type 0 or 1 to begin the target number")
 			# break
+
 		if p.number(p) > 4:
 			pointsX, pointsY = None, None
 			p.restrict_len(p,4)
@@ -189,43 +190,51 @@ def assignTargetNumber():
 
 
 def computeStats(currentCroppedIm, geotiffFilename, pointsX, pointsY):
-	#currentCroppedIm, (array)
-	#geotiffFilename, (str)
+   #currentCroppedIm, (array)
+   #geotiffFilename, (str)
 
-	import numpy as np
-	import cv2
-	from osgeo import gdal
+   import numpy as np
+   import cv2
+   from osgeo import gdal
 
-	#Create poly mask
-	mask = np.zeros((currentCroppedIm.shape[0], currentCroppedIm.shape[1]))
-	polyMaskCoords = np.asarray(list(zip(pointsX, pointsY)),dtype=np.int32)
-	cv2.fillConvexPoly(mask, polyMaskCoords, 1.0)
+   #Create poly mask
+   #mask = np.zeros((currentCroppedIm.shape[0], currentCroppedIm.shape[1]))
+   #polyMaskCoords = np.asarray(list(zip(pointsX, pointsY)),dtype=np.int32)
+   #cv2.fillConvexPoly(mask, polyMaskCoords, 1.0)
 
-	#apply the single channel mask to each of the five bands in 'currentCroppedIm'
-	mask[np.where(mask == 0)] = np.nan
-	#mask = mask.astype(currentCroppedIm.dtype)
+   #apply the single channel mask to each of the five bands in 'currentCroppedIm'
+   #mask[np.where(mask == 0)] = np.nan
+   #mask = mask.astype(currentCroppedIm.dtype)
 
+   #ROI_image = mask * currentCroppedIm.T
+   #ROI_image = np.dstack(((mask * currentCroppedIm[:,:,0]), (mask * currentCroppedIm[:,:,1]), (mask * currentCroppedIm[:,:,2]), (mask * currentCroppedIm[:,:,3]), (mask * currentCroppedIm[:,:,4])))
+   #calculate statistics
+   mean = []
+   stdev = []
+   #for i in [0, 1, 2, 3, 4]:
+   #	mean.append(np.nanmean(ROI_image[:,:,i]))
+   #	stdev.append(np.nanstd(ROI_image[:,:,i]))
 
-	#ROI_image = mask * currentCroppedIm.T
-	ROI_image = np.dstack(((mask * currentCroppedIm[:,:,0]), (mask * currentCroppedIm[:,:,1]), (mask * currentCroppedIm[:,:,2]), (mask * currentCroppedIm[:,:,3]), (mask * currentCroppedIm[:,:,4])))
+   #calculate centroid
+   orignalImage = gdal.Open(geotiffFilename).ReadAsArray()
+   orignalImage = np.moveaxis(orignalImage, 0, -1)
+   #print(pointsX, orignalImage.shape[1], currentCroppedIm.shape[1])
+   #print(pointsY, orignalImage.shape[0], currentCroppedIm.shape[0])
+   pointsX = np.array(pointsX)+orignalImage.shape[1]//2-currentCroppedIm.shape[1]//2
+   pointsY = np.array(pointsY)+orignalImage.shape[0]//2-currentCroppedIm.shape[0]//2
 
-	#calculate statistics
-	mean = []
-	stdev = []
-	for i in [0, 1, 2, 3, 4]:
-		mean.append(np.nanmean(ROI_image[:,:,i]))
-		stdev.append(np.nanstd(ROI_image[:,:,i]))
+   mask = np.zeros((orignalImage.shape[0], orignalImage.shape[1]))
+   #print(mask.shape)
+   cv2.fillConvexPoly(mask, np.asarray(list(zip(pointsX,pointsY)), dtype=np.int32),1.0)
+   mask[np.where(mask==0)]= np.nan
+   mask = np.repeat(mask[:,:,np.newaxis], orignalImage.shape[2], axis=2)
+   maskedImage = orignalImage*mask
+   for i in range(orignalImage.shape[2]):
+      mean.append(np.nanmean(maskedImage[:,:,i]))
+      stdev.append(np.nanstd(maskedImage[:,:,i]))
+   centroid = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
 
-	#calculate centroid
-	orignalImage = gdal.Open(geotiffFilename).ReadAsArray()
-	orignalImage = np.moveaxis(orignalImage, 0, -1)
-	#print(pointsX, orignalImage.shape[1], currentCroppedIm.shape[1])
-	#print(pointsY, orignalImage.shape[0], currentCroppedIm.shape[0])
-	pointsX = np.array(pointsX)+orignalImage.shape[1]//2-currentCroppedIm.shape[1]//2
-	pointsY = np.array(pointsY)+orignalImage.shape[0]//2-currentCroppedIm.shape[0]//2
-	centroid = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
-
-	return mask, ROI_image, mean, stdev, centroid , pointsX, pointsY
+   return mask, maskedImage, mean, stdev, centroid , pointsX, pointsY
 
 def micasenseRawData(geotiffFilename):
 	from geoTIFF import metadataReader

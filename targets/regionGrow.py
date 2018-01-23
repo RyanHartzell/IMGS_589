@@ -2,6 +2,7 @@
 
 def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     import cv2
+    import time
     import PointsSelected
     import numpy as np
     import scipy
@@ -29,6 +30,7 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     #     gradient = cv2.Laplacian(displayImage, cv2.CV_64F)
 
     if seedPoint is None:
+        print("Waiting for seed point selection")
         if len(displayImage.shape) > 2:
             if mapName is not None:
                 cv2.imshow(mapName, displayImage[:,:,:3])
@@ -62,17 +64,23 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
             threshMahal = 10
         #print("Using default threshold variance of {0}".format(threshVar))
 
+    print("Growing region based on seed point, be paitent for 2 seconds please")
     thresh = np.zeros(image.shape[:2])
 
     #Create the 3x3 inverse covariance matrix
     seedArea = image[seedPoint[1]-1:seedPoint[1]+2, seedPoint[0]-1:seedPoint[0]+2]
     flatSeed = seedArea.reshape(-1,seedArea.shape[-1])
     V = np.cov(flatSeed.T)
-    VI = np.linalg.inv(V)
+    try:
+        VI = np.linalg.inv(V)
+    except:
+        print("Seed did not grow, please select points as usual.")
+        return None, None
 
     newPixels = True
     listOfGoodPoints = [seedPoint]
     thresh[seedPoint[1],seedPoint[0]] = 1
+    startTime = time.time()
     #movement is defined in xy coordinates to be consistant with the seed
     for point in listOfGoodPoints:
         movement = [(0,1), (1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1)]
@@ -84,6 +92,10 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
                 thresh[movingPoint[1], movingPoint[0]] = 1
                 if movingPoint not in listOfGoodPoints:
                     listOfGoodPoints.append(movingPoint)
+        elapsedTime = time.time() - startTime
+        if elapsedTime > 2:
+            #If region growing takes longer than 5 seconds break
+            break
         listOfGoodPoints.pop(0)
 
     kernel = np.ones((2,2), np.uint8)

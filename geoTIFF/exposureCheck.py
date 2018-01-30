@@ -30,15 +30,20 @@ for image in imagelist:
 	isoList.append(int(iso))
 
 	n += 1
-	
-plt.hist(exposureList,bins=500)
-plt.title('Exposure Histogram on {}'.format(folderlocation.split('Missions/')[1]))
-plt.xlabel('Exposure Numerator (Exposure = Exposure Numerator/1000000)')
-plt.ylabel('Image Count')
-plt.show()
 
-plt.hist(isoList,bins=100)
-plt.title('ISO Histogram on {}'.format(folderlocation.split('Missions/')[1]))
-plt.xlabel('ISO')
-plt.ylabel('Image Count')
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(121)
+ax1.hist(exposureList,bins=500)
+fig1.suptitle('Exposure Histogram on {}'.format(folderlocation.split('Missions/')[1]))
+ax1.set_xlabel('Exposure Numerator (Exposure = Exposure Numerator/1000000)')
+ax1.set_ylabel('Image Count')
+#plt.show()
+
+#fig2 = plt.figure()
+ax2 = fig1.add_subplot(122)
+ax2.hist(isoList,bins=100)
+#ax2.set_title('ISO Histogram on {}'.format(folderlocation.split('Missions/')[1]))
+ax2.set_xlabel('ISO')
+ax2.set_ylabel('Image Count')
+
 plt.show()

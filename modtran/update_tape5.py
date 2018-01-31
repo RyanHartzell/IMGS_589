@@ -183,7 +183,7 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
 
 if __name__ == '__main__':
 
-   import radiometry.modtran
+   #import radiometry.modtran
    import time
 
    home = os.path.expanduser('~')
@@ -238,7 +238,8 @@ if __name__ == '__main__':
          os.system('/dirs/bin/modtran4' + '> /dev/null 2>&1')
          print('Elapsed time = {0} [s]'.format(time.time() - startTime))
 
-         tape7 = radiometry.modtran.read_tape7(tape7Filename)
+         #tape7 = radiometry.modtran.read_tape7(tape7Filename)
+         tape7 = read_tape7(tape7Filename)
 
          downwelledComponent = \
             tape7['sol scat'] * \

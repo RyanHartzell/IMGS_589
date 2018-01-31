@@ -7,3 +7,4 @@ from .ROIExtraction import fieldData
 from .ROIExtraction import targetStrtoNum
 from .PointsSelected import PointsSelected
 from .regionGrow import regionGrow
+from .enterImage import enterImage

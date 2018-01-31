@@ -53,7 +53,7 @@ def getDisplayImage(geotiffFilename, angle=10, scaleFactor=2):
 	displayImage = displayImage/np.max(displayImage)
 	return imageStack_crop, displayImage
 
-def selectROI(mapName, im):
+def selectROI(mapName, im, point=None):
 	#mapName, (str)
 	import numpy as np
 	import cv2
@@ -63,7 +63,7 @@ def selectROI(mapName, im):
 	#utilize 'PointsSelected' to get the search window, manual input
 
 	pointsX, pointsY = None, None
-	pointsX, pointsY = regionGrow(im, mapName)
+	pointsX, pointsY = regionGrow(im, mapName=mapName, seedPoint=point)
 
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints(p)
@@ -115,26 +115,39 @@ def selectROI(mapName, im):
 				sys.exit(0)
 
 
-		elif response == ord('0') or response == ord('1'):
+		#elif response == ord('0') or (response == ord('1')) or (response == 176) or (response == 177):
+		elif response in {ord('0'), ord('1'), 176, 177}:
+
+			numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
+					ord('6'), ord('7'), ord('8'), ord('9'), 27]
+			otherDict = {176:0, 177:1, 178:2, 179:3, 180:4, 181:5, 182:6,
+					183:7, 184:8, 185:9}
+
 			if pointsX is not None and pointsY is not None:
 				print(chr(response))
 				response_2 = cv2.waitKey(0)
-				targetNumber = ((chr(response)) + (chr(response_2)))
-				numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
-				 			ord('6'), ord('7'), ord('8'), ord('9'), 27]
+				#targetNumber = ((chr(response)) + (chr(response_2)))
 
 				if chr(response) == '0' and response_2 not in numberList:
+					print("Not a valid number")
 					continue
-				elif (chr(response)) == '0':
+
+				elif (chr(response)) == '0' or otherDict[response] == 0:
 					if response_2 in numberList:
 						targetNumber = (chr(response_2))
-					else:
-						continue
+					elif response_2 in otherDict.keys():
+						targetNumber = str(otherDict[response_2])
+
+				elif chr(response) == '1' or otherDict[response] == 1:
+					if response_2 in numberList:
+				 		targetNumber = '1' + chr(response_2)
+					elif response_2 in otherDict.keys():
+						targetNumber = '1'+ str(otherDict[response2])
+
 				elif response_2 == ord('n'):
 					p.clearPoints(p)
 					continue
-				elif chr(response) == '1' and response_2 not in numberList:
-				 		targetNumber = chr(response)
+
 				elif response == 27:
 				 	sys.exit(0)
 				print(targetNumber)

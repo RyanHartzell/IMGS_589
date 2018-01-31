@@ -14,6 +14,7 @@ import glob
 import csv
 import argparse
 import getpass
+from enterImage import enterImage
 import tkinter
 from tkinter import filedialog, ttk
 root = tkinter.Tk()
@@ -182,12 +183,13 @@ with open(txtDestination, writeMode) as currentTextFile:
         print("Do you want to get ROIs in this frame? 'w' for yes, 'a' for back, 'd' for forward.")
         print(fileNames[currentImIndex], 'Index = ', currentImIndex,'/', imageCount)
 
-        userInput = cv2.waitKey(0)
+        #userInput = cv2.waitKey(0)
+        userInput, point = enterImage(currentIm_tag)
         if userInput == ord('w'):
             print('Ready to accept points.')
             print("Once you are done, enter target number with 2 digits [04], 'n' to redo.")
 
-            pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage)
+            pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage, point)
             if pointsX is None or pointsY is None or currentTargetNumber is None:
                 continue
             partCenter = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]
@@ -220,7 +222,7 @@ with open(txtDestination, writeMode) as currentTextFile:
             #'Irradiance R','Irradiance RE', 'Irradiance IR',
             #'Centroid Coord X', 'Centroid Coord Y','Point X1','Point X2',
             #'Point X3','Point X4','Point Y1','Point Y2',
-            #'Point Y3', 'Points Y4', 'Nadir Angle','SVC filenumber'
+            #'Point YIncrementWheel3', 'Points Y4', 'Nadir Angle','SVC filenumber'
 
             writer.writerow([currentTargetNumber, fileNames[currentImIndex],
             '', resolution, altitude, str(mean[0]), str(mean[1]), str(mean[2]),

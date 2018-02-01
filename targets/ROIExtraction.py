@@ -120,8 +120,10 @@ def selectROI(mapName, im, point=None):
 
 			numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
 					ord('6'), ord('7'), ord('8'), ord('9'), 27]
-			otherDict = {176:0, 177:1, 178:2, 179:3, 180:4, 181:5, 182:6,
-					183:7, 184:8, 185:9}
+					
+			otherDict = {ord('0'):0, ord('1'):1,ord('2'):2, ord('3'):3, ord('4'):4, ord('5'):5,
+					ord('6'):6, ord('7'):7, ord('8'):8, ord('9'):9, 27:27, 176:0,
+					177:1, 178:2, 179:3, 180:4, 181:5, 182:6, 183:7, 184:8, 185:9}
 
 			if pointsX is not None and pointsY is not None:
 				print(chr(response))

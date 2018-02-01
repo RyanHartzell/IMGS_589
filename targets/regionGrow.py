@@ -47,41 +47,66 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
             threshMahal = 10
         #print("Using default threshold variance of {0}".format(threshVar))
 
+    #eightBit = (displayImage*255).astype(np.uint8)
+    sX = np.absolute(cv2.Sobel(displayImage, cv2.CV_64F, 1,0, ksize=5))
+    sY = np.absolute(cv2.Sobel(displayImage, cv2.CV_64F, 0,1, ksize=5))
+    sobel = sX*sY
+    #image = sobel
+    # cv2.circle(image,seedPoint, 2, (1,1,1), -1)
+    # cv2.imshow("Image", image)
+    # cv2.waitKey(0)
+
     print("Growing region based on seed point, be paitent for 2 seconds please")
     thresh = np.zeros(image.shape[:2])
 
     #Create the 3x3 inverse covariance matrix
     seedArea = image[seedPoint[1]-1:seedPoint[1]+2, seedPoint[0]-1:seedPoint[0]+2]
     flatSeed = seedArea.reshape(-1,seedArea.shape[-1])
+
     V = np.cov(flatSeed.T)
-    try:
+    saturated = False
+    if np.sum(V) == 0:
+        saturated=True
+        print("The seed area has no variance per band")
+    #try:
+    if saturated is False:
         #THIS DOES NOT WORK FOR TARGETS THAT ARE SATURATED
         VI = np.linalg.inv(V)
-    except:
-        print("Seed did not grow, please select points as usual.")
-        return None, None
+    #except:
+    #    print("Seed did not grow, please select points as usual.")
+    #    return None, None
+
 
     newPixels = True
     listOfGoodPoints = [seedPoint]
     thresh[seedPoint[1],seedPoint[0]] = 1
     startTime = time.time()
-    #movement is defined in xy coordinates to be consistant with the seed
+    #movement is defined in xy coordinates to be coimageStacknsistant with the seed
     for point in listOfGoodPoints:
         movement = [(0,1), (1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1)]
         for m in range(len(movement)):
             movingPoint = (point[0]+movement[m][0], point[1]+movement[m][1])
+            #cv2.circle(image,movingPoint, 2, (1,1,1), -1)
+            #cv2.imshow("Image", image)
+            #cv2.waitKey(1)
             try:
                 inputValue = image[movingPoint[1], movingPoint[0]]
             except:
                 continue
-            zscore = mahalanobis(inputValue, image[seedPoint[1],seedPoint[0]], VI)
-            if zscore < threshMahal:
-                thresh[movingPoint[1], movingPoint[0]] = 1
-                if movingPoint not in listOfGoodPoints:
-                    listOfGoodPoints.append(movingPoint)
+            if saturated is False:
+                zscore = mahalanobis(inputValue, image[seedPoint[1],seedPoint[0]], VI)
+                if zscore < threshMahal:
+                    thresh[movingPoint[1], movingPoint[0]] = 1
+                    if movingPoint not in listOfGoodPoints:
+                        listOfGoodPoints.append(movingPoint)
+            else:
+                if inputValue == image[seedPoint[1], seedPoint[0]]:
+                    thresh[movingPoint[1], movingPoint[0]] = 1
+                    if movingPoint not in listOfGoodPoints:
+                        listOfGoodPoints.append(movingPoint)
         elapsedTime = time.time() - startTime
         if elapsedTime > 2:
-            #If region growing takes longer than 5 seconds break
+            #If region growing takes longer thanimageStack 5 seconds break
             break
         listOfGoodPoints.pop(0)
 
@@ -104,6 +129,7 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
 
         x = [top[0], right[0], bot[0], left[0]]
         y = [top[1], right[1], bot[1], left[1]]
+    print("Completed Region Growing")
 
     return x, y
 
@@ -118,11 +144,19 @@ if __name__ == '__main__':
 
     imageStack = gdal.Open(geotiffFilename).ReadAsArray()
     imageStack = np.moveaxis(imageStack, 0, -1)
-    imageStack = imageStack/np.max(imageStack)
+    #imageStack = imageStack/np.max(imageStack)
+    rgb = imageStack[:,:,:3]
+    rgb = rgb/np.max(rgb)
+    mapName = "Test Image"
     #radius = 175
     #imageCenter = (imageStack.shape[0]//2, imageStack.shape[1]//2)
     #iSCrop = imageStack[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
     #blue = imageStack[:,:,0]
     #imageStack= cv2.resize(iSCrop, None,fx=2, fy=2,interpolation=cv2.INTER_AREA)
     #blue = blue/np.max(blue)
-    morphology = regionGrow(imageStack, seedPoint=None)
+    x, y = regionGrow(rgb, mapName, seedPoint=None)
+    points = np.asarray(list(zip(x, y)),np.int32)
+    points = points.reshape((-1,1,2))
+    rgb = cv2.polylines(rgb.copy(), [points], True, (.9, 0, 0))
+    cv2.imshow(mapName, rgb)
+    cv2.waitKey(0)

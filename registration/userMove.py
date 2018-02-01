@@ -63,6 +63,7 @@ def userMove(fixedIm, movingIm, matrix=False, resize=False):
         return movingImage, affineMatrix
 
     cv2.destroyWindow("Stacked Image: WASD (SHIFT x5) | ' ' to accept | ESC to skip")
+    cv2.destroyAllWindows()
     return movingImage
 
 if __name__ == "__main__":

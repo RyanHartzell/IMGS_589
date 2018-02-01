@@ -71,7 +71,10 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     #try:
     if saturated is False:
         #THIS DOES NOT WORK FOR TARGETS THAT ARE SATURATED
-        VI = np.linalg.inv(V)
+        try:
+            VI = np.linalg.inv(V)
+        except:
+            saturated = True
     #except:
     #    print("Seed did not grow, please select points as usual.")
     #    return None, None

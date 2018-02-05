@@ -66,8 +66,8 @@ if geotiffFolderName is None:
     else:
         geotiffFolderName = geotiffFolderName + os.path.sep
 
+splitted = geotiffFolderName.split('/')
 if tsvFilename is None:
-    splitted = geotiffFolderName.split('/')
     tsvDirectory = '/'.join(splitted[:6]) + os.path.sep + 'GroundDocumentation/datasheets/'
     if os.path.isfile(tsvDirectory + 'Flight_Notes.tsv'):
         tsvFilename = tsvDirectory + 'Flight_Notes.tsv'

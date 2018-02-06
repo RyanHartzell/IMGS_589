@@ -48,9 +48,9 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
         #print("Using default threshold variance of {0}".format(threshVar))
 
     #eightBit = (displayImage*255).astype(np.uint8)
-    sX = np.absolute(cv2.Sobel(displayImage, cv2.CV_64F, 1,0, ksize=5))
-    sY = np.absolute(cv2.Sobel(displayImage, cv2.CV_64F, 0,1, ksize=5))
-    sobel = sX*sY
+    #sX = np.absolute(cv2.Sobel(displayImage, cv2.CV_64F, 1,0, ksize=5))
+    #sY = np.absolute(cv2.Sobel(displayImage, cv2.CV_64F, 0,1, ksize=5))
+    #sobel = sX*sY
     #image = sobel
     # cv2.circle(image,seedPoint, 2, (1,1,1), -1)
     # cv2.imshow("Image", image)
@@ -65,7 +65,7 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
 
     V = np.cov(flatSeed.T)
     saturated = False
-    if np.sum(V) == 0:
+    if np.sum(V) == 0 or np.sum(V) == 1:
         saturated=True
         print("The seed area has no variance per band")
     #try:
@@ -83,6 +83,7 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     newPixels = True
     listOfGoodPoints = [seedPoint]
     thresh[seedPoint[1],seedPoint[0]] = 1
+    seedValue = image[seedPoint[1], seedPoint[0]]
     startTime = time.time()
     #movement is defined in xy coordinates to be coimageStacknsistant with the seed
     for point in listOfGoodPoints:
@@ -103,7 +104,8 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
                     if movingPoint not in listOfGoodPoints:
                         listOfGoodPoints.append(movingPoint)
             else:
-                if inputValue == image[seedPoint[1], seedPoint[0]]:
+                if np.array_equal(inputValue, seedValue):
+                #if inputValue == seedValue:
                     thresh[movingPoint[1], movingPoint[0]] = 1
                     if movingPoint not in listOfGoodPoints:
                         listOfGoodPoints.append(movingPoint)

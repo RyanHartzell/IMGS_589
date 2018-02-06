@@ -14,6 +14,8 @@ class PointsSelected(object):
       self._x = []
       self._y = []
       self._points = []
+      self._rclick = False
+      self._mclick = False
 
       #cv.SetMouseCallback(self._windowName, self._on_mouse, 0)
       cv2.setMouseCallback(self._windowName, self.select_point, (self._windowID, self))
@@ -51,6 +53,18 @@ class PointsSelected(object):
        return self._points
 
    @staticmethod
+   def rclick(self):
+       return self._rclick
+
+   @staticmethod
+   def mclick(self):
+       return self._mclick
+
+   @staticmethod
+   def resetMclick(self):
+      self._mclick = False
+
+   @staticmethod
    def number(self):
       if len(self._x) != len(self._y):
           msg = "Length of x and y not equal!"
@@ -69,10 +83,16 @@ class PointsSelected(object):
       if event == cv2.EVENT_LBUTTONDOWN:
          if _verbose:
             print('Window: %i - (x,y) = (%d,%d)' %
-                    (params[0], currentX, currentY))
+               (params[0], currentX, currentY))
          params[1]._points.append((currentX,currentY))
          params[1]._x.append(currentX)
          params[1]._y.append(currentY)
+      elif event == cv2.EVENT_RBUTTONDOWN:
+         params[1]._rclick = True
+      elif event == cv2.EVENT_MBUTTONDOWN:
+         params[1]._mclick = True
+
+
 
    @staticmethod
    def clearPoints(self):

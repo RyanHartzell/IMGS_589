@@ -141,26 +141,33 @@ def register(fixedIm, movingIm, corCoef, feature, bandQC=False):
 	warpedIm, registerIm = movingIm, movingIm
 	warpMatrix = np.eye(2,3, dtype=np.float32)
 	warpedCorCoef = 0
+	perfect = np.matrix([[1,0],[0,1]])
+
 	try:
 		cc, warpMatrix = cv2.findTransformECC(fixedIm.astype(np.float32),
                 featureMovingIm.astype(np.float32), warpMatrix, cv2.MOTION_EUCLIDEAN)
-	except:
+
+		translate = np.around(warpMatrix[:2,2]).astype(int)
+		small = True
+		for t in translate:
+			if np.absolute(t) > 5:
+				small = False
+
 		scaleRotate = np.around(warpMatrix[:2,:2]).astype(int)
-		perfect = np.matrix([[1,0],[0,1]])
-		if np.sum(scaleRotate==perfect) == 4:
+		if np.sum(scaleRotate==perfect) == 4 and small is True:
 			warpedIm = cv2.warpAffine(movingIm, warpMatrix, (fixedIm.shape[1],
 			    fixedIm.shape[0]),flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP)
-		else:
-			kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature="orb")
-			if goodMatches is not None:
-				match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
-				match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
+	except:
+		kp1, kp2, goodMatches = computeMatches(fixedIm, featureMovingIm, feature="orb")
+		if goodMatches is not None:
+			match1 = np.array([kp1[i.queryIdx].pt for i in goodMatches], dtype=np.float32)
+			match2 = np.array([kp2[i.trainIdx].pt for i in goodMatches], dtype=np.float32)
 
-				#So according to the documentation, this funtion uses RANSAC to filter
-				M = cv2.estimateRigidTransform(match2, match1, False)
-				scaleRotate = np.around(warpMatrix[:2,:2]).astype(int)
-
-				if M is not None and np.sum(scaleRotate==perfect) == 4:
+			#So according to the documentation, this funtion uses RANSAC to filter
+			M = cv2.estimateRigidTransform(match2, match1, False)
+			if M is not None:
+				scaleRotate = np.around(M[:2,:2]).astype(int)
+				if np.sum(scaleRotate==perfect) == 4:
 					warpedIm = cv2.warpAffine(movingIm, M, (fixedIm.shape[1], fixedIm.shape[0]))
 
 	warpedCorCoef = np.absolute(np.corrcoef(np.ravel(fixedIm), np.ravel(warpedIm)))[0,1]

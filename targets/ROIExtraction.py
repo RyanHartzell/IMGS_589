@@ -64,9 +64,10 @@ def selectROI(mapName, im, point=None):
 
 	pointsX, pointsY = None, None
 	pointsX, pointsY = regionGrow(im, mapName=mapName, seedPoint=point)
-
+	points = None
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints(p)
+	num = 0
 	original = im.copy()
 	while True:
 
@@ -98,6 +99,18 @@ def selectROI(mapName, im, point=None):
 			cv2.imshow(mapName, im)
 			pointsX, pointsY = p.x(p), p.y(p)
 
+		if points is not None:
+			if p.mclick(p) is True:
+				p.resetMclick(p)
+				num += 1
+				if num > 18:
+					num = 0
+				print(num)
+
+			if num != 0 and p.rclick(p) is True:
+				targetNumber = str(num)
+				break
+
 
 		response = cv2.waitKey(100)
 		if response == ord('n'):
@@ -120,7 +133,7 @@ def selectROI(mapName, im, point=None):
 
 			numberList = [ord('0'), ord('1'), ord('2'), ord('3'), ord('4'), ord('5'),
 					ord('6'), ord('7'), ord('8'), ord('9'), 27]
-					
+
 			otherDict = {ord('0'):0, ord('1'):1,ord('2'):2, ord('3'):3, ord('4'):4, ord('5'):5,
 					ord('6'):6, ord('7'):7, ord('8'):8, ord('9'):9, 27:27, 176:0,
 					177:1, 178:2, 179:3, 180:4, 181:5, 182:6, 183:7, 184:8, 185:9}

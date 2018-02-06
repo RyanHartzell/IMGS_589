@@ -13,7 +13,7 @@ from ROIExtraction import targetNumtoStr
 
 
 #svcSIG = glob.glob('/cis/otherstu/gvs6104/DIRS/**/*.sig', recursive=True)
-tsvList = glob.glob('/cis/otherstu/gvs6104/DIRS/**/Flight_Notes.tsv', recursive=True)
+tsvList = glob.glob('/research/imgs589/imageLibrary/DIRS/**/Flight_Notes.tsv', recursive=True)
 
 target0 = ["Just for indexing"]
 target1 = [[],[],[]]
@@ -82,6 +82,8 @@ if dayAverage:
             #dayMeasure = len(targets[i][d])
             targets[i][d] = [sum(e)/len(e) for e in zip(*targets[i][d])]
 
+print(len(targets[6][1]))
+#Targets[TargetNumber][Date Taken][MeasurementNumber]
 blue_patch = mpatches.Patch(color='blue', label='November 2, 2017')
 green_patch = mpatches.Patch(color='green', label='November 8, 2017')
 red_patch = mpatches.Patch(color='red', label='November 9, 2017')

@@ -236,7 +236,7 @@ with open(txtDestination, writeMode) as currentTextFile:
             print('Line has been written to file.')
             #cv2.destroyWindow(currentIm_tag)
 
-        elif userInput == ord('d'):
+        elif userInput == ord('d') or userInput == 32:
             if currentImIndex + stepNumber > imageCount:
                 stepNumber = 1
             currentImIndex += stepNumber

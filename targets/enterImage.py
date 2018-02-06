@@ -5,12 +5,14 @@ def enterImage(windowName):
 
     r = PointsSelected.PointsSelected(windowName)
     point = None
-    acceptable = [ord('w'), ord('a'), ord('d'), ord('r'), ord('t'), 27]
+    acceptable = [ord('w'), ord('a'), ord('d'), ord('r'), ord('t'), ord(' '), 27]
     while True:
         resp = cv2.waitKey(10)
         if r.number(r) > 0:
             resp = ord('w')
             point = r.points(r)[0]
+        elif r.rclick(r) is True:
+            resp = ord('d')
 
         if resp in acceptable:
             break

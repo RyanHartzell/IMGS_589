@@ -67,7 +67,7 @@ if flightDirectory is None:
 else:
 	if flightDirectory[-1] == '/':
 		flightDirectory = flightDirectory[:-1]
-		
+
 if geoTiffDir is None:
 	splitted = flightDirectory.split('/')
 	geoTiffDir = '/'.join(splitted[:-1]) + os.path.sep
@@ -164,7 +164,7 @@ if registrationDict is None:
 	f.close()
 	transformDictionary.update({k : np.matrix(v).astype(np.float32) for k,v in transformDictionary.items()})
 
-stackQC = False
+stackQC = True
 wait = 500
 
 splitted = flightDirectory.split('/')

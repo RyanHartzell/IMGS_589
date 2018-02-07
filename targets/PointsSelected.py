@@ -57,6 +57,10 @@ class PointsSelected(object):
        return self._rclick
 
    @staticmethod
+   def resetRclick(self):
+      self._rclick = False
+
+   @staticmethod
    def mclick(self):
        return self._mclick
 

@@ -49,8 +49,8 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
             threshMahal = 7
             threshDiff = 3
         elif image.shape[2] == 5:
-            threshMahal = 100
-            threshDiff = 30
+            threshMahal = 7
+            threshDiff = 50
 
         #print("Using default threshold variance of {0}".format(threshVar))
 
@@ -77,7 +77,7 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
         saturated=True
         print("The seed area has no variance in a band")
     #try:                # print("Moving Value: {0} Seed Value: {1} Mahal Score: {2}".format(
-                # inputValue,image[seedPoint[1],seedPoint[0]], int(zscore)))
+                # inputValue,imrgbage[seedPoint[1],seedPoint[0]], int(zscore)))
     if saturated is False:
         #THIS DOES NOT WORK FOR TARGETS THAT ARE SATURATED
         try:
@@ -92,8 +92,10 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     newPixels = True
     listOfGoodPoints = [seedPoint]
     thresh[seedPoint[1],seedPoint[0]] = 1
-    #rgb = image[:,:,:3]/np.max(image[:,:,:3])
-    #moving = rgb.copy()
+    # rgb = image[:,:,:3]/np.max(image[:,:,:3])
+    # moving = rgb.copy()
+    # good = rgb.copy()
+    # badMah, badDiff = rgb.copy(), rgb.copy()
     #rgb = cv2.circle(rgb.copy(),tuple(seedPoint), 2, (1,1,1), -1)
     #cv2.imshow("Seed Point on Image", rgb)
     #cv2.waitKey(0)
@@ -107,7 +109,7 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
         for m in range(len(movement)):
             movingPoint = (point[0]+movement[m][0], point[1]+movement[m][1])
             #cv2.circle(moving,movingPoint, 2, (1,1,1), -1)
-            #cv2.imshow("Moving Point", moving)100000
+            #cv2.imshow("Moving Point", moving)
             #cv2.waitKey(1)
             try:
                 inputValue = image[movingPoint[1], movingPoint[0]]
@@ -123,15 +125,27 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
                 # print("Moving Value: {0} Seed Value: {1} Mahal Score: {2}".format(
                 # inputValue,image[seedPoint[1],seedPoint[0]], int(zscore)))
                 #print(zscore, np.asarray(movingPoint)*1.5)
-                #cv2.waitKey(0)
+                #c50v2.waitKey(0)
                 #if zscore < threshMahal:
                 #print("Difference Sum: {0} Mahal Score: {1}".format(np.sum(difference), zscore))
                 if zscore > threshMahal and np.sum(difference) < threshDiff:
                     #print("Moving Value: {0} Seed Value: {1} Mahal Score: {2}".format(
                     #    inputValue,image[seedPoint[1],seedPoint[0]], int(zscore)))
+                    #cv2.circle(good,movingPoint,2,(0,1,0),-1)
                     thresh[movingPoint[1], movingPoint[0]] = 1
                     if movingPoint not in listOfGoodPoints:
                         listOfGoodPoints.append(movingPoint)
+                # if zscore < threshMahal:
+                #     cv2.circle(badMah,movingPoint, 2, (0,0,1), -1)
+                # if np.sum(difference) > threshDiff:
+                #     cv2.circle(badDiff,movingPoint, 2, (1,0,0), -1)
+                #
+                # cv2.imshow("Good Points", good)
+                # cv2.imshow("Bad Points (Mah)", badMah)
+                # cv2.imshow("Bad Points (Diff)", badDiff)
+
+                #cv2.waitKey(1)
+                    #print("Moving Coordinate [xy] {0}".format(movingPoint))
             else:
                 #print("Moving Value: {0} Seed Value: {1}".format(
                     #inputValue,image[seedPoint[1],seedPoint[0]]))
@@ -144,15 +158,18 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
         elapsedTime = time.time() - startTime
         if elapsedTime > 2:
             #If region growing takes longer thanimageStack 5 seconds break
+            print("Ran out of time... 2 seconds.")
             break
         listOfGoodPoints.pop(0)
 
-    kernel = np.ones((2,2), np.uint8)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    #kernel = np.ones((3,3), np.uint8)
+    #thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
     thresh = (thresh*255).astype(np.uint8)
 
-    kernel = np.ones((3,3), np.uint8)
-    floodmask = cv2.erode(thresh,kernel,iterations = 2)
+    kernel = np.ones((2,2), np.uint8)
+    floodmask = cv2.erode(thresh,kernel,iterations = 1)
+
+    #floodmask = thresh
 
     #cv2.imshow("FLOOD MASK", floodmask*image[:,:,0])
     #cv2.waitKey(0)
@@ -167,14 +184,18 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     x, y = None, None
     #print(len(contours))
     #print(seedPoint)
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+    try:
+        area = cv2.contourArea(contours[0])
+        if area <=2:
+            contours = []
+    except:
+        pass
+
     print("Completed Region Growing. Contours Found: {0}".format(len(contours)))
-    if len(contours) > 0:
-        if len(contours) > 1:
-            c = max(contours, key =cv2.contourArea)
-            cpoints = c
-            #cpoints = c[0]
-        else:
-            cpoints = contours[0]
+    if len(contours) >= 1:
+        cpoints = contours[0]
+
         left = tuple(cpoints[cpoints[:, :, 0].argmin()][0])
         right = tuple(cpoints[cpoints[:, :, 0].argmax()][0])
         top = tuple(cpoints[cpoints[:, :, 1].argmin()][0])

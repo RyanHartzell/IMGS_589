@@ -61,6 +61,7 @@ def selectROI(mapName, originalIm, displayImage, seedPoint=None, scaleFactor = 1
 	import PointsSelected
 	import sys
 	from regionGrow import regionGrow
+	from selectTarget import chooseNumber
 	#utilize 'PointsSelected' to get the search window, manual input
 
 	pointsX, pointsY = None, None
@@ -119,7 +120,6 @@ def selectROI(mapName, originalIm, displayImage, seedPoint=None, scaleFactor = 1
 			pointsX, pointsY = p.x(p), p.y(p)
 
 		if points is not None:
-
 			if p.mclick(p) is True:
 				p.resetMclick(p)
 				num += 1
@@ -135,10 +135,11 @@ def selectROI(mapName, originalIm, displayImage, seedPoint=None, scaleFactor = 1
 
 
 
+
 		response = cv2.waitKey(100)
-		otherDict = {ord('0'):0, ord('1'):1,ord('2'):2, ord('3'):3, ord('4'):4, ord('5'):5,
-							ord('6'):6, ord('7'):7, ord('8'):8, ord('9'):9, 27:27, 176:0,
-							177:1, 178:2, 179:3, 180:4, 181:5, 182:6, 183:7, 184:8, 185:9}
+		#otherDict = {ord('0'):0, ord('1'):1,ord('2'):2, ord('3'):3, ord('4'):4, ord('5'):5,
+		#					ord('6'):6, ord('7'):7, ord('8'):8, ord('9'):9, 27:27, 176:0,
+		#					177:1, 178:2, 179:3, 180:4, 181:5, 182:6, 183:7, 184:8, 185:9}
 
 		if response == ord('n'):
 			pointsX = None
@@ -154,48 +155,60 @@ def selectROI(mapName, originalIm, displayImage, seedPoint=None, scaleFactor = 1
 			elif confirm == 27:
 				sys.exit(0)
 
-		elif response in otherDict.keys():
-			print(otherDict[response])
-
-			if points is not None:
-				response_2 = cv2.waitKey(0)
-				#targetNumber = ((chr(response)) + (chr(response_2)))
-				if response_2 == 8:
-					print("Re-Enter first number \n")
-					continue
-
-				if otherDict[response]==0 and response_2 not in otherDict.keys():
-					print("Not a valid number")
-					continue
-
-				elif otherDict[response] == 0:
-					if response_2 in otherDict.keys():
-						targetNumber = str(otherDict[response_2])
-
-				elif otherDict[response] == 1:
-					if response_2 in otherDict.keys():
-						targetNumber = '1'+ str(otherDict[response_2])
-					elif response_2 not in otherDict.keys():
-						targetNumber = '1'
-
-				elif response in otherDict.keys() and response_2 not in otherDict.keys():
-					targetNumber = str(otherDict[response])
-
-				elif response_2 == ord('n'):
-					p.clearPoints(p)
-					continue
-
-				elif response == 27:
-				 	sys.exit(0)
-				print("Target Number: {0}".format(targetNumber))
-
-				print('Running ROI calculations...')
-				break
-			else:
-				print('Must select 4 points!!!')
-
 		elif response == 27:
 			sys.exit(0)
+
+		elif response > 0:
+			break
+
+
+	targetNumber = chooseNumber(mapName, rgb, response, confirm=False, text="",
+			                    validDict=None, confirmList=None, position=None, color=None)
+	print(targetNumber)
+
+
+		# elif response in otherDict.keys():
+		# 	print(otherDict[response])
+		#
+		# 	if points is not None:
+		# 		response_2 = cv2.waitKey(0)
+		# 		#targetNumber = ((chr(response)) + (chr(response_2)))
+		# 		if response_2 == 8:
+		# 			print("Re-Enter first number \n")
+		# 			continue
+		#
+		# 		if otherDict[response]==0 and response_2 not in otherDict.keys():
+		# 			print("Not a valid number")
+		# 			continue
+		#
+		# 		elif otherDict[response] == 0:
+		# 			if response_2 in otherDict.keys():
+		# 				targetNumber = str(otherDict[response_2])
+		#
+		# 		elif otherDict[response] == 1:
+		# 			if response_2 in otherDict.keys():
+		# 				targetNumber = '1'+ str(otherDict[response_2])
+		# 			elif response_2 not in otherDict.keys():
+		# 				targetNumber = '1'
+		#
+		# 		elif response in otherDict.keys() and response_2 not in otherDict.keys():
+		# 			targetNumber = str(otherDict[response])
+		#
+		# 		elif response_2 == ord('n'):
+		# 			p.clearPoints(p)
+		# 			continue
+		#
+		# 		elif response == 27:
+		# 		 	sys.exit(0)
+		# 		print("Target Number: {0}".format(targetNumber))
+		#
+		# 		print('Running ROI calculations...')
+		# 		break
+		# 	else:
+		# 		print('Must select 4 points!!!')
+		#
+		# elif response == 27:
+		# 	sys.exit(0)
 
 
 	return pointsX, pointsY, targetNumber

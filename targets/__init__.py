@@ -8,3 +8,6 @@ from .ROIExtraction import targetStrtoNum
 from .PointsSelected import PointsSelected
 from .regionGrow import regionGrow
 from .enterImage import enterImage
+from .selectTarget import chooseNumber
+from .selectTarget import getDisplayImage
+from .selectTarget import getNumber

@@ -30,12 +30,13 @@ def getDisplayImage(geotiffFilename, angle=10, scaleFactor=2):
 		circleMask = np.repeat(circleMask[:,:,np.newaxis], imageStack.shape[2])
 		circleMask = circleMask.reshape(imageStack.shape)
 		imageStackMasked = imageStack*circleMask
-		imageStack_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
+		imageStackMasked_crop = imageStackMasked[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
+		imageStack_crop = imageStack[imageCenter[0]-radius:imageCenter[0]+radius,imageCenter[1]-radius:imageCenter[1]+radius, :]
 	else:
 		imageStack_crop = imageStack
 
 	#displayImage = np.dstack((band1,band2,band3)).astype(np.uint8)
-	displayImage = imageStack_crop[:,:,0:3] #RGB
+	displayImage = imageStackMasked_crop[:,:,0:3] #RGB
 	displayImage = cv2.resize(displayImage, None,
 			fx=scaleFactor, fy=scaleFactor,interpolation=cv2.INTER_LANCZOS4)
 
@@ -53,7 +54,7 @@ def getDisplayImage(geotiffFilename, angle=10, scaleFactor=2):
 	displayImage = displayImage/np.max(displayImage)
 	return imageStack_crop, displayImage
 
-def selectROI(mapName, im, point=None):
+def selectROI(mapName, originalIm, displayImage, point=None, scaleFactor = 1.5):
 	#mapName, (str)
 	import numpy as np
 	import cv2
@@ -63,40 +64,56 @@ def selectROI(mapName, im, point=None):
 	#utilize 'PointsSelected' to get the search window, manual input
 
 	pointsX, pointsY = None, None
-	pointsX, pointsY = regionGrow(im, mapName=mapName, seedPoint=point)
+	pointsX, pointsY = regionGrow(originalIm, mapName=mapName, seedPoint=point)
+	if pointsX is not None and pointsY is not None:
+		for i in range(len(pointsX)):
+			pointsX[i] = np.around(pointsX[i]*scaleFactor).astype(int)
+			pointsY[i] = np.around(pointsY[i]*scaleFactor).astype(int)
+	#print(pointsX)
+
+	#pointsX, pointsY = int(np.asarray(pointsX)*scaleFactor), int(np.asarray(pointsY)*scaleFactor)
+	# cv2.circle(displayImage, (pointsX[0],pointsY[0]), 2, (1,1,1),-1)
+	# cv2.circle(displayImage, (pointsX[1],pointsY[1]), 2, (1,1,1),-1)
+	# cv2.circle(displayImage, (pointsX[2],pointsY[2]), 2, (1,1,1),-1)
+	# cv2.circle(displayImage, (pointsX[3],pointsY[3]), 2, (1,1,1),-1)
+	# cv2.imshow("REGION GROW POINTS", displayImage)
+	# cv2.waitKey(0)
+
 	points = None
 	p = PointsSelected.PointsSelected(mapName, verbose=False)
 	p.clearPoints(p)
 	num = 0
-	original = im.copy()
+	rgb = displayImage.copy()
 	while True:
 
 		if p.number(p) > 4:
 			pointsX, pointsY = None, None
 			p.restrict_len(p,4)
-
+			for i in range(len(pointsX)):
+				pointsX[i] = np.around(pointsX[i]*scaleFactor).astype(int)
+				pointsY[i] = np.around(pointsY[i]*scaleFactor).astype(int)
 		if p.number(p) == 1:
 			pointsX, pointsY = None, None
-			im = cv2.circle(original.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
-			cv2.imshow(mapName, im)
+			cv2.circle(rgb,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			cv2.imshow(mapName, rgb)
 
 		if pointsX is not None and pointsY is not None:
 			points = np.asarray(list(zip(pointsX, pointsY)),np.int32)
 			points = points.reshape((-1,1,2))
-			im = cv2.polylines(im.copy(), [points], True, (.9, 0, 0))
-			cv2.imshow(mapName, im)
+			cv2.polylines(rgb, [points], True, (.9, 0, 0))
+			cv2.imshow(mapName, rgb)
 
 		if (p.number(p) == 2) or (p.number(p) == 3):
-			im = cv2.circle(im.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
-			im = cv2.line(im.copy(),(p.x(p)[-2],p.y(p)[-2]),(p.x(p)[-1],p.y(p)[-1]),(255,0,0),1)
-			cv2.imshow(mapName, im)
+			cv2.circle(rgb,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			cv2.line(rgb,(p.x(p)[-2],p.y(p)[-2]),(p.x(p)[-1],p.y(p)[-1]),(255,0,0),1)
+			cv2.imshow(mapName, rgb)
 
 		if p.number(p) == 4:
-			im = cv2.circle(im.copy(),(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			cv2.circle(rgb,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
 			points = np.asarray(list(zip(p.x(p), p.y(p))), np.int32)
 			points = points.reshape((-1,1,2))
-			im = cv2.polylines(im.copy(), [points], True, (255,0,0))
-			cv2.imshow(mapName, im)
+			cv2.polylines(rgb, [points], True, (255,0,0))
+			cv2.imshow(mapName, rgb)
 			pointsX, pointsY = p.x(p), p.y(p)
 
 		if points is not None:
@@ -117,7 +134,7 @@ def selectROI(mapName, im, point=None):
 			pointsX = None
 			pointsY = None
 			p.clearPoints(p)
-			cv2.imshow(mapName, original)
+			cv2.imshow(mapName, rgb)
 			print('Clearing selected points...')
 			print('Press n again [1/2 sec] to exit point selection')
 			confirm = cv2.waitKey(500)
@@ -157,7 +174,7 @@ def selectROI(mapName, im, point=None):
 					if response_2 in numberList:
 				 		targetNumber = '1' + chr(response_2)
 					elif response_2 in otherDict.keys():
-						targetNumber = '1'+ str(otherDict[response2])
+						targetNumber = '1'+ str(otherDict[response_2])
 
 				elif response_2 == ord('n'):
 					p.clearPoints(p)

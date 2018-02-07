@@ -184,12 +184,11 @@ with open(txtDestination, writeMode) as currentTextFile:
         print(fileNames[currentImIndex], 'Index = ', currentImIndex,'/', imageCount)
 
         #userInput = cv2.waitKey(0)
-        userInput, point = enterImage(currentIm_tag)
+        userInput, point = enterImage(currentIm_tag, scaleFactor)
         if userInput == ord('w'):
             print('Ready to accept points.')
             print("Once you are done, enter target number with 2 digits [04], 'n' to redo.")
-
-            pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, displayImage, point)
+            pointsX, pointsY, currentTargetNumber = selectROI(currentIm_tag, currentCroppedIm, displayImage, point, scaleFactor)
             if pointsX is None or pointsY is None or currentTargetNumber is None:
                 continue
             partCenter = [int(np.around(np.mean(pointsX))) ,int(np.around(np.mean(pointsY)))]

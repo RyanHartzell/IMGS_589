@@ -1,7 +1,8 @@
 
-def enterImage(windowName):
+def enterImage(windowName, scaleFactor):
     import PointsSelected
     import cv2
+    import numpy as np
 
     r = PointsSelected.PointsSelected(windowName)
     point = None
@@ -10,7 +11,10 @@ def enterImage(windowName):
         resp = cv2.waitKey(10)
         if r.number(r) > 0:
             resp = ord('w')
-            point = r.points(r)[0]
+            point = list(r.points(r)[0])
+            for p in range(len(point)):
+                point[p] = np.around(point[p]/scaleFactor).astype(int)
+
         elif r.rclick(r) is True:
             resp = ord('d')
 

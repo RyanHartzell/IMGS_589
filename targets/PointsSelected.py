@@ -91,6 +91,9 @@ class PointsSelected(object):
          params[1]._rclick = True
       elif event == cv2.EVENT_MBUTTONDOWN:
          params[1]._mclick = True
+      #USE FOR ERROR CHECKING
+      #elif event == cv2.EVENT_MOUSEMOVE:
+         #print(currentX, currentY)
 
 
 

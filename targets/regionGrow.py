@@ -39,12 +39,19 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
         #print(image[seedPoint[1],seedPoint[0]])
 
     if threshMahal is None:
-        if image.dtype == np.uint8:
+        # if image.dtype == np.uint8:
+        #     threshMahal = 7
+        # elif image.dtype == np.uint16:
+        #     threshMahal = 7
+        # else:
+        #     threshMahal = 10
+        if image.shape[2] == 3:
             threshMahal = 7
-        elif image.dtype == np.uint16:
-            threshMahal = 7
-        else:
-            threshMahal = 10
+            threshDiff = 3
+        elif image.shape[2] == 5:
+            threshMahal = 100
+            threshDiff = 30
+
         #print("Using default threshold variance of {0}".format(threshVar))
 
     #eightBit = (displayImage*255).astype(np.uint8)
@@ -60,38 +67,47 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     thresh = np.zeros(image.shape[:2])
 
     #Create the 3x3 inverse covariance matrix
-    seedArea = image[seedPoint[1]-1:seedPoint[1]+2, seedPoint[0]-1:seedPoint[0]+2]
+    seedArea = image[seedPoint[1]-2:seedPoint[1]+3, seedPoint[0]-2:seedPoint[0]+3]
     flatSeed = seedArea.reshape(-1,seedArea.shape[-1])
-
     V = np.cov(flatSeed.T)
+    #print("Covariance Sample Size: ({0},{1}) \n".format(seedArea.shape[0],seedArea.shape[1]), V)
     saturated = False
-    if np.sum(V) == 0 or np.sum(V) == 1:
+    if 0 or 1 in np.sum(V, axis=1):
+        #print(np.sum(V,axis=1))
         saturated=True
-        print("The seed area has no variance per band")
-    #try:
+        print("The seed area has no variance in a band")
+    #try:                # print("Moving Value: {0} Seed Value: {1} Mahal Score: {2}".format(
+                # inputValue,image[seedPoint[1],seedPoint[0]], int(zscore)))
     if saturated is False:
         #THIS DOES NOT WORK FOR TARGETS THAT ARE SATURATED
         try:
             VI = np.linalg.inv(V)
+            #print("Inverse Covariance (rounded) \n", np.around(VI))
         except:
             saturated = True
     #except:
     #    print("Seed did not grow, please select points as usual.")
     #    return None, None
 
-
     newPixels = True
     listOfGoodPoints = [seedPoint]
     thresh[seedPoint[1],seedPoint[0]] = 1
+    #rgb = image[:,:,:3]/np.max(image[:,:,:3])
+    #moving = rgb.copy()
+    #rgb = cv2.circle(rgb.copy(),tuple(seedPoint), 2, (1,1,1), -1)
+    #cv2.imshow("Seed Point on Image", rgb)
+    #cv2.waitKey(0)
+
     seedValue = image[seedPoint[1], seedPoint[0]]
     startTime = time.time()
+    #print(seedPoint)
     #movement is defined in xy coordinates to be coimageStacknsistant with the seed
     for point in listOfGoodPoints:
         movement = [(0,1), (1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1)]
         for m in range(len(movement)):
             movingPoint = (point[0]+movement[m][0], point[1]+movement[m][1])
-            #cv2.circle(image,movingPoint, 2, (1,1,1), -1)
-            #cv2.imshow("Image", image)
+            #cv2.circle(moving,movingPoint, 2, (1,1,1), -1)
+            #cv2.imshow("Moving Point", moving)100000
             #cv2.waitKey(1)
             try:
                 inputValue = image[movingPoint[1], movingPoint[0]]
@@ -99,12 +115,28 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
                 continue
             if saturated is False:
                 zscore = mahalanobis(inputValue, image[seedPoint[1],seedPoint[0]], VI)
-                if zscore < threshMahal:
+                #print(float(inputValue)-float(image[seedPoint[1],seedPoint[0]]))
+                movingArray = np.asarray(inputValue, dtype=np.float)
+                seedArray = np.asarray(image[seedPoint[1],seedPoint[0]], dtype=np.float)
+                difference = np.absolute(np.subtract(movingArray,seedArray))
+                #print(difference)
+                # print("Moving Value: {0} Seed Value: {1} Mahal Score: {2}".format(
+                # inputValue,image[seedPoint[1],seedPoint[0]], int(zscore)))
+                #print(zscore, np.asarray(movingPoint)*1.5)
+                #cv2.waitKey(0)
+                #if zscore < threshMahal:
+                #print("Difference Sum: {0} Mahal Score: {1}".format(np.sum(difference), zscore))
+                if zscore > threshMahal and np.sum(difference) < threshDiff:
+                    #print("Moving Value: {0} Seed Value: {1} Mahal Score: {2}".format(
+                    #    inputValue,image[seedPoint[1],seedPoint[0]], int(zscore)))
                     thresh[movingPoint[1], movingPoint[0]] = 1
                     if movingPoint not in listOfGoodPoints:
                         listOfGoodPoints.append(movingPoint)
             else:
-                if np.array_equal(inputValue, seedValue):
+                #print("Moving Value: {0} Seed Value: {1}".format(
+                    #inputValue,image[seedPoint[1],seedPoint[0]]))
+                if 0 in inputValue-seedValue:
+                #if np.array_equal(inputValue, seedValue):
                 #if inputValue == seedValue:
                     thresh[movingPoint[1], movingPoint[0]] = 1
                     if movingPoint not in listOfGoodPoints:
@@ -122,11 +154,27 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
     kernel = np.ones((3,3), np.uint8)
     floodmask = cv2.erode(thresh,kernel,iterations = 2)
 
+    #cv2.imshow("FLOOD MASK", floodmask*image[:,:,0])
+    #cv2.waitKey(0)
+
     _, contours, hierarchy = cv2.findContours(floodmask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     #c = max(contours[0], key=cv2.contourArea)
+    #rgb = image[:,:,3]/np.max(image[:,:,:3])
+    #cv2.imshow("RGB",rgb)
+    #cv2.drawContours(rgb, contours, -1,(1,1,1),3)
+    #cv2.imshow("CONTOURS", rgb)
+    #cv2.waitKey(0)
     x, y = None, None
+    #print(len(contours))
+    #print(seedPoint)
+    print("Completed Region Growing. Contours Found: {0}".format(len(contours)))
     if len(contours) > 0:
-        cpoints = contours[0]
+        if len(contours) > 1:
+            c = max(contours, key =cv2.contourArea)
+            cpoints = c
+            #cpoints = c[0]
+        else:
+            cpoints = contours[0]
         left = tuple(cpoints[cpoints[:, :, 0].argmin()][0])
         right = tuple(cpoints[cpoints[:, :, 0].argmax()][0])
         top = tuple(cpoints[cpoints[:, :, 1].argmin()][0])
@@ -134,7 +182,6 @@ def regionGrow(image, mapName=None, seedPoint=None, threshMahal=None):
 
         x = [top[0], right[0], bot[0], left[0]]
         y = [top[1], right[1], bot[1], left[1]]
-    print("Completed Region Growing")
 
     return x, y
 

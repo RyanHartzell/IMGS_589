@@ -43,6 +43,7 @@ def getNumber(validDict=None, confirmList=None, startNumber=None):
         if response == 8:
             break
         if response == 27:
+            cv2.destroyAllWindows()
             sys.exit(0)
         if response in confirmList:
             number = True

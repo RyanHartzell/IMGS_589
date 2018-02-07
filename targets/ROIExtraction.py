@@ -97,26 +97,26 @@ def selectROI(mapName, originalIm, displayImage, seedPoint=None, scaleFactor = 1
 				pointsY[i] = np.around(pointsY[i]*scaleFactor).astype(int)
 		if p.number(p) == 1:
 			pointsX, pointsY = None, None
-			cv2.circle(displayImage,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
-			cv2.imshow(mapName, displayImage)
+			cv2.circle(rgb,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			cv2.imshow(mapName, rgb)
 
 		if pointsX is not None and pointsY is not None:
 			points = np.asarray(list(zip(pointsX, pointsY)),np.int32)
 			points = points.reshape((-1,1,2))
-			cv2.polylines(rgb, [points], True, (.9, 0, 0))
-			cv2.imshow(mapName, rgb)
+			cv2.polylines(displayImage, [points], True, (.9, 0, 0))
+			cv2.imshow(mapName, displayImage)
 
 		if (p.number(p) == 2) or (p.number(p) == 3):
-			cv2.circle(displayImage,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
-			cv2.line(displayImage,(p.x(p)[-2],p.y(p)[-2]),(p.x(p)[-1],p.y(p)[-1]),(255,0,0),1)
-			cv2.imshow(mapName, displayImage)
+			cv2.circle(rgb,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			cv2.line(rgb,(p.x(p)[-2],p.y(p)[-2]),(p.x(p)[-1],p.y(p)[-1]),(255,0,0),1)
+			cv2.imshow(mapName, rgb)
 
 		if p.number(p) == 4:
-			cv2.circle(displayImage,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
+			cv2.circle(rgb,(p.x(p)[-1],p.y(p)[-1]), 2, (0,0,255), -1)
 			points = np.asarray(list(zip(p.x(p), p.y(p))), np.int32)
 			points = points.reshape((-1,1,2))
-			cv2.polylines(displayImage, [points], True, (255,0,0))
-			cv2.imshow(mapName, displayImage)
+			cv2.polylines(rgb, [points], True, (255,0,0))
+			cv2.imshow(mapName, rgb)
 			pointsX, pointsY = p.x(p), p.y(p)
 
 		if points is not None:
@@ -156,6 +156,7 @@ def selectROI(mapName, originalIm, displayImage, seedPoint=None, scaleFactor = 1
 				sys.exit(0)
 
 		elif response == 27:
+			cv2.destroyAllWindows()
 			sys.exit(0)
 
 		elif response > 0:

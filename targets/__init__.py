@@ -9,5 +9,5 @@ from .PointsSelected import PointsSelected
 from .regionGrow import regionGrow
 from .enterImage import enterImage
 from .selectTarget import chooseNumber
-from .selectTarget import getDisplayImage
+from .selectTarget import displayTextImage
 from .selectTarget import getNumber

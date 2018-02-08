@@ -19,7 +19,7 @@ from read_tape7 import read_tape7
 from interp1 import interp1
 import matplotlib.pyplot as plt
 import csv
-	
+
 baseDirectory = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 tape5Filename = os.path.join(baseDirectory, 'tape5')
 tape7Filename = os.path.join(baseDirectory, 'tape7.scn')
@@ -38,7 +38,7 @@ SVCFilenames = ['000000_0000_R092_T094.sig', '000000_0000_R092_T095.sig', '00000
 
 
 #get the RSR info
-RSRFilePath = 'Full Spectral Response CSV.csv'
+RSRFilePath = 'FullSpectralResponse.csv'
 RSRdata = np.genfromtxt(baseDirectory + RSRFilePath, delimiter = ',', skip_header = 1)
 RSR_wavelengths = RSRdata[:, 0] * 0.001
 
@@ -167,7 +167,7 @@ for currentAtmos in np.arange(1, 3+1, 1): #for currentAtmos in np.arange(1, 3+1,
 					BER_red = sensorReachingRadiance * redRSR
 					BER_redEdge = sensorReachingRadiance * redEdgeRSR
 					BER_ir = sensorReachingRadiance * irRSR
-					
+
 					#integrate to get band-integrated radiance for each band
 					bandIntegratedBlue = np.sum(BER_blue)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths))
 					bandIntegratedGreen = np.sum(BER_green)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths))

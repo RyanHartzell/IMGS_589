@@ -256,7 +256,7 @@ with open(currentDirectory + os.path.sep + userName + "MODTRAN.csv",
 
                         #print("Angle Sum Ground Reflectance: ", angSumGrndReflt)
                         #print("Angle Sum Solar Scattering: ", angSumSolScat)
-                        for s, t in svcDict:
+                        for s, t in svcDict.items():
                             wL, _, _, svcRef = targets.svcReader.svcGrabber(s)
                             tgtRefl = interp1((wL*0.001), svcRef, tape7Dict['wavlen mcrn'],
                                                             interpOrder, extrap)

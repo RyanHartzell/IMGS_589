@@ -27,7 +27,7 @@ testing = True
 dZenith = 10
 dAzimuth = 30
 interpOrder = 1
-extrap = True
+extrap = False
 if testing:
     dZenith = 45
     dAzimuth = 180
@@ -36,18 +36,22 @@ if testing:
 ########## Define parameters for MODTRAN5 Card5 Modification ###################
 modelAtmospheres = [1, 2, 3] #Tropical, Mid Lat Summer, Mid Lat Winter
 #modelAtmosphere = [2]
-pathTypes = [1,2,3] #1-Horizontal Path 2-Slant Altitude 3-Slant Ground Space
-pathTypes = [2,3]
+#pathTypes = [1,2,3] #1-Horizontal Path 2-Slant Altitude 3-Slant Ground Space
+pathTypes = [2,3] #Path type 2 is straight down type3 is the Look to Space
 surfaceAlbedos = [0, 1] #0 is Ground Reflectance 1 is Solar Scattering
+surfaceTemperature = 303.15
+albedoFilename = None
+targetLabel = None
+backgroundLabel = None
 visibility = 0
 groundAltitude = 0.168
 sensorAltitudes = [0.2137, 0.282] #213m, 700ft AGL, 282m, 925ft AGL
 #sensorAltitudes = [0.268]
 targetAltitude = 0.168 #168m, 551ft Ground Level
-sensorZeniths = list(np.linspace(0.0, 90.0, 90/dZenith+1)) #0 to 90
-sensorZeniths = [180.0]
-sensorAzimuths = list(np.linspace(0.0, 360.0, 360/dAzimuth+1)) # 0 to 360
-sensorAzimuths = [0.0]
+#sensorZeniths = list(np.linspace(0.0, 90.0, 90/dZenith+1)) #0 to 90 Downwelling
+#sensorZeniths = [180.0] #180 IS STRAIGHT DOWN
+#sensorAzimuths = list(np.linspace(0.0, 360.0, 360/dAzimuth+1)) # 0 to 360 Downwelling
+#sensorAzimuths = [0.0]
 dayNumbers = [1, 90, 180, 270] #Jan 1, April 1, June 30, Sept 28
 #dayNumbers = [270]
 extraterrestrialSource = 0 #0-Sun 1-Moon(Night)
@@ -74,19 +78,24 @@ args = parser.parse_args()
 rsrPath = args.relativeSpectralResponse
 svcDirPath = args.svcDirectory
 
-if not os.path.isfile(rsrPath):
-    rsrPath = filedialog.askopenfilename(
-        initialdir = os.getcwd(),
-        title="Choose the camera RSR csv file",
-        filetypes=[("Comma Seperated Values", "*.csv")])
-
-if not os.path.isdir(svcDirPath):
-    svcDirPath = filedialog.askdirectory(
-        initialdir = "/research/imgs589/imageLibrary/DIRS/",
-        title="Choose the SVC Directory")
-
 currentDirectory = os.path.dirname(os.path.abspath(__file__))
 #ex. /cis/otherstu/gvs6104/src/python/IMGS_589/modtran
+
+if rsrPath is None:
+    rsrPath = currentDirectory + '/FullSpectralResponse.csv'
+    if not os.path.isfile(rsrPath):
+        rsrPath = filedialog.askopenfilename(
+                        initialdir = os.getcwd(),
+                        title="Choose the camera RSR csv file",
+                        filetypes=[("Comma Seperated Values", "*.csv")])
+
+if svcDirPath is None:
+    #DEFAULT DIRECTORY PATH
+    svcDirPath = "/research/imgs589/imageLibrary/DIRS/20171108/SVC/"
+    if not os.path.isdir(svcDirPath):
+        svcDirPath = filedialog.askdirectory(
+                initialdir = "/research/imgs589/imageLibrary/DIRS/",
+                title="Choose the SVC Directory")
 
 tape5Path = currentDirectory + '/tape5'
 if not os.path.isfile(tape5Path):
@@ -100,6 +109,13 @@ if not os.path.isfile(tape7Path):
     tape7Path = filedialog.askopenfilename(initialdir = os.getcwd(),
         title="Choose the modtran tape7.scn output",
         filetypes=[("Scenario", "*.scn")])
+
+albedoFilename = currentDirectory + '/spec_alb.dat'
+if not os.path.isfile(specAlbPath):
+    #TKinter filedialog box
+    albedoFilename = filedialog.askopenfilename(initialdir = os.getcwd(),
+        title="Choose the modtran spec_albp.dat file",
+        filetypes=[("Data", "*.dat")])
 
 #########     GET THE FILENAMES AND PATHS FOR USE LATER     ####################
 ######### tape7Path, tape5Path, svcDirPath, rsrPath, currentDirectory ##########
@@ -180,8 +196,15 @@ with open(currentDirectory + os.path.sep + userName + "MODTRAN.csv",
                 for timeUTC in timesUTC:
 
                     for pathType in pathTypes:
+                        if pathType == 2: #Downwelling
+                            sensorZeniths = [180.0]
+                            sensorAzimuths = [0.0]
+                        elif pathType == 3:
+                            sensorZeniths = list(np.linspace(0.0, 90.0, 90/dZenith+1))
+                            sensorAzimuths = list(np.linspace(0.0, 360.0, 360/dAzimuth+1))
                         angSumSolScat = 0
                         angSumGrndReflt = 0
+
                         for sensorZenith in sensorZeniths:
                             zeinith = np.radians(sensorZenith)
                             for sensorAzimuth in sensorAzimuths:
@@ -247,9 +270,12 @@ with open(currentDirectory + os.path.sep + userName + "MODTRAN.csv",
 
                                     if surfaceAlbedo == 0:
                                         solScat = tape7Dict['sol scat']
-                                        angSumSolScat += solScat * \
-                                        np.cos(zeinith)* np.sin(zeinith) * \
-                                        np.radians(dZenith) * np.radians(dAzimuth)
+                                        if pathType == 2:
+                                            angSumSolScat += solScat
+                                        elif pathType == 3:
+                                            angSumSolScat += solScat * \
+                                            np.cos(zeinith)* np.sin(zeinith) * \
+                                            np.radians(dZenith) * np.radians(dAzimuth)
 
                                     elif surfaceAlbedo == 1:
                                         angSumGrndReflt += tape7Dict['grnd rflt']
@@ -262,14 +288,15 @@ with open(currentDirectory + os.path.sep + userName + "MODTRAN.csv",
                                                             interpOrder, extrap)
                             tgtRefl[np.isnan(tgtRefl)] = 0
 
-
                             radiance = tgtRefl*angSumGrndReflt+ angSumSolScat
 
                             bIntDict = copy.deepcopy(rsrDict)
                             for b in rsrDict.keys():
                                 beRadiance = radiance * rsrDict[b]
-                                biRad = np.sum(beRadiance)/wLRange
-                                biRSR = np.sum(rsrDict[b])/wLRange
+                                biRad = np.trapz(beRadiance, wLRange)
+                                biRSR = np.trapz(rsrDict[b], wLRange)
+                                #biRad = np.sum(beRadiance)/wLRange
+                                #biRSR = np.sum(rsrDict[b])/wLRange
                                 bIntDict[b] = biRad/biRSR
 
                             line = [modelAtmosphere, pathType, dayNumber, int(timeUTC),

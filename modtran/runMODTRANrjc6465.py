@@ -12,7 +12,6 @@ def svcGrabber(filename):
 import numpy as np
 import os
 import subprocess
-import pandas as pd
 import cv2
 from update_tape5 import update_tape5
 from read_tape7 import read_tape7
@@ -26,8 +25,8 @@ tape7Filename = os.path.join(baseDirectory, 'tape7.scn')
 
 # Perform hemispheric integral to compute the diffuse downwelling radiance
 first = True
-dZenith = 45
-dAzimuth = 180
+dZenith = 10
+dAzimuth = 180 #30
 grndRfltFirst = True
 
 # #Get SVC files to use for reference
@@ -37,16 +36,16 @@ SVCFilenames = ['000000_0000_R092_T094.sig', '000000_0000_R092_T095.sig', '00000
 
 
 
-#get the RSR info
+### GET THE RSR INFO
 RSRFilePath = 'FullSpectralResponse.csv'
 RSRdata = np.genfromtxt(baseDirectory + RSRFilePath, delimiter = ',', skip_header = 1)
 RSR_wavelengths = RSRdata[:, 0] * 0.001
 
-blueRSR_base= RSRdata[:, 17]
-greenRSR_base= RSRdata[:, 18]
-redRSR_base= RSRdata[:, 19]
-redEdgeRSR_base= RSRdata[:, 20]
-irRSR_base= RSRdata[:, 21]
+blueRSR_base= RSRdata[:, 7] #7 or 17
+greenRSR_base= RSRdata[:, 8] #8 or 18
+redRSR_base= RSRdata[:, 9] #9 or 19
+redEdgeRSR_base= RSRdata[:, 10]# 10 or 20
+irRSR_base= RSRdata[:, 11] #11 or 21
 
 #correct for any values < 0
 blueRSR_base[blueRSR_base < 0] = 0
@@ -72,12 +71,18 @@ redRSR[np.isnan(redRSR)] = 0
 redEdgeRSR[np.isnan(redEdgeRSR)] = 0
 irRSR[np.isnan(irRSR)] = 0
 
+#get the RSR integrals
+blueRSR_integral = (np.sum(blueRSR)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))
+greenRSR_integral = (np.sum(greenRSR)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))
+redRSR_integral = (np.sum(redRSR)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))
+redEdgeRSR_integral = (np.sum(redEdgeRSR)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))
+irRSR_integral = (np.sum(irRSR)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))
 
 
-#Start CSV file
-csvFile = open('rjc6465MODTRAN_AT' + '.csv', 'w', newline = '\n')
-writer = csv.writer(csvFile, delimiter = ',')
-writer.writerow(['Model Atmosphere', 'Day', 'Time', 'Altitude', 'SVC Filename', 'Band Integrated Blue', 'Band Integrated Green', 'Band Integrated Red', 'Band Integrated RedEdge', 'Band Integrated Infrared'])
+### START CSV FILE
+# csvFile = open('rjc6465MODTRAN_AT' + '.csv', 'w', newline = '\n')
+# writer = csv.writer(csvFile, delimiter = ',')
+# writer.writerow(['Model Atmosphere', 'Day', 'Time', 'Altitude', 'Zenith', 'Azimuth', 'SVC Filename', 'Band Integrated Blue', 'Band Integrated Green', 'Band Integrated Red', 'Band Integrated RedEdge', 'Band Integrated Infrared'])
 
 
 
@@ -91,96 +96,92 @@ for currentAtmos in np.arange(1, 3+1, 1): #for currentAtmos in np.arange(1, 3+1,
 			for currentAltitude in np.asarray([.2137, .282]):
 
 				#Current sequence of iterated MODTRAN inputs
-				for zenith in np.arange(0.0, 90.0, dZenith):
+				for zenith in np.asarray([180]): #np.arange(0.0, 90.0, dZenith)
 					for azimuth in np.arange(0.0, 360.0, dAzimuth):
-						for currentAlbedo in np.asarray([0, 1]):
+
+
+						update_tape5(
+							modelAtmosphere=currentAtmos,
+							dayNumber=currentDay,
+							filename=tape5Filename,
+							timeUTC = currentTime,
+							pathType=2,
+							extraterrestrialSource=0,
+							groundAltitude=0.168,
+							sensorAltitude=currentAltitude,
+							targetAltitude=0.168,
+							sensorZenith=zenith,
+							sensorAzimuth=azimuth,
+							surfaceAlbedo = 0.0)
+
+
+						os.system('/dirs/bin/modtran4' + '> /dev/null 2>&1')
+						tape7 = read_tape7(tape7Filename)
+
+						#get solar scattering component
+						solScatComponent = \
+							tape7['sol scat'] * \
+							np.cos(np.radians(zenith)) * \
+							np.sin(np.radians(zenith)) * \
+							np.radians(dZenith) * \
+							np.radians(dAzimuth)
+						# if first:
+						# 	downwelledSpectralRadiance = downwelledComponent
+						# 	first = False
+						# else:
+						# 	downwelledSpectralRadiance += downwelledComponent
+
+
+						#Get ground reflect component
+						update_tape5(
+							modelAtmosphere=currentAtmos,
+							dayNumber=currentDay,
+							filename=tape5Filename,
+							timeUTC = currentTime,
+							pathType=2,
+							extraterrestrialSource=0,
+							groundAltitude=0.168,
+							sensorAltitude=currentAltitude,
+							targetAltitude=0.168,
+							sensorZenith=zenith,
+							sensorAzimuth=azimuth,
+							surfaceAlbedo = 1.0)
+
+						os.system('/dirs/bin/modtran4' + '> /dev/null 2>&1')
+						tape7 = read_tape7(tape7Filename)
+
+
+						currentGroundReflectComponent = tape7['grnd rflt']
 
 
 
-							# Typical path between two altitudes run
-							update_tape5(
-								modelAtmosphere=currentAtmos,
-								dayNumber=currentDay,
-								filename=tape5Filename,
-								timeUTC = currentTime,
-								pathType=3,
-								extraterrestrialSource=0,
-								groundAltitude=0.168,
-								sensorAltitude=currentAltitude,
-								targetAltitude=0.168,
-								sensorZenith=zenith,
-								sensorAzimuth=azimuth,
-								surfaceAlbedo = currentAlbedo)
+						print(zenith, azimuth)
+						for i in np.linspace(0, len(SVCFilenames)-1, len(SVCFilenames)).astype(np.int32):
+							currentSVCFilename = baseSVCdir + SVCFilenames[i]
+							wavelength, reference, target, spectralReflectance_SVC = svcGrabber(currentSVCFilename)
+							#interpolate SVC measurements to match MODTRAN spectral resolution, convert SVC wavelength from nm to um
+							spectralReflectance = interp1((wavelength*0.001), spectralReflectance_SVC, tape7['wavlen mcrn'])
+							spectralReflectance[np.isnan(spectralReflectance)] = 0
 
+							sensorReachingRadiance = (spectralReflectance * currentGroundReflectComponent) + solScatComponent
 
-							os.system('/dirs/bin/modtran4' + '> /dev/null 2>&1')
-							tape7 = read_tape7(tape7Filename)
+							#calculate the band effective radiances for each band
+							BER_blue = sensorReachingRadiance * blueRSR
+							BER_green = sensorReachingRadiance * greenRSR
+							BER_red = sensorReachingRadiance * redRSR
+							BER_redEdge = sensorReachingRadiance * redEdgeRSR
+							BER_ir = sensorReachingRadiance * irRSR
 
+							#integrate to get band-integrated radiance for each band
+							bandIntegratedBlue = (np.sum(BER_blue)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))/blueRSR_integral
+							bandIntegratedGreen = (np.sum(BER_green)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))/greenRSR_integral
+							bandIntegratedRed = (np.sum(BER_red)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))/redRSR_integral
+							bandIntegratedRedEdge = (np.sum(BER_redEdge)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))/redEdgeRSR_integral
+							bandIntegratedInfrared = (np.sum(BER_ir)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths)))/irRSR_integral
+							
+							print([bandIntegratedBlue, bandIntegratedGreen, bandIntegratedRed, bandIntegratedRedEdge, bandIntegratedInfrared])
+							#print(' ')
+							#writer.writerow([currentAtmos, currentDay, currentTime, currentAltitude, zenith, azimuth, SVCFilenames[i], bandIntegratedBlue, bandIntegratedGreen, bandIntegratedRed, bandIntegratedRedEdge, bandIntegratedInfrared])
 
-							#get solar scattering component
-							if currentAlbedo == 0:
-								#calculate downwelled component
-								downwelledComponent = \
-									tape7['sol scat'] * \
-									np.cos(np.radians(zenith)) * \
-									np.sin(np.radians(zenith)) * \
-									np.radians(dZenith) * \
-									np.radians(dAzimuth)
-								#print(len(downwelledComponent))
-								if first:
-									downwelledSpectralRadiance = downwelledComponent
-									first = False
-								else:
-									downwelledSpectralRadiance += downwelledComponent
+#csvFile.close()
 
-							#Get ground reflect component
-							elif currentAlbedo == 1:
-								currentGroundReflectComponent = tape7['grnd rflt']
-								#print(len(currentGroundReflectComponent))
-								if grndRfltFirst:
-									groundReflectComponent = currentGroundReflectComponent
-									grndRfltFirst = False
-								else:
-									groundReflectComponent += currentGroundReflectComponent
-
-
-				#Current sequence over all azimuth/zenith angles
-				cumSolarScatteringComponent = downwelledSpectralRadiance
-				cumGroundReflectComponent = groundReflectComponent
-				first = True
-				grndRfltFirst = True
-				downwelledSpectralRadiance = 0
-				groundReflectComponent = 0
-
-				for i in np.linspace(0, len(SVCFilenames), len(SVCFilenames)+1).astype(np.int32):
-					currentSVCFilename = baseSVCdir + SVCFilenames[i]
-					wavelength, reference, target, spectralReflectance_SVC = svcGrabber(currentSVCFilename)
-					#interpolate SVC measurements to match MODTRAN spectral resolution, convert SVC wavelength from nm to um
-					spectralReflectance = interp1((wavelength*0.001), spectralReflectance_SVC, tape7['wavlen mcrn'])
-					spectralReflectance[np.isnan(spectralReflectance)] = 0
-
-					sensorReachingRadiance = (spectralReflectance * cumGroundReflectComponent) + cumSolarScatteringComponent
-
-					#calculate the band effective radiances for each band
-					BER_blue = sensorReachingRadiance * blueRSR
-					BER_green = sensorReachingRadiance * greenRSR
-					BER_red = sensorReachingRadiance * redRSR
-					BER_redEdge = sensorReachingRadiance * redEdgeRSR
-					BER_ir = sensorReachingRadiance * irRSR
-
-					#integrate to get band-integrated radiance for each band
-					bandIntegratedBlue = np.sum(BER_blue)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths))
-					bandIntegratedGreen = np.sum(BER_green)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths))
-					bandIntegratedRed = np.sum(BER_red)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths))
-					bandIntegratedRedEdge = np.sum(BER_redEdge)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths))
-					bandIntegratedInfrared = np.sum(BER_ir)/(np.max(MODTRANtape7Wavelengths) - np.min(MODTRANtape7Wavelengths))
-					#print(SVCFilenames[i])
-					#print([bandIntegratedBlue, bandIntegratedGreen, bandIntegratedRed, bandIntegratedRedEdge, bandIntegratedInfrared])
-					#print(' ')
-					writer.writerow([currentAtmos, currentDay, currentTime, currentAltitude, SVCFilenames[i], bandIntegratedBlue, bandIntegratedGreen, bandIntegratedRed, bandIntegratedRedEdge, bandIntegratedInfrared])
-
-csvFile.close()
-
-
-# # print('Downwelled spectral radiance:')
-# # print(downwelledSpectralRadiance)

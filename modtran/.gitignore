@@ -1,0 +1,2 @@
+#Ignore created modtran folders when running git
+modtran*/**

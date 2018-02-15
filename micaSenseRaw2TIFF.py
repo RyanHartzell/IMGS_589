@@ -164,7 +164,7 @@ if registrationDict is None:
 	f.close()
 	transformDictionary.update({k : np.matrix(v).astype(np.float32) for k,v in transformDictionary.items()})
 
-stackQC = True
+stackQC = False
 wait = 500
 
 splitted = flightDirectory.split('/')

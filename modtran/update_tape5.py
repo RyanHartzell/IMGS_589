@@ -48,13 +48,13 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
          7 User-specified model atmosphere (radiosonde data) is to be read in
 
       pathType (ITYPE)
-         1 Horizontal (constant-pressure) path, i.e., single layer, no 
+         1 Horizontal (constant-pressure) path, i.e., single layer, no
            refraction calculation
          2 Vertical or slant path between two altitudes
          3 Vertical or slant path to space or ground
 
       surfaceAlbedo (SURREF)
-         Albedo of the earth, equal to one minus the surface emissivity and 
+         Albedo of the earth, equal to one minus the surface emissivity and
          spectrally independent (constant)
 
       surfaceTemperature (AATEMP)
@@ -63,15 +63,15 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
       albedoFilename (SALBFL)
          Name of the spectral albedo data file / If specified, then the
          surface albedo (SURREF) will be set equal to 'LAMBER' and
-         CARD 4A, CARD 4L1, and CARD 4L2 will be included to specify the 
+         CARD 4A, CARD 4L1, and CARD 4L2 will be included to specify the
          target and background names in the provided spectral albedo file
 
       targetLabel (CSALB)
-         The number or name associated with a target spectral albedo curve 
+         The number or name associated with a target spectral albedo curve
          from the spectral albedo data file
 
       backgroundLabel (CSALB)
-         The number or name associated with a background spectral albedo curve 
+         The number or name associated with a background spectral albedo curve
          from the spectral albedo data file
 
       visibility (VIS)
@@ -79,9 +79,9 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
          = 0.0 Uses the default meteorological range set by IHAZE
 
       groundAltitude (GNDALT)
-         Altitude of surface relative to sea level (km). GNDALT may be negative 
-         but may not exceed 6 km / The baseline 0 to 6-km aerosol profiles are 
-         compressed (or stretched) based on input GNDALT / GNDALT is set to the 
+         Altitude of surface relative to sea level (km). GNDALT may be negative
+         but may not exceed 6 km / The baseline 0 to 6-km aerosol profiles are
+         compressed (or stretched) based on input GNDALT / GNDALT is set to the
          first profile altitude when radiosonde data is used (MODEL = 7)
 
       sensorAltitude (H1)
@@ -111,7 +111,7 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
          Greenwich time in decimal hours (e.g. 8:45am is 8.75, 5:20pm is 17.33)
 
       sensorAzimuth (PSIPO)
-         Sensor (path) azimuth degrees East of North (i.e. due North is 0.0 
+         Sensor (path) azimuth degrees East of North (i.e. due North is 0.0
          degrees, due East is 90.0 degrees)
 
       startingWavelength (V1)
@@ -121,12 +121,12 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
          Final wavelength in units of microns
 
       wavelengthIncrement (DV)
-         Wavelength increment used for spectral outputs (the recommended value 
+         Wavelength increment used for spectral outputs (the recommended value
          FWHM / 2) in units of microns
 
       fwhm (FWHM)
-         Slit function full width at half maximum in units of microns (no 
-         convolution is performed if FWHM equals the bin size and the default 
+         Slit function full width at half maximum in units of microns (no
+         convolution is performed if FWHM equals the bin size and the default
          slit function is selected)
 
    author::
@@ -142,17 +142,17 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
       1.0.0
 
    disclaimer::
-      This source code is provided "as is" and without warranties as to 
-      performance or merchantability. The author and/or distributors of 
-      this source code may have made statements about this source code. 
-      Any such statements do not constitute warranties and shall not be 
+      This source code is provided "as is" and without warranties as to
+      performance or merchantability. The author and/or distributors of
+      this source code may have made statements about this source code.
+      Any such statements do not constitute warranties and shall not be
       relied on by the user in deciding whether to use this source code.
-      
-      This source code is provided without any express or implied warranties 
-      whatsoever. Because of the diversity of conditions and hardware under 
-      which this source code may be used, no warranty of fitness for a 
-      particular purpose is offered. The user is advised to test the source 
-      code thoroughly before relying on it. The user must assume the entire 
+
+      This source code is provided without any express or implied warranties
+      whatsoever. Because of the diversity of conditions and hardware under
+      which this source code may be used, no warranty of fitness for a
+      particular purpose is offered. The user is advised to test the source
+      code thoroughly before relying on it. The user must assume the entire
       risk of using the source code.
    """
 
@@ -245,17 +245,17 @@ if __name__ == '__main__':
 
    # Typical path between two altitudes run
    radiometry.modtran.update_tape5(
-      filename=tape5Filename, 
+      filename=tape5Filename,
       pathType=2,
       extraterrestrialSource=0,
-      sensorAltitude=0.268, 
-      targetAltitude=0.168, 
+      sensorAltitude=0.268,
+      targetAltitude=0.168,
       sensorZenith=180.0,
       sensorAzimuth=0.0)
 
    # Typical downwelling radiance run
    radiometry.modtran.update_tape5(
-      filename=tape5Filename, 
+      filename=tape5Filename,
       pathType=3,
       extraterrestrialSource=0,
       sensorAltitude=0.168,
@@ -307,4 +307,3 @@ if __name__ == '__main__':
 
    print('Downwelled spectral radiance:')
    print(downwelledSpectralRadiance)
-

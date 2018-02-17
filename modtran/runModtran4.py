@@ -137,6 +137,8 @@ def createItterations(params):
     return itterate
 
 def plotResults(params, results, blocking=True):
+    import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     import numpy as np
     import os
@@ -191,6 +193,7 @@ def plotResults(params, results, blocking=True):
                     params['targetLabel'], params['dAzimuth'], params['dZenith'])
     plt.savefig(currentDirectory + figureTitle)
 
+    plt.close()
     if blocking is True:
         plt.show()
 
@@ -307,7 +310,7 @@ def modtran(paramList, plotting=True):
         'totalRadiance':totalRadiance, 'estimatedDownwell':estDownwell,
         'integratedDownwellRadiance': sumSolScat}
 
-        plotResults(paramList[0],results)
+        plotResults(paramList[0],results, False)
 
 if __name__ == "__main__":
     import os
@@ -316,20 +319,23 @@ if __name__ == "__main__":
     import numpy as np
     from runModtran4 import modtran
 
-    plotting = False
+    plotting = True
 
-    params = {'fileName':'tape5', 'modelAtmosphere':[1,2,3], 'pathType':2,
+    params = {'fileName':'tape5', 'modelAtmosphere':[2], 'pathType':2,
         'surfaceAlbedo':None, 'surfaceTemperature':303.15,
         'albedoFilename':'spec_alb.dat', 'targetLabel':["healthy grass", "asphalt",
         "concrete", "blue felt", "green felt", "red felt"],
         'backgroundLabel':["constant, 18%"], 'visibility':[0.0],
-        'groundAltitude':0.168, 'sensorAltitude':[0.2137, 0.2823],
+        'groundAltitude':0.168, 'sensorAltitude':[0.2823],
         'targetAltitude':0.168, 'sensorZenith':180.0, 'sensorAzimuth':0.0,
         'dZenith': 2.5, 'dAzimuth':5,
         'dayNumber':[312], 'extraterrestrialSource':0, 'latitude':43.041,
-        'longitude':77.698, 'timeUTC':[15.0,17.1,19.0], 'startingWavelength':0.30,
+        'longitude':77.698, 'timeUTC':[15.0], 'startingWavelength':0.30,
         'endingWavelength':1.2, 'wavelengthIncrement':0.001, 'fwhm':0.001}
 
+    params['targetLabel'] = "green felt"
+    #params['dZenith'] = 45
+    #params['dAzimuth'] = 180
     params['sensorZenith'] = list(np.linspace(0.0, 90.0, 90/params['dZenith']+1)) + [180.0]
     params['sensorAzimuth'] = list(np.linspace(0.0, 360.0, 360/params['dAzimuth']+1))
 

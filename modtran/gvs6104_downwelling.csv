@@ -1,7 +1,0 @@
-Model Atmosphere,Visibility,Day,Time,Ground Altitude,Sensor Altitude,Target Altitude,Albedo,Band Integrated Downwelling Blue,Band Integrated Downwelling Green,Band Integrated Downwelling Red,Band Integrated Downwelling RedEdge,Band Integrated Downwelling Infrared
-2,0.0,312,15.0,0.168,0.2137,100.0,0.0,0.0,0.0,0.0,0.0
-2,0.0,312,17.0,0.168,0.2137,100.0,0.0,0.0,0.0,0.0,0.0
-2,0.0,312,19.0,0.168,0.2137,100.0,0.0,0.0,0.0,0.0,0.0
-2,0.0,312,15.0,0.168,0.2823,100.0,0.0,0.0,0.0,0.0,0.0
-2,0.0,312,17.0,0.168,0.2823,100.0,0.0,0.0,0.0,0.0,0.0
-2,0.0,312,19.0,0.168,0.2823,100.0,0.0,0.0,0.0,0.0,0.0

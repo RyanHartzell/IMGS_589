@@ -1,2 +1,7 @@
 #Ignore created modtran folders when running git
 modtran*/**
+*.eps
+*_downwelling.csv
+*_target.csv
+*.pyc
+__pycache__/

@@ -15,8 +15,8 @@ def executeModtran(currentParams):
     splitted = currentParams['fileName'].split('/')
     os.chdir('/'.join(splitted[:-2])+ os.path.sep)
 
-    m,s = divmod(endTime, 60)
-    print("It took {0}m {1}s to run modtran4".format(m, int(s)))
+    #m,s = divmod(endTime, 60)
+    #print("It took {0}m {1}s to run modtran4".format(m, int(s)))
 
     tape7 = read_tape7(outputPath +'/tape7.scn')
 
@@ -27,18 +27,19 @@ def executeModtran(currentParams):
         raise ValueError(msg)
     shutil.rmtree(outputPath)
 
-    return tape7
+    return tape7, endTime
 
-def integrateBandRadiance(radiance, rsrDict, wavelengths):
+def integrateBandRadiance(radiance, rsrDict, wavelengths, radianceType):
     import copy
     import numpy as np
 
-    bandIntegratedDict = copy.deepcopy(rsrDict)
+    bandIntegratedDict = {}
     for b in rsrDict.keys():
         bandEffectiveRadiance = radiance * rsrDict[b]
         bandIntegratedRadiance = np.trapz(bandEffectiveRadiance, wavelengths)
         bandIntegratedRSR = np.trapz(rsrDict[b], wavelengths)
-        bandIntegratedDict[b] = bandIntegratedRadiance/bandIntegratedRSR
+        bandIntegratedDict[radianceType+' '+b] = bandIntegratedRadiance/bandIntegratedRSR
+    bandIntegratedDict['radianceType'] = radianceType
 
     return bandIntegratedDict
 
@@ -72,62 +73,61 @@ def writeToCSV(csvFile, params, bandDict):
 
     exists = os.path.isfile(csvFile)
 
+    writeDict = dict(params, **bandDict)
+    writeDict['albedoFilename'] = os.path.basename(writeDict['albedoFilename'])
+    writeDict['fileName'] = os.path.basename(writeDict['fileName'])
+    writeDict = {k:v for k,v in writeDict.items() if v is not None}
+    if writeDict['radianceType'] == 'Target':
+        writeDict['targetAltitude'] = writeDict['groundAltitude']
+
     with open(csvFile, 'a') as f:
-        writer = csv.writer(f)
+        dw = csv.DictWriter(f, writeDict.keys())
+        if not exists:
+            dw.writeheader()
+        dw.writerow(writeDict)
 
-        if params['targetAltitude'] == 100:
-            headders=['Model Atmosphere', 'Visibility', 'Day', 'Time',
-                    'Ground Altitude', 'Sensor Altitude', 'Target Altitude', 'Albedo',
-                    'Band Integrated Downwelling Blue', 'Band Integrated Downwelling Green',
-                    'Band Integrated Downwelling Red', 'Band Integrated Downwelling RedEdge',
-                     'Band Integrated Downwelling Infrared']
+def writeSummary(filename, paramDict, summary, bandIntDictTgt, bandIntDictSolar):
+    import csv
+    import os
+    import numpy as np
 
-            if not exists:
-                writer.writerow(headders)
+    writeDict = {k:v for k,v in paramDict.items() if v is not None}
+    writeDict['albedoFilename'] = os.path.basename(writeDict['albedoFilename'])
+    writeDict['fileName'] = os.path.basename(writeDict['fileName'])
 
-            row = [params['modelAtmosphere'], params['visibility'],
-                    params['dayNumber'], params['timeUTC'], params['groundAltitude'],
-                    params['sensorAltitude'], params['targetAltitude']] + bandList
-            print(row)
-            writer.writerow(row)
+    with open(filename, 'a') as f:
+        w = csv.writer(f)
+        w.writerow(list(writeDict.keys())[:-1])
+        w.writerow(list(writeDict.values())[:-1])
+        w.writerow(list(bandIntDictTgt.keys())[:-1]+list(bandIntDictSolar.keys())[:-1])
+        w.writerow(list(bandIntDictTgt.values())[:-1]+list(bandIntDictSolar.values())[:-1])
+        #w.writerow(list(bandIntDictSolar.keys()))
+        #w.writerow(list(bandIntDictSolar.values()))
+        w.writerow(list(summary.keys()))
+        for r in range(np.asarray(list(summary.values())).shape[1]):
+            w.writerow(np.asarray(list(summary.values()))[:,r])
 
-        if params['targetAltitude'] == params['groundAltitude']:
-            headders = ['Model Atmosphere', 'Visibility', 'Day', 'Time',
-                            'Ground Altitude','Sensor Altitude',
-                                'Target Altitude', 'Zenith', 'Azimuth',
-                                'Background', 'Target', 'Band Integrated Blue',
-                                'Band Integrated Green', 'Band Integrated Red',
-                                'Band Integrated RedEdge', 'Band Integrated Infrared']
-            if not exists:
-                writer.writerow(headders)
-            row = [params['modelAtmosphere'], params['visibility'],
-                    params['dayNumber'], params['timeUTC'], params['groundAltitude'],
-                    params['sensorAltitude'], params['targetAltitude'],
-                    params['sensorZenith'], params['sensorAzimuth'],
-                    params['backgroundLabel'], params['targetLabel']] + bandList
-            print(row)
-            writer.writerow(row)
 
 def createItterations(params):
     import itertools
 
-    listDict = {k:v for k,v in params.items() 
-                    if type(v) is list 
+    listDict = {k:v for k,v in params.items()
+                    if type(v) is list
                     if k != 'sensorZenith' if k != 'sensorAzimuth'}
     uniqueDict = {k:v for k,v in listDict.items() if len(v) > 1}
-    listCombo = list(dict(zip(listDict, x)) 
+    listCombo = list(dict(zip(listDict, x))
                         for x in itertools.product(*listDict.values()))
 
     for d in range(len(listCombo)):
         listCombo[d]['sensorZenith'] = params['sensorZenith']
         listCombo[d]['sensorAzimuth'] = params['sensorAzimuth']
         dDict = {k:v for k,v in listCombo[d].items() if type(v) is list}
-        dCombo = list(dict(zip(dDict, x)) 
+        dCombo = list(dict(zip(dDict, x))
                             for x in itertools.product(*dDict.values()))
         listCombo[d] = [dict(listCombo[d], **x) for x in dCombo]
 
     listTargets = [[dict(params, **d) for d in l] for l in listCombo]
-    listTargets = [[dict(d, **{'key':key}) for key, d in enumerate(l)] 
+    listTargets = [[dict(d, **{'key':key}) for key, d in enumerate(l)]
                                                     for l in listTargets]
 
     for t in listTargets:
@@ -136,7 +136,7 @@ def createItterations(params):
                 d['targetAltitude'] = 100.0
             elif d['sensorZenith'] == 180.0 and d['sensorAzimuth'] == 0.0:
                 d['targetAltitude'] = d['groundAltitude']
-            elif d['sensorZenith'] == 180.0 and (d['targetAltitude'] 
+            elif d['sensorZenith'] == 180.0 and (d['targetAltitude']
                                                     != d['sensorAltitude']):
                 d = None
 
@@ -183,17 +183,17 @@ def plotResults(params, results, blocking=True):
 
     plt.title(title)
 
-    plt.plot(wavelengths, resultsList[0], color='red', 
+    plt.plot(wavelengths, resultsList[0], color='red',
                                     label="Target Solar Scattering")
-    plt.plot(wavelengths, resultsList[1], color='cyan', 
+    plt.plot(wavelengths, resultsList[1], color='cyan',
                                     label="Ground Reflectance")
-    plt.plot(wavelengths, resultsList[2], color='green', 
+    plt.plot(wavelengths, resultsList[2], color='green',
                                     label="Direct Reflectance")
-    plt.plot(wavelengths, resultsList[3], color='purple', 
+    plt.plot(wavelengths, resultsList[3], color='purple',
                                     label="Total Radiance")
-    plt.plot(wavelengths, resultsList[4], color='yellow', 
+    plt.plot(wavelengths, resultsList[4], color='yellow',
                                     label="Estimated Downwell Solar Scattering")
-    plt.plot(wavelengths, resultsList[5], color='blue', 
+    plt.plot(wavelengths, resultsList[5], color='blue',
                                     label="Integrated Solar Scattering")
     plt.xlabel("Wavelengths {0}-{1}[microns]".format(
         params['startingWavelength'], params['endingWavelength']))
@@ -203,29 +203,28 @@ def plotResults(params, results, blocking=True):
     plt.legend()
     plt.draw()
 
-    currentDirectory = os.path.dirname(os.path.abspath(__file__))
     figureTitle = "/Modtran4_target-{0}_dAzimuth-{1}_dZenith-{2}.eps".format(
-        params['targetLabel'].replace(" ", "_"), params['dAzimuth'], 
+        params['targetLabel'].replace(" ", "_"), params['dAzimuth'],
         params['dZenith'])
-    plt.savefig(currentDirectory + figureTitle)
+    plt.savefig(os.path.dirname(params['albedoFilename']) + figureTitle)
 
     plt.close()
     if blocking is True:
         plt.show()
 
-def processFunction(params,q=None):
+def processFunction(params):
     import os
+    import getpass
     import numpy as np
     from update_tape5 import update_tape5
     from read_tape7 import read_tape7
 
-    currentDirectory = os.path.dirname(os.path.abspath(__file__))
-    keyDirectory = currentDirectory+'/modtran_{0}'.format(params['key'])
+    keyDirectory = os.path.dirname(params['albedoFilename'])+ \
+                                    '/modtran_{0}'.format(params['key'])
     if not os.path.exists(keyDirectory):
         os.mkdir(keyDirectory)
 
     params['fileName'] = keyDirectory + '/tape5'
-    params['albedoFilename'] = currentDirectory + '/spec_alb.dat'
     update_tape5(params['fileName'], params['modelAtmosphere'],
             params['pathType'], params['surfaceAlbedo'],
             params['surfaceTemperature'], params['albedoFilename'],
@@ -242,7 +241,7 @@ def processFunction(params,q=None):
     #print("Running Modtran4 with Zenith {0}, Azimuth {1}".format(
     #                   params['sensorZenith'],params['sensorAzimuth']))
 
-    tape7 = executeModtran(params)
+    tape7, modtranTime = executeModtran(params)
     wavelengths = tape7['wavlen mcrn']
 
     sumSolScat = None
@@ -260,10 +259,14 @@ def processFunction(params,q=None):
         estDownwell = groundReflect - directReflect
         totalRadiance = tape7['total rad']
 
-        rsrPath = currentDirectory + '/FullSpectralResponse.csv'
+        rsrPath = os.path.dirname(params['albedoFilename']) + '/FullSpectralResponse.csv'
         rsrDict = generateRSR(rsrPath, wavelengths)
-        bandIntDict = integrateBandRadiance(totalRadiance, rsrDict, 
-                                                            wavelengths)
+        bandIntDict = integrateBandRadiance(totalRadiance, rsrDict,
+                                                    wavelengths, 'Target')
+        baseDir = os.path.dirname(params['albedoFilename'])
+        userName = getpass.getuser()
+        #writeToCSV(baseDir + '/{0}_target.csv'.format(userName),
+        #                        params, bandIntDict)
 
     elif params['sensorZenith'] != 180:
         sumSolScat = tape7['sol scat']
@@ -275,7 +278,8 @@ def processFunction(params,q=None):
     resultDict = {'wavelengths':wavelengths,'sumSolScat':sumSolScat,
                 'tgtSolScat':tgtSolScat,'groundReflect':groundReflect,
                 'directReflect':directReflect,'estDownwell':estDownwell,
-                'totalRadiance':totalRadiance, 'bandIntDictTgt':bandIntDict}
+                'totalRadiance':totalRadiance, 'bandIntDictTgt':bandIntDict,
+                'modtranTime': modtranTime, 'params': params}
 
     return resultDict
 
@@ -287,42 +291,59 @@ def modtran(paramList, plotting=True):
     from runModtran4 import plotResults
     import getpass
     import os
+    import numpy as np
     import multiprocessing
 
+    sumSolScat = 0
+    useFullCPU = multiprocessing.cpu_count()-2
+    modtranTime = []
+    modNumber = 5
+    targetList = ['tgtSolScat','groundReflect','directReflect','estDownwell',
+                    'totalRadiance','bandIntDictTgt']
+    if len(paramList) > 46:
+        modNumber = 46
+    if len(paramList) < useFullCPU: useFullCPU=len(paramList)
+    with multiprocessing.Pool(processes=useFullCPU) as pool:
+        for resultDict in pool.imap_unordered(processFunction, [param for param in paramList]):
+            resultDict = {k:v for k,v in resultDict.items() if v is not None}
+            wavelengths = resultDict['wavelengths']
+            modtranTime.append(resultDict['modtranTime'])
+            if len(modtranTime)%modNumber == 0:
+                averageTime = sum(modtranTime)/len(modtranTime)
+                m, s = divmod(averageTime, 60)
+                print("The current average modtran run time is {0}m {1}s".format(int(m), int(s)))
 
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count()-2) as pool:
-        resultArray = pool.map(processFunction, [param for param in paramList])
+            if 'sumSolScat' in resultDict.keys():
+                sumSolScat += resultDict['sumSolScat']
+            elif len([k for t in targetList for k in resultDict.keys() if t in k]) == len(targetList):
+                tgtSolScat = resultDict['tgtSolScat']
+                groundReflect = resultDict['groundReflect']
+                directReflect = resultDict['directReflect']
+                estDownwell = resultDict['estDownwell']
+                totalRadiance = resultDict['totalRadiance']
+                bandIntDictTgt = resultDict['bandIntDictTgt']
+
     pool.join()
     pool.close()
 
-    resultList = [dict((k,v) for k,v in d.items() 
-                                if v is not None) for d in resultArray]
-
-    wavelengths = resultList[0]['wavelengths']
-    sumSolScat = 0
-    for r in range(len(resultList)):
-        if len(resultList[r]) == 7:
-            tgtSolScat = resultList[r]['tgtSolScat']
-            groundReflect = resultList[r]['groundReflect']
-            directReflect = resultList[r]['directReflect']
-            estDownwell = resultList[r]['estDownwell']
-            totalRadiance = resultList[r]['totalRadiance']
-            bandIntDictTgt = resultList[r]['bandIntDictTgt']
-        else:
-            dictionary = resultList[r]
-            for key in dictionary.keys():
-                if key == 'sumSolScat':
-                    sumSolScat += dictionary[key]
-
     userName = getpass.getuser()
-    currentDirectory = os.path.dirname(os.path.abspath(__file__))
-    rsrPath = currentDirectory + '/FullSpectralResponse.csv'
+    rsrPath = os.path.dirname(paramList[0]['albedoFilename']) +\
+                                '/FullSpectralResponse.csv'
     rsrDict = generateRSR(rsrPath, wavelengths)
-    bandIntDictSolar = integrateBandRadiance(sumSolScat, rsrDict, wavelengths)
-    writeToCSV(currentDirectory+ '/{0}_downwelling.csv'.format(userName), 
-                                                paramList[0], bandIntDictSolar)
-    writeToCSV(currentDirectory+'/{0}_target.csv'.format(userName), 
-                                                paramList[0], bandIntDictTgt)
+    bandIntDictSolar = integrateBandRadiance(sumSolScat, rsrDict,
+                                        wavelengths, 'Downwelling')
+
+    baseDir = os.path.dirname(paramList[0]['albedoFilename'])
+    #writeToCSV(baseDir + '/{0}_downwelling.csv'.format(userName),
+    #                                paramList[0], bandIntDictSolar)
+
+    summary = {'wavelengths':wavelengths, 'tgtSolScat':tgtSolScat,
+    'groundReflect':groundReflect, 'directReflect':directReflect,
+    'estDownwell':estDownwell, 'totalRadiance':totalRadiance,
+    'sumSolScat':sumSolScat}
+    summary.update(rsrDict)
+
+    writeSummary(baseDir + '/summary.csv', paramList[0], summary, bandIntDictTgt, bandIntDictSolar)
 
     if plotting:
         results = {'wavelengths':wavelengths, 'targetSolScat': tgtSolScat,
@@ -339,74 +360,93 @@ if __name__ == "__main__":
     import numpy as np
     from runModtran4 import modtran
 
-    plotting = True
+    plotting = False
+
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
 
     params = {'fileName':'tape5', 'modelAtmosphere':[2,3,6], 'pathType':2,
         'surfaceAlbedo':None, 'surfaceTemperature':303.15,
-        'albedoFilename':'spec_alb.dat', 'targetLabel':["healthy grass", 
+        'albedoFilename':currentDirectory+'/spec_alb.dat',
+        'targetLabel':["healthy grass",
         "asphalt", "concrete", "blue felt", "green felt", "red felt"],
         'backgroundLabel':["constant, 18%"], 'visibility':[0.0],
         'groundAltitude':0.168, 'sensorAltitude':[0.2137, 0.2823],
         'targetAltitude':0.168, 'sensorZenith':180.0, 'sensorAzimuth':0.0,
         'dZenith': 2.5, 'dAzimuth':5,
-        'dayNumber':[312], 'extraterrestrialSource':0, 'latitude':43.041,
-        'longitude':77.698, 'timeUTC':[15.0, 17.0, 19.0], 
-        'startingWavelength':0.30, 'endingWavelength':1.2, 
+        'dayNumber':[312],
+        'extraterrestrialSource':0, 'latitude':43.041,
+        'longitude':77.698, 'timeUTC':[15.0, 17.0, 19.0],
+        'startingWavelength':0.30, 'endingWavelength':1.2,
         'wavelengthIncrement':0.001, 'fwhm':0.001}
 
     params['targetLabel'] = "green felt"
     #params['dZenith'] = 45
     #params['dAzimuth'] = 180
-    params['sensorZenith'] = list(np.linspace(0.0, 90.0, 
-                                        90/(params['dZenith']+1))) + [180.0]
-    params['sensorAzimuth'] = list(np.linspace(0.0, 360.0, 
-                                                360/params['dAzimuth']+1))
+    #print(np.linspace(1,365,4, False, True))
+    params['timeUTC'] = 15.0
+    params['sensorAltitude'] = 0.2823
+    params['modelAtmosphere'] = 2
+    # params['sensorZenith'] = list(np.linspace(0.0, 90.0,
+    #                                     90.0/(params['dZenith']+1))) + [180.0]
+    # params['sensorAzimuth'] = list(np.linspace(0.0, 360.0,
+    #                                     360.0/params['dAzimuth']+1))
+    params['sensorZenith'] = list(np.arange(0.0,90.0+params['dZenith'],
+                                            params['dZenith'])) + [180.0]
+    params['sensorAzimuth'] = list(np.arange(0.0,360.0+params['dAzimuth'],
+                                            params['dAzimuth']))
+    #params['sensorZenith'] = [0.0, 180.0]
+    #params['sensorAzimuth'] = [0.0]
 
     itterations, uniqueDict = createItterations(params)
 
-    numCPU = multiprocessing.cpu_count()
-    if numCPU == 8:
+    totalCpu = multiprocessing.cpu_count()
+    if totalCpu == 8:
         estTime = 20
     else:
         estTime = 100
-    
-    numItter = len(itterations)*len(itterations[0])*100
 
-    numItter = numItter/(numCPU-2)
+    numItter = len(itterations)*len(itterations[0])*estTime
+    numCPU = totalCpu-2
+    if len(itterations[0]) < totalCpu: numCPU = len(itterations[0])
+    numItter = numItter/(numCPU)
 
     m,s = divmod(numItter, 60)
     h, m = divmod(m, 60)
     d, h = divmod(h, 24)
 
-    print("""Estimated time to complete {0} itterations is {1}d {2}h {3}m {4}s 
-using {5}/{6} cores at {7}s per itteration""".format(
-            len(itterations)*len(itterations[0]),int(d), int(h), int(m), 
-            int(s), numCPU-2, numCPU, estTime).replace('\n',''))
+
+    print("Estimated time to complete {0} itterations ".format(len(itterations)*len(itterations[0])) +
+    "is {0}d {1}h {2}m {3}s ".format(int(d), int(h), int(m), int(s)) +
+    "using {0}/{1} cores at {2}s per itteration.".format(numCPU, totalCpu, estTime))
     print("Unique itterations: {0}, Angle itterations: {1}".format(
                                     len(itterations), len(itterations[0])))
-    print("The unique itterations are key(s):{0} value(s):{1}".format(
-                        list(uniqueDict.keys()), list(uniqueDict.values())))
-    print("""The angle itterations are Zenith Angles: {0}, 
-Azimuth Angles: {1}""".format(params['sensorZenith'], 
-                                params['sensorAzimuth']).replace('\n', ''))
-    print('\n')
+    print("The unique itterations are:")
+    for k,v in uniqueDict.items():
+        print("\t{0}: {1}".format(k,v))
+
+    print("The angle itterations are:")
+    print("\tZenith Angles: {0}".format(params['sensorZenith']))
+    print("\tAzimuth Angles: {0}".format(params['sensorAzimuth']))
+    print()
 
     for i in range(len(itterations)):
         unique = {k:v for k,v in itterations[i][0].items() if k in uniqueDict.keys()}
-        print("Current Unique Itteration: ", unique) 
+        print("Current Unique Itteration: ", unique)
         startTime = time.time()
         modtran(itterations[i], plotting)
         itterationTime = time.time()-startTime
         m,s = divmod(itterationTime, 60)
         h,m = divmod(m, 60)
-        print("It took {0}h {1}m {2}s to run with a delta z {3} and a delta a {4}".format(
-                                    h, m, s, params['dZenith'], params['dAzimuth']))
-        
+        print("\nIt took {0}h {1}m {2}s ".format(int(h),int(m),int(s)) +
+            "to complete all angles using a delta zenith angle " +
+            "of {0} ".format(params['dZenith']) +
+            "and a delta azimuth angle of {0}".format(params['dAzimuth']))
+
         uM,uS = divmod(itterationTime*(len(itterations)-i-1), 60)
         uH, uM = divmod(uM, 60)
         uD, uH = divmod(uH, 24)
-        print("The updated estimated time to complete is {0}d {1}h {2}m {3}s".format(
-            int(uD), int(uH), int(uM), int(uS))
-        print('\n')
+        print("The updated estimated time to complete is {0}d {1}h {2}m {3}s.".format(
+            int(uD), int(uH), int(uM), int(uS)))
+        print()
 
     print("You've completed all of the itterations, congratulations")

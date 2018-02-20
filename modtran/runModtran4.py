@@ -55,8 +55,8 @@ def generateRSR(rsrPath, wavelengths, interpOrder=1, extrap=False):
     rsrData = np.genfromtxt(rsrPath, delimiter=',', skip_header=1)
     rsrData[rsrData < 0] = 0
     rsrWavelengths = rsrData[:,0]*0.001 #Units of micrometers
-    rsrDict = {'Norm Raw Blue':0, 'Norm Raw Green':0,'Norm Raw Red':0,
-                'Norm Raw RE':0,'Norm Raw IR':0}
+    rsrDict = {'Norm Blue':0, 'Norm Green':0,'Norm Red':0,
+                'Norm RE':0,'Norm IR':0}
     for band in rsrDict.keys():
         rsr = rsrData[:,fieldnames.index(band)]
         rsr = interp1(rsrWavelengths, rsr, wavelengths, interpOrder, extrap)
@@ -91,16 +91,18 @@ def writeSummary(filename, paramDict, summary, bandIntDictTgt, bandIntDictSolar)
     import os
     import numpy as np
 
-    writeDict = {k:v for k,v in paramDict.items() if v is not None}
+    writeDict = {k:v for k,v in paramDict.items() if v is not None or k != "key"}
     writeDict['albedoFilename'] = os.path.basename(writeDict['albedoFilename'])
     writeDict['fileName'] = os.path.basename(writeDict['fileName'])
+    sumBandIntTgt = {k:v for k,v in bandIntDictTgt.items() if k != "Target"}
+    sumBandIntSol = {k:v for k,v in bandIntDictSolar.items() if k != "Downwelling"}
 
     with open(filename, 'a') as f:
         w = csv.writer(f)
-        w.writerow(list(writeDict.keys())[:-1])
-        w.writerow(list(writeDict.values())[:-1])
-        w.writerow(list(bandIntDictTgt.keys())[:-1]+list(bandIntDictSolar.keys())[:-1])
-        w.writerow(list(bandIntDictTgt.values())[:-1]+list(bandIntDictSolar.values())[:-1])
+        w.writerow(list(writeDict.keys()))
+        w.writerow(list(writeDict.values()))
+        w.writerow(list(sumBandIntTgt.keys())+list(sumBandIntSol.keys()))
+        w.writerow(list(sumBandIntTgt.values())+list(sumBandIntSol.values()))
         #w.writerow(list(bandIntDictSolar.keys()))
         #w.writerow(list(bandIntDictSolar.values()))
         w.writerow(list(summary.keys()))
@@ -369,7 +371,7 @@ if __name__ == "__main__":
         'albedoFilename':currentDirectory+'/spec_alb.dat',
         'targetLabel':["healthy grass",
         "asphalt", "concrete", "blue felt", "green felt", "red felt"],
-        'backgroundLabel':["constant, 18%"], 'visibility':[0.0],
+        'backgroundLabel':["constant, 0%", "constant, 18%", "constant, 100%"], 'visibility':[0.0],
         'groundAltitude':0.168, 'sensorAltitude':[0.2137, 0.2823],
         'targetAltitude':0.168, 'sensorZenith':180.0, 'sensorAzimuth':0.0,
         'dZenith': 2.5, 'dAzimuth':5,
@@ -379,7 +381,7 @@ if __name__ == "__main__":
         'startingWavelength':0.30, 'endingWavelength':1.2,
         'wavelengthIncrement':0.001, 'fwhm':0.001}
 
-    params['targetLabel'] = "green felt"
+    #params['targetLabel'] = "green felt"
     #params['dZenith'] = 45
     #params['dAzimuth'] = 180
     #print(np.linspace(1,365,4, False, True))

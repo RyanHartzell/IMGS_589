@@ -1,5 +1,6 @@
 def executeModtran(currentParams):
     import os
+    import numpy as np
     import time
     import shutil
     from read_tape7 import read_tape7
@@ -22,9 +23,11 @@ def executeModtran(currentParams):
 
     if any(v.size for v in tape7.values()) == 0:
         #print(currentParams)
-        print("Zenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'], currentParams['sensorAzimuth']))
-        msg = "Tape 7 has no information, check your inputs for tape 5"
-        raise ValueError(msg)
+        #print("Zenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'], currentParams['sensorAzimuth']))
+        msg = "Tape 7 has no information, check your inputs for tape 5" + \
+        "Zenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'], currentParams['sensorAzimuth'])
+        print(msg)
+        tape7 = {k:np.zeros((1,901)) for k,v in tape7.items()}
     shutil.rmtree(outputPath)
 
     return tape7, endTime
@@ -381,11 +384,13 @@ if __name__ == "__main__":
         'startingWavelength':0.30, 'endingWavelength':1.2,
         'wavelengthIncrement':0.001, 'fwhm':0.001}
 
-    #params['targetLabel'] = "green felt"
+    params['targetLabel'] = "green felt"
+    params['backgroundLabel'] = "constant, 18%"
     #params['dZenith'] = 45
     #params['dAzimuth'] = 180
     #print(np.linspace(1,365,4, False, True))
     params['timeUTC'] = 15.0
+    #params['pathType'] = 1
     params['sensorAltitude'] = 0.2823
     params['modelAtmosphere'] = 2
     # params['sensorZenith'] = list(np.linspace(0.0, 90.0,
@@ -396,8 +401,8 @@ if __name__ == "__main__":
                                             params['dZenith'])) + [180.0]
     params['sensorAzimuth'] = list(np.arange(0.0,360.0+params['dAzimuth'],
                                             params['dAzimuth']))
-    #params['sensorZenith'] = [0.0, 180.0]
-    #params['sensorAzimuth'] = [0.0]
+    params['sensorZenith'] = [0.0, 180.0]
+    params['sensorAzimuth'] = [0.0]
 
     itterations, uniqueDict = createItterations(params)
 

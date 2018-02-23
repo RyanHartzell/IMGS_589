@@ -2,9 +2,11 @@ def emailStatus(currentParams):
    import os
    import getpass
    import json
+   import datetime
 
    subject = "Modtran4 Failure Zenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'], currentParams['sensorAzimuth'])
    message = json.dumps(currentParams)
+   message += '\n{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
    userName = getpass.getuser()
    toAddress = userName + "@rit.edu"
    fromAddress = "Modtran4@cis.rit.edu"
@@ -70,19 +72,20 @@ def integrateBandRadiance(radiance, rsrDict, wavelengths, radianceType):
 def computeReflectance(biTgt, biDown):
 
     reflectanceDict = {}
-    tgtKey = [k.split()[-1] for k in biTgt.keys()]
-    downKey = [k.split()[-1] for k in biDown.keys()]
+
+    tgtKey = [k.replace("Target Camera ","") for k in biTgt.keys()]
+    downKey = [k.replace("Downwelling DLS ","") for k in biDown.keys()]
 
     for k in tgtKey:
         if k in downKey and k != "radianceType":
-            targetVal = biTgt["Target Camera Norm {0}".format(k)]
-            downVal = biDown["Downwelling DLS Norm {0}".format(k)]
+            targetVal = biTgt["Target Camera {0}".format(k)]
+            downVal = biDown["Downwelling DLS {0}".format(k)]
             if downVal != 0:
                 reflectanceDict['Ratio {0}'.format(k)] = targetVal/downVal
             else:
                 reflectanceDict['Ratio {0}'.format(k)] = 0
 
-    IR = reflectanceDict["Ratio IR"]
+    IR = reflectanceDict["Ratio NIR"]
     Red = reflectanceDict["Ratio Red"]
     if IR + Red != 0:
         reflectanceDict['NDVI'] = (IR-Red)/(IR+Red)
@@ -104,8 +107,8 @@ def generateRSR(rsrPath, wavelengths, rsrType, interpOrder=1, extrap=False):
     rsrData = np.genfromtxt(rsrPath, delimiter=',', skip_header=1)
     rsrData[rsrData < 0] = 0
     rsrWavelengths = rsrData[:,0]*0.001 #Units of micrometers
-    rsrDict = {rsrType + ' Norm Blue':0, rsrType + ' Norm Green':0,
-        rsrType +' Norm Red':0, rsrType + ' Norm RE':0,rsrType + ' Norm IR':0}
+    rsrDict = {rsrType + ' Blue':0, rsrType + ' Green':0,
+        rsrType +' Red':0, rsrType + ' Red Edge':0,rsrType + ' NIR':0}
     for band in rsrDict.keys():
         rsr = rsrData[:,fieldnames.index(band.replace(rsrType + ' ', ''))]
         rsr = interp1(rsrWavelengths, rsr, wavelengths, interpOrder, extrap)
@@ -189,7 +192,8 @@ def createItterations(params):
 
     angleDict['sensorZenith'] = [z for z in angleDict['sensorZenith']
                 if np.around(np.cos(np.radians(z)), decimals=5) != 0
-                and np.around(np.sin(np.radians(z)), decimals=5) != 0] + [180.0]
+                and np.around(np.sin(np.radians(z)), decimals=5) != 0
+                if z <= 90.0] + [180.0]
 
     angleCombo = list(dict(zip(angleDict,x)) for x in itertools.product(*angleDict.values()))
 
@@ -272,6 +276,7 @@ def plotResults(params, results, blocking=True):
     for r in range(len(resultsList)):
         if type(resultsList[r]) is int or len(resultsList[r]) == 1:
             resultsList[r] = np.zeros_like(wavelengths)
+            resultsList[r] = np.reshape(resultsList[r],(wavelengths.shape))
 
     title = "Atmosphere Model - {0}, ".format(params['modelAtmosphere']) + \
     "Surface Temperature - {0}, ".format(params['surfaceTemperature']) + \
@@ -365,7 +370,7 @@ def processFunction(params):
         estDownwell = groundReflect - directReflect
         totalRadiance = tape7['total rad']
 
-        rsrPath = os.path.dirname(params['albedoFilename']) + '/FullSpectralResponse.csv'
+        rsrPath = os.path.dirname(params['albedoFilename']) + '/camera_rsr.csv'
         rsrDict = generateRSR(rsrPath, wavelengths, "Camera")
         bandIntDict = integrateBandRadiance(totalRadiance, rsrDict,
                                                     wavelengths, 'Target')
@@ -437,7 +442,7 @@ def modtran(paramList, cores, plotting=True):
 
     userName = getpass.getuser()
     rsrPath = os.path.dirname(paramList[0]['albedoFilename']) +\
-                                '/FullSpectralResponse.csv'
+                                '/dls_rsr.csv'
 
     dlsRSR = generateRSR(rsrPath, wavelengths, "DLS")
     bandIntDictSolar = integrateBandRadiance(sumSolScat, dlsRSR,
@@ -488,7 +493,7 @@ if __name__ == "__main__":
         "asphalt", "concrete", "blue felt", "green felt", "red felt"],
         'backgroundLabel':["constant, 0%", "constant, 18%", "constant, 100%"],
         'visibility':[5, 15, 23],
-        'groundAltitude':0.168, 'sensorAltitude':[0.1685, 0.2137, 0.2823],
+        'groundAltitude':0.168, 'sensorAltitude':[0.1686, 0.2137, 0.2823],
         'targetAltitude':0.168, 'sensorZenith':180.0, 'sensorAzimuth':0.0,
         'dZenith': 5, 'dAzimuth':10,
         'dayNumber':[172, 312],
@@ -499,7 +504,7 @@ if __name__ == "__main__":
 
     params['targetLabel'] = "green felt"
     params['backgroundLabel'] = "concrete"
-    #params['dZenith'] = 2.5
+    #params['dZenith'] = 5
     #params['dAzimuth'] = 5
     #print(np.linspace(1,365,4, False, True))
     #params['timeUTC'] = 15.0
@@ -521,7 +526,7 @@ if __name__ == "__main__":
         cores = totalCpu - 2
         estTime = 20
     else:
-        cores = totalCpu - 4
+        cores = totalCpu
         estTime = 100
 
     numItter = len(itterations)*len(itterations[0])*estTime

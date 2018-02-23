@@ -125,7 +125,7 @@ def writeSummary(filename, paramDict, summary, bandIntDictTgt, bandIntDictSolar,
     import collections
 
     writeDict = collections.OrderedDict(sorted(paramDict.items()))
-    writeDict = {k:v for k,v in write.items() if v is not None if k != "key"}
+    writeDict = {k:v for k,v in writeDict.items() if v is not None if k != "key"}
     writeDict['albedoFilename'] = os.path.basename(writeDict['albedoFilename'])
     writeDict['fileName'] = os.path.basename(writeDict['fileName'])
     sumBandIntTgt = {k:v for k,v in bandIntDictTgt.items() if k != "radianceType"}

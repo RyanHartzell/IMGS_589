@@ -26,7 +26,7 @@ def getImages(imageDirectory, plotting=True):
 
         if o == "Middle":
             dlsDictList[4] = dlsDict["Red edge"]
-        
+
 
         if plotting:
             xvals = numpy.arange(380, 1000 + 10, 10)
@@ -39,6 +39,7 @@ def getImages(imageDirectory, plotting=True):
                 plt.xlim(380, 1000)
                 plt.ylim(0, max(dlsDict[maxList[0]]) + .002)
                 plt.legend(loc=5)
+                
 
             for a in [0,1]:
                 annotation = "{0} max {1:.5f}".format(maxList[a],max(dlsDict[maxList[a]]))

@@ -5,3 +5,6 @@ modtran*/**
 *_target.csv
 *.pyc
 __pycache__/
+*summary.csv
+sent-mail
+modtranLog.txt

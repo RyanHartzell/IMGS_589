@@ -1,0 +1,14 @@
+From gvs6104 Sat Feb 24 01:04:22 2018
+Date: Sat, 24 Feb 2018 01:04:22 -0500
+From: Modtran4@cis.rit.edu
+To: gvs6104@rit.edu
+Subject: Modtran4 Failure Zenith-180.0, Azimuth-0.0
+Message-ID: <5a910066.LV5a37jjeq3sg5G4%Modtran4@cis.rit.edu>
+User-Agent: Heirloom mailx 12.5 7/5/10
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+{albedoFilename: /cis/otherstu/gvs6104/src/python/IMGS_589/modtran/spec_alb.dat, backgroundLabel: concrete, dAzimuth: 10, dZenith: 5, dayNumber: 172, endingWavelength: 1.2, extraterrestrialSource: 0, fileName: /cis/otherstu/gvs6104/src/python/IMGS_589/modtran/modtran_629/tape5, fwhm: 0.001, groundAltitude: 0.168, key: 629, latitude: 43.041, longitude: 77.698, modelAtmosphere: 2, pathType: 2, sensorAltitude: 0.2137, sensorAzimuth: 0.0, sensorZenith: 180.0, startingWavelength: 0.3, surfaceAlbedo: null, surfaceTemperature: 303.15, targetAltitude: 0.168, targetLabel: green felt, timeUTC: 15.1, visibility: 5.0, wavelengthIncrement: 0.001}
+2018-02-24 01:04:22
+

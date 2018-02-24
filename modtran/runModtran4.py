@@ -48,6 +48,10 @@ def executeModtran(currentParams):
             currentParams['endingWavelength']+currentParams['wavelengthIncrement'],
                                         currentParams['wavelengthIncrement'])
 
+        wL = np.arange(currentParams['startingWavelength'],
+        currentParams['endingWavelength'] + currentParams['wavelengthIncrement'],
+                            currentParams['wavelengthIncrement'])
+        tape7['sumSolScat'] = np.zeros(len(wL))
         emailStatus(currentParams)
 
     shutil.rmtree(outputPath)

@@ -439,9 +439,9 @@ def modtran(paramList, cores, uniqueDict, plotting=True):
 
             if 'sumSolScat' in resultDict.keys():
                 try:
-			        sumSolScat += np.asarray(resultDict['sumSolScat'])
-		        except:
-			        sumSolScat += np.reshape(np.asarray(resultDict['sumSolScat']), sumSolScat.shape)
+                    sumSolScat += np.asarray(resultDict['sumSolScat'])
+                except:
+                    sumSolScat += np.reshape(np.asarray(resultDict['sumSolScat']), sumSolScat.shape)
             elif len([k for t in targetList for k in resultDict.keys() if t in k]) == len(targetList):
                 tgtSolScat = np.asarray(resultDict['tgtSolScat'])
                 groundReflect = np.asarray(resultDict['groundReflect'])

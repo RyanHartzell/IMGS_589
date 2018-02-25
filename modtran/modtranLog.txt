@@ -488,3 +488,21 @@ It took 1h 44m 53s to complete all angles using a delta zenith angle of 5 and a 
 The updated estimated time to complete is 0d 17h 28m 58s.
 
 Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.1686, 'dayNumber': 312, 'timeUTC': 15.1}
+The current average modtran run time is 1m 3s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 0m 59s
+
+It took 1h 45m 33s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 15h 50m 4s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.1686, 'dayNumber': 312, 'timeUTC': 18.0}

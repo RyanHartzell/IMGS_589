@@ -4,7 +4,7 @@ def emailStatus(currentParams):
    import json
    import datetime
 
-   subject = "Modtran4 Failure Zenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'], currentParams['sensorAzimuth'])
+   subject = "Modtran4 Failure {0} Angles: Zenith-{1}, Azimuth-{2}".format(os.uname()[1], currentParams['sensorZenith'], currentParams['sensorAzimuth'])
    sortedDict = {k:currentParams[k] for k in sorted(currentParams)}
    message = json.dumps(sortedDict)
    message += '\n{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
@@ -254,7 +254,7 @@ def getAverageSVC(specAlbPath, target):
 
     return specArray
 
-def plotResults(params, results, blocking=True):
+def plotResults(params, results, blocking=False):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt

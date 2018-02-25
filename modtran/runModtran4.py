@@ -438,7 +438,10 @@ def modtran(paramList, cores, uniqueDict, plotting=True):
                 print("The current average modtran run time is {0}m {1}s".format(int(m), int(s)))
 
             if 'sumSolScat' in resultDict.keys():
-                sumSolScat += np.asarray(resultDict['sumSolScat'])
+                try:
+			sumSolScat += np.asarray(resultDict['sumSolScat'])
+		except:
+			sumSolScat = np.asarray(resultDict['sumSolScat'])
             elif len([k for t in targetList for k in resultDict.keys() if t in k]) == len(targetList):
                 tgtSolScat = np.asarray(resultDict['tgtSolScat'])
                 groundReflect = np.asarray(resultDict['groundReflect'])

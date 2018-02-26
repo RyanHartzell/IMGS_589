@@ -17,6 +17,48 @@ def emailStatus(currentParams):
 
    os.system(cmd)
 
+def recursiveTime(tape7, currentParams, seedTime, count=0):
+    from update_tape5 import update_tape5
+    from read_tape7 import read_tape7
+    import os
+
+    if all(v.size for v in tape7.values()) != 0:
+        return tape7
+
+    if not seedTime-0.25 < currentParams['timeUTC'] < seedTime+.25:
+        msg = "Recursion went outside the specified range {0}".format(currentParams['timeUTC'])
+        raise RecursionError(msg)
+
+    currentTime = float(currentParams['timeUTC'])
+    currentTime += (-1)**count * 0.01 * count
+    currentParams['timeUTC'] = float("{0:.2f}".format(currentTime))
+
+    update_tape5(currentParams['fileName'], currentParams['modelAtmosphere'],
+            currentParams['pathType'], currentParams['surfaceAlbedo'],
+            currentParams['surfaceTemperature'], currentParams['albedoFilename'],
+            currentParams['targetLabel'], currentParams['backgroundLabel'],
+            currentParams['visibility'], currentParams['groundAltitude'],
+            currentParams['sensorAltitude'], currentParams['targetAltitude'],
+            currentParams['sensorZenith'], currentParams['sensorAzimuth'],
+            currentParams['dayNumber'], currentParams['extraterrestrialSource'],
+            currentParams['latitude'], currentParams['longitude'],
+            currentParams['timeUTC'], currentParams['startingWavelength'],
+            currentParams['endingWavelength'], currentParams['wavelengthIncrement'],
+            currentParams['fwhm'])
+
+    outputPath = os.path.dirname(currentParams['fileName']) + os.path.sep
+    command = '/dirs/bin/modtran4 > /dev/null 2>&1'
+    os.chdir(outputPath)
+
+    os.system(command)
+
+    splitted = currentParams['fileName'].split('/')
+    os.chdir('/'.join(splitted[:-2])+ os.path.sep)
+    tape7 = read_tape7(outputPath +'/tape7.scn')
+
+    return recursiveTime(tape7, currentParams, seedTime, count+1)
+
+
 def executeModtran(currentParams):
     import os
     import numpy as np
@@ -38,21 +80,26 @@ def executeModtran(currentParams):
     tape7 = read_tape7(outputPath +'/tape7.scn')
 
     if any(v.size for v in tape7.values()) == 0:
-        msg = "Tape 7 has no information, check your inputs for tape 5\n" + \
-        "\tZenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'],
-                                                currentParams['sensorAzimuth'])
-        print(msg)
+        seedTime = currentParams['timeUTC']
+        try:
+            tape7 = recursiveTime(tape7, currentParams, seedTime)
 
-        tape7 = {k:np.zeros((1,901)) for k,v in tape7.items()}
-        tape7['wavelengths'] = np.arange(currentParams['startingWavelength'],
-            currentParams['endingWavelength']+currentParams['wavelengthIncrement'],
-                                        currentParams['wavelengthIncrement'])
+        except RecursionError as re:
+            msg = "Tape 7 has no information, check your inputs for tape 5\n" + \
+            "\tZenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'],
+                                                    currentParams['sensorAzimuth'])
+            print(msg)
 
-        wL = np.arange(currentParams['startingWavelength'],
-        currentParams['endingWavelength'] + currentParams['wavelengthIncrement'],
-                            currentParams['wavelengthIncrement'])
-        tape7['sumSolScat'] = np.zeros(len(wL))
-        emailStatus(currentParams)
+            tape7 = {k:np.zeros((1,901)) for k,v in tape7.items()}
+            tape7['wavelengths'] = np.arange(currentParams['startingWavelength'],
+                currentParams['endingWavelength']+currentParams['wavelengthIncrement'],
+                                            currentParams['wavelengthIncrement'])
+
+            wL = np.arange(currentParams['startingWavelength'],
+            currentParams['endingWavelength'] + currentParams['wavelengthIncrement'],
+                                currentParams['wavelengthIncrement'])
+            tape7['sumSolScat'] = np.zeros(len(wL))
+            emailStatus(currentParams)
 
     shutil.rmtree(outputPath)
 
@@ -512,7 +559,7 @@ if __name__ == "__main__":
         'dZenith': 5, 'dAzimuth':10,
         'dayNumber':[172, 312],
         'extraterrestrialSource':0, 'latitude':43.041,
-        'longitude':77.698, 'timeUTC':[15.1, 18.0],
+        'longitude':77.698, 'timeUTC':[15.0, 18.0],
         'startingWavelength':0.30, 'endingWavelength':1.2,
         'wavelengthIncrement':0.001, 'fwhm':0.001}
 

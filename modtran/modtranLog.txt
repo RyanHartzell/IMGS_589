@@ -506,3 +506,167 @@ It took 1h 45m 33s to complete all angles using a delta zenith angle of 5 and a 
 The updated estimated time to complete is 0d 15h 50m 4s.
 
 Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.1686, 'dayNumber': 312, 'timeUTC': 18.0}
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+
+It took 1h 45m 26s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 14h 3m 34s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2137, 'dayNumber': 172, 'timeUTC': 15.1}
+Tape 7 has no information, check your inputs for tape 5
+	Zenith-180.0, Azimuth-0.0
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+
+It took 1h 46m 6s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 12h 22m 45s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2137, 'dayNumber': 172, 'timeUTC': 18.0}
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+
+It took 1h 48m 37s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 10h 51m 47s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2137, 'dayNumber': 312, 'timeUTC': 15.1}
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 0m 59s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+
+It took 1h 45m 58s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 8h 49m 53s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2137, 'dayNumber': 312, 'timeUTC': 18.0}
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+
+It took 1h 46m 2s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 7h 4m 11s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2823, 'dayNumber': 172, 'timeUTC': 15.1}
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+
+It took 1h 46m 48s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 5h 20m 26s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2823, 'dayNumber': 172, 'timeUTC': 18.0}
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+
+It took 1h 46m 6s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 3h 32m 12s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2823, 'dayNumber': 312, 'timeUTC': 15.1}
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 0s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 2s
+
+It took 1h 49m 15s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 1h 49m 15s.
+
+Current Unique Itteration:  {'visibility': 23.0, 'sensorAltitude': 0.2823, 'dayNumber': 312, 'timeUTC': 18.0}
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 2s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+The current average modtran run time is 1m 1s
+
+It took 1h 48m 14s to complete all angles using a delta zenith angle of 5 and a delta azimuth angle of 10
+The updated estimated time to complete is 0d 0h 0m 0s.
+
+You've completed all of the itterations, congratulations

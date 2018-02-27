@@ -599,13 +599,18 @@ if __name__ == "__main__":
     #params['sensorZenith'] = [0.0, 10.0, 180.0]
     #params['sensorAzimuth'] = [0.0]
 
-    jsonExists = os.path.isfile('itterations.json')
-    if jsonExists is False:
+    if jsonIndex is not False:
+        jsonExists = os.path.isfile('itterations.json')
+        if jsonExists is False:
+            itterations, uniqueDict = createItterations(params)
+            with open('itterations.json', 'w') as outfile:
+                json.dump(itterations, outfile)
+        else: #Json File exists
+            itterations = json.load(open('itterations.json'))
+    else:
         itterations, uniqueDict = createItterations(params)
         with open('itterations.json', 'w') as outfile:
             json.dump(itterations, outfile)
-    else: #Json File exists
-        itterations = json.load(open('itterations.json'))
 
     listDict = {k:v for k,v in params.items()
                     if type(v) is list

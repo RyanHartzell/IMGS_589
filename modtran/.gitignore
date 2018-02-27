@@ -5,5 +5,6 @@ modtran*/**
 *.pyc
 .nfs*
 *.txt
+*.json
 sent-mail
 __pycache__/

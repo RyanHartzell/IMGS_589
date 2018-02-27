@@ -383,8 +383,16 @@ def processFunction(params):
     import os
     import getpass
     import numpy as np
+    import multiprocessing
     from update_tape5 import update_tape5
     from read_tape7 import read_tape7
+
+
+    if os.uname()[1] == "typhoon":
+        process = multiprocessing.current_process()
+        pid = process.pid
+        command = "taskset -cp 0-{0} {1} > /dev/null 2>&1".format(41, pid)
+        os.system(command)
 
     keyDirectory = os.path.dirname(params['albedoFilename'])+ \
                                     '/modtran_{0}'.format(params['key'])
@@ -467,9 +475,9 @@ def modtran(paramList, cores, uniqueDict, plotting=True):
     modNumber = 5
     targetList = ['tgtSolScat','groundReflect','directReflect','estDownwell',
                     'totalRadiance','bandIntDictTgt']
-    if len(paramList) > 46:
-        modNumber = 46
-    if len(paramList) < cores: cores=len(paramList)
+    if len(paramList) > cores:
+        modNumber = cores
+    if len(paramList) <= cores: cores=len(paramList)
 
     with multiprocessing.Pool(processes=cores) as pool:
         for resultDict in pool.imap_unordered(processFunction,
@@ -541,7 +549,15 @@ if __name__ == "__main__":
     import time
     import multiprocessing
     import numpy as np
+    import json
     from runModtran4 import modtran
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-i','--jsonIndex',type=int, help="Index of the itteration you wish to begin at", default=0)
+    args = parser.parse_args()
+    jsonIndex = args.jsonIndex
 
     plotting = True
 
@@ -554,7 +570,7 @@ if __name__ == "__main__":
         "asphalt", "concrete", "blue felt", "green felt", "red felt"],
         'backgroundLabel':["constant, 0%", "constant, 18%", "constant, 100%"],
         'visibility':[5.0, 15.0, 23.0],
-        'groundAltitude':0.168, 'sensorAltitude':[0.1686, 0.2137, 0.2823],
+        'groundAltitude':0.168, 'sensorAltitude':[0.1686, 0.2137, 0.2372, 0.2600, 0.2823],
         'targetAltitude':0.168, 'sensorZenith':180.0, 'sensorAzimuth':0.0,
         'dZenith': 5, 'dAzimuth':10,
         'dayNumber':[172, 312],
@@ -563,7 +579,7 @@ if __name__ == "__main__":
         'startingWavelength':0.30, 'endingWavelength':1.2,
         'wavelengthIncrement':0.001, 'fwhm':0.001}
 
-    params['targetLabel'] = "green felt"
+    params['targetLabel'] = ["concrete", "blue felt", "green felt", "red felt"]
     params['backgroundLabel'] = "concrete"
     #params['dZenith'] = 20
     #params['dAzimuth'] = 60
@@ -583,15 +599,27 @@ if __name__ == "__main__":
     #params['sensorZenith'] = [0.0, 10.0, 180.0]
     #params['sensorAzimuth'] = [0.0]
 
-    itterations, uniqueDict = createItterations(params)
+    jsonExists = os.path.isfile('itterations.json')
+    if jsonExists is False:
+        itterations, uniqueDict = createItterations(params)
+        with open('itterations.json', 'w') as outfile:
+            json.dump(itterations, outfile)
+    else: #Json File exists
+        itterations = json.load(open('itterations.json'))
 
+    listDict = {k:v for k,v in params.items()
+                    if type(v) is list
+                    if k != 'sensorZenith' if k != 'sensorAzimuth'}
+
+    uniqueDict = {k:v for k,v in listDict.items() if len(v) > 1}
+    
     totalCpu = multiprocessing.cpu_count()
     if totalCpu == 8:
         cores = totalCpu - 2
-        estTime = 20
+        estTime = 60
     else:
         cores = totalCpu - 4
-        estTime = 100
+        estTime = 210
 
     numItter = len(itterations)*len(itterations[0])*estTime
 
@@ -621,11 +649,15 @@ if __name__ == "__main__":
     print("\tAzimuth Angles: {0}".format(params["sensorAzimuth"]))
     print()
 
-    for i in range(len(itterations)):
-        unique = {k:v for k,v in itterations[i][0].items() if k in uniqueDict.keys()}
+    #for i in range(len(itterations)):
+    if jsonIndex > len(itterations): jsonIndex = 0
+    totalStartTime = time.time()
+    while jsonIndex <= len(itterations):
+        print("Currently running itteration index {0}".format(jsonIndex))
+        unique = {k:v for k,v in itterations[jsonIndex][0].items() if k in uniqueDict.keys()}
         print("Current Unique Itteration: ", unique)
         startTime = time.time()
-        modtran(itterations[i], cores, unique, plotting)
+        modtran(itterations[jsonIndex], cores, unique, plotting)
         itterationTime = time.time()-startTime
         m,s = divmod(itterationTime, 60)
         h,m = divmod(m, 60)
@@ -638,7 +670,15 @@ if __name__ == "__main__":
         uH, uM = divmod(uM, 60)
         uD, uH = divmod(uH, 24)
         print("The updated estimated time to complete is {0}d {1}h {2}m {3}s.".format(
-            int(uD), int(uH), int(uM), int(uS)))
+                int(uD), int(uH), int(uM), int(uS)))
         print()
 
+        jsonIndex += 1
+
+
+    totalTime = time.time()-totalStartTime
+    iM, iS = divmod(totalTime, 60)
+    iH, iM = divmod(iM, 60)
+    iD, iH = divmod(iH, 24)
+    print("It took {0}d {1}h {2}m {3}s to complete everything".format(iD, iH, iM, iS))
     print("You've completed all of the itterations, congratulations")

@@ -84,7 +84,7 @@ def executeModtran(currentParams):
         try:
             tape7 = recursiveTime(tape7, currentParams, seedTime)
 
-        except RecursionError as re:
+        except:
             msg = "Tape 7 has no information, check your inputs for tape 5\n" + \
             "\tZenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'],
                                                     currentParams['sensorAzimuth'])

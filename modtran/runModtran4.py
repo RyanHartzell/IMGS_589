@@ -671,7 +671,7 @@ if __name__ == "__main__":
             "of {0} ".format(params['dZenith']) +
             "and a delta azimuth angle of {0}".format(params['dAzimuth']))
 
-        uM,uS = divmod(itterationTime*(len(itterations)-i-1), 60)
+        uM,uS = divmod(itterationTime*(len(itterations)-jsonIndex-1), 60)
         uH, uM = divmod(uM, 60)
         uD, uH = divmod(uH, 24)
         print("The updated estimated time to complete is {0}d {1}h {2}m {3}s.".format(

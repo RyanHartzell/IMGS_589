@@ -81,7 +81,9 @@ if geoTiffDir is None:
 
 startTime = time.time()
 #print(flightDirectory)
+
 subdirs = glob.glob(flightDirectory+'/*/')
+'''
 if len(subdirs) != 0 and any("geoTiff" not in s for s in subdirs):
 	print("Fixing the naming structure of the {0} directory".format(flightDirectory))
 	processedDirectory = fixNamingStructure(flightDirectory)
@@ -89,8 +91,10 @@ if len(subdirs) != 0 and any("geoTiff" not in s for s in subdirs):
 	#raise ValueError (msg)
 else:
 	processedDirectory = flightDirectory
-
+'''
+processedDirectory = flightDirectory
 tiffList = sorted(glob.glob(processedDirectory + '/*.tif'))
+
 if len(tiffList)%5 != 0:
 	msg = "The number of tiffs in the {0} directory is not divisible by 5".format(processedDirectory)
 	raise ValueError(msg)

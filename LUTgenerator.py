@@ -26,7 +26,7 @@ Current Bugs/Questions::
 Author::
    Kevin Kha
 '''
-
+import csv
 import cv2
 import glob
 import numpy as np
@@ -67,12 +67,23 @@ def findReflectance(SVCtargetSR,cameraresponseSR,bandname):
     reflectance = numerator/denominator
     return reflectance
 
-def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
+def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR,logging = True):
+    #Generate numerous LUT to generate reflectance imagery based on downwelling irradiance
+    if logging == True:
+        csvfile = '/'.join(missionDatafilename.split('/')[:-1])+'/ELM_LUT_logger.csv'
+        with open(csvfile,'w', newline = '\n') as currentTextFile:
+            writer = csv.writer(currentTextFile, delimiter = ',')
+            writer.writerow(['Frame','Altitude','Band','Irradiance','White #','White Rho','White Avg','White Std','Black #','Black Rho','Black Avg','Black Std', 'ELM Slope','ELM Intercept'])
     #From the target acquisition, grab every frame that had targets internal
     missionData = np.loadtxt(missionDatafilename,unpack = True, skiprows = 1,dtype = str, delimiter = ',')
     frames = list(np.unique(missionData[1]))
-    LUTdict = {}
+    #We need to figure out when we are at altitude, lets say we have to be within 95% of peak to be good
+    Altitudes = np.loadtxt(missionDatafilename,unpack = True, skiprows = 1,usecols=4,dtype = float, delimiter = ',')
+    peakAltitude = np.max(Altitudes)
+    requiredAlt = peakAltitude * 0.95
+
     #For each frame we have to filter according to additional criteria
+    LUTdict = {}
     for name in frames:
         indices = np.where(missionData[1] == name)
         scenetargets = missionData[0][indices]
@@ -92,6 +103,11 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             framestd['target4'] = std4
             svcdict['target4'] = svcfilenumber
             DNdict['target4'] = DN4
+            #Since black will always be a valid target, lets grab a flight altitude here
+            #If we are still climbing or descending, we don't want this frame
+            altitude = missionData[4,indextarget4]
+            if float(altitude[0][0]) < requiredAlt:
+                continue
         #Ideally we want the brightest white target, but lets grab all 'whites' here
         #5 is our wooden white cal target
         if '5' in scenetargets:
@@ -136,7 +152,11 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
         #on what to use for ELM
         if len(framestd) >= 2:
             #If our standard deviation indicates saturation, we should avoid that target
+            #print(framestd.values())
             for key, value in framestd.items():
+                if '0' in value:
+                    del reflectancedict[key]
+                    del DNdict[key]
                 if '0.0' in value:
                     del reflectancedict[key]
                     del DNdict[key]
@@ -164,53 +184,56 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
                     metadatadict = metadataReader.metadataGrabber(imagemetadatafile)
                     irradiance = metadatadict['Xmp.Camera.Irradiance']
                     #Our series of LUT for generating reflectance imagery
-                    LUTdict[(band,irradiance)] = (slope,intercept)
+                    LUTdict[(band,irradiance)] = (slope,intercept,name)
+                    #If we get this far we need to log some info
+                    if logging == True:
+                        with open(csvfile,'a', newline = '\n') as currentTextFile:
+                            writer = csv.writer(currentTextFile, delimiter = ',')
+                            writer.writerow([name,altitude[0][0],band,irradiance,gotoTarget,whiteReflect[band],whiteDN[band][0],framestd[gotoTarget][band][0],'target4',blackReflect[band],blackDN[band][0],framestd['target4'][band][0], slope[0],intercept[0]])
     return LUTdict
 
 def applyLuts(LUTdict, processedimagedirectory, geoTiff):
+    #Apply our fancy LUT to an image to generate a reflectance image
     print(geoTiff[-13:-5])
+    #Read in image/raster with gdal
     imageStack = gdal.Open(geoTiff).ReadAsArray()
     imageStack = np.moveaxis(imageStack, 0 ,-1)
+    #Prepare a store of values for reflectance
     reflectanceImage = np.zeros(np.shape(imageStack))
+    #Cycle through each band seperately to take advantage of ELM LUTS and doc the LUT used
+    CurrentIrradiance = []
+    ClosestIrradiance = []
+    ReferenceImage = []
+    Band = []
     for band in np.arange(1,6):
         rawimage = processedimagedirectory + geoTiff[-13:-5] + '_{}'.format(band) + '.tif'
-        #print(rawimage)
         metadatadict = metadataReader.metadataGrabber(rawimage)
+        #Load in image irrradiance
         irradiance = metadatadict['Xmp.Camera.Irradiance']
-        #print(irradiance)
         refIrradiance = []
         for key, value in LUTdict.items() :
             if key[0] == band-1:
                 refIrradiance.append(key[1])
+        #Find the closest irradiance between the LUT and current image
         refIrradiance = np.asarray(refIrradiance)
         comparison = np.abs(refIrradiance-irradiance)
-        #print(comparison)
-        #print(np.argmin(comparison))
         closestIrradiance = refIrradiance[np.argmin(comparison)]
-        #print(closestIrradiance)
         dictionaryreadkey = (band-1,closestIrradiance)
+        #Grab the calibration coefficients from the LUT
         slope = LUTdict[dictionaryreadkey][0][0]
         intercept = LUTdict[dictionaryreadkey][1][0]
+        referenceImage = LUTdict[dictionaryreadkey][2]
+        #Generate the reflectance band
         reflectanceImage[:,:,band-1] = imageStack[:,:,band-1] * slope + intercept
-        #print(np.argmin(comparison))
         print(np.max(reflectanceImage[:,:,band-1]))
-    return reflectanceImage
-    '''
-    #Generate array of dictionary key irradiances
-    irradianceKeys = np.asarray(list(dictionary.keys()))
-    #find irradiance
-    metadatadict = metadatagrabber(image)
-    irradiance = metadatadict['Xmp.Camera.Irradiance']
-    #find closest irradiance in array
-    closestIrradiance = np.abs(irradiancekeys - irradiance).argmin()
-    bestIrradiance = irradiancekeys[logical]
-    #apply given irradiance/LUT pair to image
-    LUT = dictionary[bestIrradiance]
-    reflectanceimage = cv2.LUT(image, LUT)
-    #saveout image
+        CurrentIrradiance.append(irradiance)
+        ClosestIrradiance.append(closestIrradiance)
+        ReferenceImage.append(referenceImage)
+        Band.append(band-1)
 
-    #return image
-    '''
+
+    return reflectanceImage,CurrentIrradiance,ReferenceImage,ClosestIrradiance,Band
+
 if __name__ == '__main__':
 
     import cv2
@@ -226,46 +249,51 @@ if __name__ == '__main__':
     starttime = time.time()
     sys.path.append("..")
 
-    #SVCdirectory = '/cis/otherstu/gvs6104/DIRS/20171109/SVC/'
-    #processedimagedirectory = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/processed/'
-    #missionDatafilename = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/Flight_20171109T1345_375ft_kxk8298.csv'
-    #cameraresponseSR = '/cis/otherstu/gvs6104/DIRS/MonochrometerTiffs/Spectral_Response.csv'
-    #reflectanceDir = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
-    #imagelist = glob.glob('/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/*')
-
-    #Time Specific
+    #Time Specific Files
     processedimagedirectory = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/processed/'
     missionDatafilename = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/Flight_20171108T1330_375ft_kxk8298.csv'
     reflectanceDir = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/reflectanceproduct/'
-    imagelist = glob.glob('/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/geoTiff/*')
+    imagelist = glob.glob('/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/geoTiff/*.tiff')
 
-    #Date Specific
+    #Date Specific Files
     SVCdirectory = '/research/imgs589/imageLibrary/DIRS/20171108/SVC/'
 
-    #Device Specific
+    #Device Specific Files
     cameraresponseSR = '/research/imgs589/imageLibrary/DIRS/MonochrometerTiffs/Spectral_Response.csv'
 
     if not os.path.exists(reflectanceDir):
         os.makedirs(reflectanceDir)
     LUTdict = findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR)
-    print(LUTdict)
-    '''
-    print(time.time() - starttime)
-    #sampleimage = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0160.tiff'
-    for image in imagelist:
-        reflectanceImage = applyLuts(LUTdict, processedimagedirectory, image)
+    logging = True
 
+    if logging == True:
+        csvfile = '/'.join(missionDatafilename.split('/')[:-1])+'/ELM_App_logger.csv'
+        with open(csvfile,'w', newline = '\n') as currentTextFile:
+            writer = csv.writer(currentTextFile, delimiter = ',')
+            writer.writerow(['Image','Band','Irradiance','Ref Image','Ref Irradiance'])
+
+    print(time.time() - starttime)
+    imagelist.sort()
+    for image in imagelist:
+        ReflectanceImage,CurrentIrradiance,ReferenceImage,ClosestIrradiance,Band = applyLuts(LUTdict, processedimagedirectory, image)
         imagename = 'ref' + image[-13:]
-        print(imagename)
-        height, width, channels = reflectanceImage.shape
+        if logging == True:
+            csvfile = '/'.join(missionDatafilename.split('/')[:-1])+'/ELM_App_logger.csv'
+            with open(csvfile,'a', newline = '\n') as currentTextFile:
+                writer = csv.writer(currentTextFile, delimiter = ',')
+                for index in np.arange(len(CurrentIrradiance)):
+                    writer.writerow([imagename,Band[index],CurrentIrradiance[index],ReferenceImage[index],ClosestIrradiance[index]])
+
+        #Stuff to write out image to server using gdal
+        height, width, channels = ReflectanceImage.shape
         driver = gdal.GetDriverByName( 'GTiff' )
-        if reflectanceImage.dtype == 'uint8':
+        if ReflectanceImage.dtype == 'uint8':
             GDT = gdal.GDT_Byte
-        elif reflectanceImage.dtype == 'uint16':
+        elif ReflectanceImage.dtype == 'uint16':
             GDT = gdal.GDT_UInt16
-        elif reflectanceImage.dtype == 'float32':
+        elif ReflectanceImage.dtype == 'float32':
             GDT = gdal.GDT_Float32
-        elif reflectanceImage.dtype == 'float64':
+        elif ReflectanceImage.dtype == 'float64':
             GDT = gdal.GDT_Float64
         ds = driver.Create (reflectanceDir + imagename, width, height, channels, GDT)
         pWidth, pHeight = 1.0, 1.0
@@ -275,14 +303,8 @@ if __name__ == '__main__':
         wktProjection = ''
         #srs = osr.SpatialReference(wkt = "")
         ds.SetProjection(wktProjection)
-        for band in range(1, reflectanceImage.shape[2]+1):
-            ds.GetRasterBand(band).WriteArray(reflectanceImage[:,:,band-1])
+        for band in range(1, ReflectanceImage.shape[2]+1):
+            ds.GetRasterBand(band).WriteArray(ReflectanceImage[:,:,band-1])
         ds.FlushCache()
         ds = None
     print(time.time() - starttime)
-
-
-        #print(missionDataarray)
-        #print(missionDataarray[10:15,80])
-        #print(missionDataarray[:,0])
-    '''

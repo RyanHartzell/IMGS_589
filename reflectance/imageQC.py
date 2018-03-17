@@ -90,10 +90,10 @@ def QCvideo(imagedirectory):
 if __name__ == '__main__':
 
     #Grab all of the images in a given directory
-    images = glob.glob('/research/imgs589/imageLibrary/DIRS/20171108/Missions/1300_225ft/micasense/reflectanceproduct/*.tiff')
+    images = glob.glob('/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/reflectanceproduct/*.tiff')
     images.sort()
     #The directory to save to
-    saveout = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1300_225ft/micasense/reflectanceproduct/parsed/'
+    saveout = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/reflectanceproduct/parsed/'
     print(saveout)
     for image in images:
         print(image.split('/')[-1])

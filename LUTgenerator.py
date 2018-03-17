@@ -13,6 +13,7 @@ Description::
    a reflectance image based upon irradiance for a given frame.
 Inputs::
 Version History::
+   Added comments to findLUTS method, removed commented out lines                           03/17/2018
    findReflectance function completed                                                       11/26/2017
    Filling in the blanks                                                                    11/24/2017
    Converted field notes to excel for csv possibility
@@ -49,7 +50,7 @@ def findReflectance(SVCtargetSR,cameraresponseSR,bandname):
     elif bandname == 'NIR':
         band = cameraSR[16]
     elif bandname == 'Red Edge':
-        band = cameraSR[15]    
+        band = cameraSR[15]
     #For given time, trace back to nearest SVC measurement for given target
     wavelength,reference,target,target_response = svcReader.svcGrabber(SVCtargetSR)
     target_response = target_response/100
@@ -57,7 +58,7 @@ def findReflectance(SVCtargetSR,cameraresponseSR,bandname):
     mean = np.sum(band * wavelengthMono)/np.sum(band)
     std = np.sqrt(np.abs(np.sum((wavelengthMono-mean)**2*band)/np.sum(band)))
     #Assignment of cameraSR to domain of SVC measurements
-    gaussianResponse = np.exp(-(mean-wavelength)**2/std)    
+    gaussianResponse = np.exp(-(mean-wavelength)**2/std)
     #Integral of product of SVC and Camera
     numerator = np.sum(gaussianResponse * target_response)
     #Integral of SVC curves
@@ -66,28 +67,33 @@ def findReflectance(SVCtargetSR,cameraresponseSR,bandname):
     reflectance = numerator/denominator
     return reflectance
 
-#def findLuts(dictionary, image)#, DNfinder = 'auto'):
-#def findLUTS(missionDatafilename,SVCdirectory,cameraresponseSR,bandname):
 def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
+    #From the target acquisition, grab every frame that had targets internal
     missionData = np.loadtxt(missionDatafilename,unpack = True, skiprows = 1,dtype = str, delimiter = ',')
     frames = list(np.unique(missionData[1]))
     LUTdict = {}
+    #For each frame we have to filter according to additional criteria
     for name in frames:
-
         indices = np.where(missionData[1] == name)
         scenetargets = missionData[0][indices]
         framestd = {}
         svcdict = {}
         DNdict = {}
+        #We always want the black target, as we do not run into capture issues here
+        #For any of the targets we grab, we need the same data
         if '4' in scenetargets:
             indextarget4 = np.where((missionData[1] == name) & (missionData[0] == '4'))
+            #Store the standard deviation
             std4 = missionData[10:15,indextarget4[0]]
+            #Store the target average pixel value
             DN4 = missionData[5:10,indextarget4[0]]
+            #Store the corresponding svc file number
             svcfilenumber = missionData[31,indextarget4]
-            #print(svcfilenumber)
             framestd['target4'] = std4
             svcdict['target4'] = svcfilenumber
             DNdict['target4'] = DN4
+        #Ideally we want the brightest white target, but lets grab all 'whites' here
+        #5 is our wooden white cal target
         if '5' in scenetargets:
             indextarget5 = np.where((missionData[1] == name) & (missionData[0] == '5'))
             std5 = missionData[10:15,indextarget5[0]]
@@ -96,6 +102,7 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             framestd['target5'] = std5
             svcdict['target5'] = svcfilenumber
             DNdict['target5'] = DN5
+        #Brightest white on the tribar target
         if '1' in scenetargets:
             indextarget1 = np.where((missionData[1] == name) & (missionData[0] == '1'))
             std1 = missionData[10:15,indextarget1[0]]
@@ -104,6 +111,7 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             framestd['target1'] = std1
             svcdict['target1'] = svcfilenumber
             DNdict['target1'] = DN1
+        #Our gray target on the white tribar
         if '2' in scenetargets:
             indextarget2 = np.where((missionData[1] == name) & (missionData[0] == '2'))
             std2 = missionData[10:15,indextarget2[0]]
@@ -112,70 +120,52 @@ def findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR):
             framestd['target2'] = std2
             svcdict['target2'] = svcfilenumber
             DNdict['target2'] = DN2
-        #print(framestd)
-        #print(framestd)
 
+        #All that has been done so far is grabbing data from our target csv file
+        #Now we need to manipulate all of the values
         reflectancedict = {}
+        #Lets grab a reflectance value for every SVC file that we have, and
+        #combining that with our camera RSR measurements
         for key, value in svcdict.items():
             SVCfilename = 'T' + value[0][0].zfill(3) + '.sig'
             SVCfile = glob.glob(SVCdirectory + '*' + SVCfilename)
             reflectancevalues = [findReflectance(SVCfile[0],cameraresponseSR,'Blue'),findReflectance(SVCfile[0],cameraresponseSR,'Green'),findReflectance(SVCfile[0],cameraresponseSR,'Red'),findReflectance(SVCfile[0],cameraresponseSR,'Red Edge'),findReflectance(SVCfile[0],cameraresponseSR,'NIR')]
-            #print(reflectancevalues)
             reflectancedict[key] = reflectancevalues
 
+        #If we have more than two targets in scene, we have to make a decision
+        #on what to use for ELM
         if len(framestd) >= 2:
+            #If our standard deviation indicates saturation, we should avoid that target
             for key, value in framestd.items():
                 if '0.0' in value:
-                    #print('deleting saturated targets')
                     del reflectancedict[key]
                     del DNdict[key]
-            #print(DNdict)
-                    #print(DNdict)
+            #If we still have two targets in scene, and one is black, we can do ELM
             if len(DNdict) >= 2 and 'target4' in DNdict.keys():
                 for key,value in DNdict.items():
+                    #Brightest target after all of this filtering is still priority
                     if 'target5' in DNdict:
                         gotoTarget = 'target5'
                     elif 'target1' in DNdict:
                         gotoTarget = 'target1'
                     elif 'target2' in DNdict:
                         gotoTarget = 'target2'
-                #print(gotoTarget)
-                #print(reflectancedict)
-                #print(DNdict)
+                #Grab the reflectance values and DN required for ELM
                 whiteReflect = np.asarray(reflectancedict[gotoTarget])
                 blackReflect = np.asarray(reflectancedict['target4'])
                 whiteDN = DNdict[gotoTarget].astype(np.float)
                 blackDN = DNdict['target4'].astype(np.float)
-                #print(type(whiteReflect[0]))
-                #print(whiteReflect)
-                #print(type(blackReflect[0]))
-                #print(blackReflect)
-                #print(type(whiteDN))
-                #print(whiteDN)
-                #print(type(blackDN))
-                #print(blackDN)
+                #Perform ELM for each band
                 for band in np.arange(5):
                     slope = (whiteReflect[band] - blackReflect[band])/(whiteDN[band] - blackDN[band])
-                    #print('slope',slope)       
                     intercept = whiteReflect[band] - slope * whiteDN[band]
-                    #print('intercept',intercept)
+                    #Grab the specialty of our method, irradiance based ELM
                     imagemetadatafile = processedimagedirectory + name[:8] + '_' + str(band+1) + '.tif'
-                    #print(imagemetadatafile)
                     metadatadict = metadataReader.metadataGrabber(imagemetadatafile)
                     irradiance = metadatadict['Xmp.Camera.Irradiance']
-                    #print('I',irradiance)
+                    #Our series of LUT for generating reflectance imagery
                     LUTdict[(band,irradiance)] = (slope,intercept)
-                    #print('LUTdict',LUTdict)
-    #print('LUTdict',LUTdict)
     return LUTdict
-
-                #LUT = slope * fulldepth + intercept
-                #print(np.shape(LUT))
-            #SVCtargetSR = SVCdirectory + 
-
-            #reflectance = findReflectance(SVCtargetSR,cameraresponseSR,bandname)
-
-            #svcdict[key] = reflectance        
 
 def applyLuts(LUTdict, processedimagedirectory, geoTiff):
     print(geoTiff[-13:-5])
@@ -204,21 +194,21 @@ def applyLuts(LUTdict, processedimagedirectory, geoTiff):
         reflectanceImage[:,:,band-1] = imageStack[:,:,band-1] * slope + intercept
         #print(np.argmin(comparison))
         print(np.max(reflectanceImage[:,:,band-1]))
-    return reflectanceImage    
+    return reflectanceImage
     '''
     #Generate array of dictionary key irradiances
     irradianceKeys = np.asarray(list(dictionary.keys()))
     #find irradiance
     metadatadict = metadatagrabber(image)
     irradiance = metadatadict['Xmp.Camera.Irradiance']
-    #find closest irradiance in array 
+    #find closest irradiance in array
     closestIrradiance = np.abs(irradiancekeys - irradiance).argmin()
     bestIrradiance = irradiancekeys[logical]
     #apply given irradiance/LUT pair to image
     LUT = dictionary[bestIrradiance]
     reflectanceimage = cv2.LUT(image, LUT)
     #saveout image
-    
+
     #return image
     '''
 if __name__ == '__main__':
@@ -241,17 +231,17 @@ if __name__ == '__main__':
     #missionDatafilename = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/Flight_20171109T1345_375ft_kxk8298.csv'
     #cameraresponseSR = '/cis/otherstu/gvs6104/DIRS/MonochrometerTiffs/Spectral_Response.csv'
     #reflectanceDir = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/reflectanceproduct/'
-    #imagelist = glob.glob('/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/*') 
+    #imagelist = glob.glob('/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/*')
 
     #Time Specific
-    processedimagedirectory = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/processed/'
-    missionDatafilename = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/Flight_20171109T1230_150ft_kxk8298.csv'
-    reflectanceDir = '/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/reflectanceproduct/'
-    imagelist = glob.glob('/research/imgs589/imageLibrary/DIRS/20171109/Missions/1230_150ft/micasense/geoTiff/*') 
+    processedimagedirectory = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/processed/'
+    missionDatafilename = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/Flight_20171108T1330_375ft_kxk8298.csv'
+    reflectanceDir = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/reflectanceproduct/'
+    imagelist = glob.glob('/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/geoTiff/*')
 
     #Date Specific
-    SVCdirectory = '/research/imgs589/imageLibrary/DIRS/20171109/SVC/'    
-    
+    SVCdirectory = '/research/imgs589/imageLibrary/DIRS/20171108/SVC/'
+
     #Device Specific
     cameraresponseSR = '/research/imgs589/imageLibrary/DIRS/MonochrometerTiffs/Spectral_Response.csv'
 
@@ -259,11 +249,12 @@ if __name__ == '__main__':
         os.makedirs(reflectanceDir)
     LUTdict = findLUTS(missionDatafilename,processedimagedirectory,cameraresponseSR)
     print(LUTdict)
+    '''
     print(time.time() - starttime)
     #sampleimage = '/cis/otherstu/gvs6104/DIRS/20171109/Missions/1345_375ft/micasense/geoTiff/IMG_0160.tiff'
     for image in imagelist:
         reflectanceImage = applyLuts(LUTdict, processedimagedirectory, image)
-        
+
         imagename = 'ref' + image[-13:]
         print(imagename)
         height, width, channels = reflectanceImage.shape
@@ -290,7 +281,8 @@ if __name__ == '__main__':
         ds = None
     print(time.time() - starttime)
 
-        
+
         #print(missionDataarray)
         #print(missionDataarray[10:15,80])
         #print(missionDataarray[:,0])
+    '''

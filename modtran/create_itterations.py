@@ -25,8 +25,8 @@ def create_unique_itterations(parameters, uniqueDict, solarAngles):
     dZ, dA = parameters['dZenith'], parameters['dAzimuth']
     zenithAngles = list(np.arange(0, 90 + dZ, dZ))
     azimuthAngles = list(np.arange(0, 360 + dA, dA))
-    zenithAngles = [z for z in zenithAngles if z > solZenith+5 or z < solZenith-5]
-    azimuthAngles = [a for a in azimuthAngles if a > solAzimuth+5 or a < solAzimuth-5]
+    #zenithAngles = [z for z in zenithAngles if z > solZenith+5 or z < solZenith-5]
+    #azimuthAngles = [a for a in azimuthAngles if a > solAzimuth+5 or a < solAzimuth-5]
     parameters['sensorZenith'] = zenithAngles
     parameters['sensorAzimuth'] = azimuthAngles
 
@@ -40,7 +40,10 @@ def create_unique_itterations(parameters, uniqueDict, solarAngles):
                 if z <= 90.0] + [180.0]
 
     angleCombo = list(dict(zip(angleDict,x)) for x in itertools.product(*angleDict.values()))
+
     angleCombo = [c for c in angleCombo if c['sensorZenith'] != 180 or c['sensorAzimuth'] == 0]
+
+    angleCombo = [c for c in angleCombo if not solZenith-5 <= c['sensorZenith'] <= solZenith+5 and not solAzimuth-5 <= c['sensorAzimuth'] <= solAzimuth+5]
 
     angleCombo += [{'sensorZenith': solZenith, 'sensorAzimuth':solAzimuth}]
     listCombo = [list(dict(c,**n) for n in angleCombo) for c in listCombo]
@@ -95,4 +98,4 @@ if __name__ == "__main__":
     uniqueDict = find_unique_itterations(params)
     solarAngles = find_solar_angles(params)
     itterate = create_unique_itterations(params, uniqueDict, solarAngles)
-    print(itterate[0][4])
+    #print(itterate[0][4])

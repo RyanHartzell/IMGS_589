@@ -84,7 +84,7 @@ def executeModtran(currentParams):
         try:
             tape7 = recursiveTime(tape7, currentParams, seedTime)
 
-        except:
+        except RecursionError as re:
             msg = "Tape 7 has no information, check your inputs for tape 5\n" + \
             "\tZenith-{0}, Azimuth-{1}".format(currentParams['sensorZenith'],
                                                     currentParams['sensorAzimuth'])
@@ -101,6 +101,8 @@ def executeModtran(currentParams):
             tape7['sumSolScat'] = np.zeros(len(wL))
             emailStatus(currentParams)
 
+    print("Removing the Tree")
+    time.sleep(2)
     shutil.rmtree(outputPath)
 
     return tape7, endTime
@@ -169,7 +171,7 @@ def generateRSR(rsrPath, wavelengths, rsrType, interpOrder=1, extrap=False):
     return rsrDict
 
 def writeSummary(filename, paramDict, summary, bandIntDictTgt, bandIntDictSolar,
-                                                    computedReflect, svcRSR):
+                                        computedReflect, singleReflect, svcRSR):
     import csv
     import os
     import numpy as np
@@ -188,6 +190,7 @@ def writeSummary(filename, paramDict, summary, bandIntDictTgt, bandIntDictSolar,
     orderedBandIntSol = collections.OrderedDict(sorted(sumBandIntSol.items()))
     orderedSVC = collections.OrderedDict(sorted(svcRSR.items()))
     orderedReflectance = collections.OrderedDict(sorted(computedReflect.items()))
+    orderedSingle = collections.OrderedDict(sorted(singleReflect.items()))
 
     sumValArr = list(orderedSum.values())
 
@@ -206,6 +209,8 @@ def writeSummary(filename, paramDict, summary, bandIntDictTgt, bandIntDictSolar,
                             list(orderedSVC.keys()) + list(orderedReflectance.keys()))
         w.writerow(list(orderedBandIntTgt.values())+list(orderedBandIntSol.values()) +
                         list(orderedSVC.values()) + list(orderedReflectance.values()))
+        w.writerow(list(orderedSingle.keys()))
+        w.writerow(list(orderedSingle.values()))
 
         w.writerow(list(orderedSum.keys()))
 
@@ -526,6 +531,8 @@ def modtran(paramList, cores, uniqueDict, plotting=True):
     interpSVC[np.isnan(interpSVC)] = 0
     svcRSR = integrateBandRadiance(interpSVC, targetRSR, wavelengths, "SVC")
 
+    #singleReflect = singleModtran(paramList[0])
+
     summary = {'wavelengths':wavelengths, 'tgtSolScat':tgtSolScat,
     'groundReflect':groundReflect, 'directReflect':directReflect,
     'estDownwell':estDownwell, 'totalRadiance':totalRadiance,
@@ -534,36 +541,102 @@ def modtran(paramList, cores, uniqueDict, plotting=True):
     summary.update(targetRSR)
 
     writeSummary(baseDir + '/{0}_summary.csv'.format(userName), paramList[0],
-                summary, bandIntDictTgt, bandIntDictSolar, computedReflect, svcRSR)
+                summary, bandIntDictTgt, bandIntDictSolar, computedReflect, singleReflect, svcRSR)
 
-    if plotting:
-        results = {'wavelengths':wavelengths, 'targetSolScat': tgtSolScat,
-        'groundReflect': groundReflect, 'directReflect':directReflect,
-        'totalRadiance':totalRadiance, 'estimatedDownwell':estDownwell,
-        'integratedDownwellRadiance': sumSolScat, 'uniqueDict':uniqueDict}
+    # if plotting:
+    #     results = {'wavelengths':wavelengths, 'targetSolScat': tgtSolScat,
+    #     'groundReflect': groundReflect, 'directReflect':directReflect,
+    #     'totalRadiance':totalRadiance, 'estimatedDownwell':estDownwell,
+    #     'integratedDownwellRadiance': sumSolScat, 'uniqueDict':uniqueDict}
+    #
+    #     plotResults(paramList[0],results, False)
 
-        plotResults(paramList[0],results, False)
+def singleModtran(param):
+    from update_tape5 import update_tape5
+    import os
+    import numpy as np
+
+    param['sensorZenith'] = 0
+    param['sensorAzimuth'] = 0
+    param['targetAltitude'] = 100
+
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+
+
+    param['fileName'] = currentDirectory + os.path.sep + \
+        "modtran_{0}".format(param['key']) + os.path.sep + param['fileName']
+
+    if not os.path.exists(os.path.dirname(param['fileName'])):
+        os.mkdir(os.path.dirname(param['fileName']))
+
+    update_tape5(param['fileName'], param['modelAtmosphere'],
+            param['pathType'], param['surfaceAlbedo'],
+            param['surfaceTemperature'], param['albedoFilename'],
+            param['targetLabel'], param['backgroundLabel'],
+            param['visibility'], param['groundAltitude'],
+            param['sensorAltitude'], param['targetAltitude'],
+            param['sensorZenith'], param['sensorAzimuth'],
+            param['dayNumber'], param['extraterrestrialSource'],
+            param['latitude'], param['longitude'],
+            param['timeUTC'], param['startingWavelength'],
+            param['endingWavelength'], param['wavelengthIncrement'],
+            param['fwhm'])
+
+    downTape7, modtranTime = executeModtran(param)
+    wavelengths = np.asarray(downTape7['wavlen mcrn'])
+    downTotalRadiance = np.reshape(np.asarray(downTape7['total rad']), wavelengths.shape)
+
+    rsrPath = currentDirectory + '/dls_rsr.csv'
+    rsrDict = generateRSR(rsrPath, wavelengths, "DLS")
+    downIntegrated = integrateBandRadiance(downTotalRadiance, rsrDict,
+                                                wavelengths, 'Downwelling')
+
+    param['sensorZenith'] = 180
+    param['sensorAzimuth'] = 0
+    param['targetAltitude'] = param['groundAltitude']
+
+    if not os.path.exists(os.path.dirname(param['fileName'])):
+        os.mkdir(os.path.dirname(param['fileName']))
+
+    update_tape5(param['fileName'], param['modelAtmosphere'],
+            param['pathType'], param['surfaceAlbedo'],
+            param['surfaceTemperature'], param['albedoFilename'],
+            param['targetLabel'], param['backgroundLabel'],
+            param['visibility'], param['groundAltitude'],
+            param['sensorAltitude'], param['targetAltitude'],
+            param['sensorZenith'], param['sensorAzimuth'],
+            param['dayNumber'], param['extraterrestrialSource'],
+            param['latitude'], param['longitude'],
+            param['timeUTC'], param['startingWavelength'],
+            param['endingWavelength'], param['wavelengthIncrement'],
+            param['fwhm'])
+
+    tgtTape7, modtranTime = executeModtran(param)
+
+    tgtTotalRadiance = np.reshape(np.asarray(tgtTape7['total rad']), wavelengths.shape)
+
+    rsrPath = currentDirectory + '/camera_rsr.csv'
+    rsrDict = generateRSR(rsrPath, wavelengths, "Camera")
+    tgtIntegrated = integrateBandRadiance(tgtTotalRadiance, rsrDict,
+                                                wavelengths, 'Target')
+    print(tgtIntegrated, downIntegrated)
+    computedReflect = computeReflectance(tgtIntegrated, downIntegrated)
+
+    return computedReflect
+
+
+
 
 if __name__ == "__main__":
     import os
     import time
     import multiprocessing
     import numpy as np
-    import json
     from runModtran4 import modtran
-    import argparse
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('-i','--jsonIndex',type=int, help="Index of the itteration you wish to begin at", default=0)
-    args = parser.parse_args()
-    jsonIndex = args.jsonIndex
-
-    plotting = True
 
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
 
-    params = {'fileName':'tape5', 'modelAtmosphere':[2], 'pathType':2,
+    params = {'fileName':'tape5', 'modelAtmosphere':2, 'pathType':2,
         'surfaceAlbedo':None, 'surfaceTemperature':303.15,
         'albedoFilename':currentDirectory+'/spec_alb.dat',
         'targetLabel':["healthy grass",
@@ -577,47 +650,29 @@ if __name__ == "__main__":
         'extraterrestrialSource':0, 'latitude':43.041,
         'longitude':77.698, 'timeUTC':[15.0, 18.0],
         'startingWavelength':0.30, 'endingWavelength':1.2,
-        'wavelengthIncrement':0.001, 'fwhm':0.001}
+        'wavelengthIncrement':0.01, 'fwhm':0.001}
 
-    params['targetLabel'] = ["concrete", "blue felt", "green felt", "red felt"]
-    params['backgroundLabel'] = "concrete"
-    #params['dZenith'] = 20
-    #params['dAzimuth'] = 60
-    #print(np.linspace(1,365,4, False, True))
-    #params['timeUTC'] = 15.1
-    #params['visibility'] = 5.0
-    #params['dayNumber'] = 312
-    #params['sensorAltitude'] = .2137
-    #params['pathType'] = 1
-    #params['sensorAltitude'] = 0.1685
+    params['targetLabel'] = "healthy grass"
+    params['backgroundLabel'] = "healthy grass"
+    params['dZenith'] = 10
+    params['dAzimuth'] = 30
+    params['timeUTC'] = 16.0
+    params['visibility'] = 15.0
+    params['dayNumber'] = 312
+    params['sensorAltitude'] = .2823
     #params['modelAtmosphere'] = 2
 
     params['sensorZenith'] = list(np.arange(0.0,90.0+params['dZenith'],
                                             params['dZenith']))
     params['sensorAzimuth'] = list(np.arange(0.0,360.0+params['dAzimuth'],
                                             params['dAzimuth']))
-    #params['sensorZenith'] = [0.0, 10.0, 180.0]
-    #params['sensorAzimuth'] = [0.0]
-
-    if jsonIndex is not False:
-        jsonExists = os.path.isfile('itterations.json')
-        if jsonExists is False:
-            itterations, uniqueDict = createItterations(params)
-            with open('itterations.json', 'w') as outfile:
-                json.dump(itterations, outfile)
-        else: #Json File exists
-            itterations = json.load(open('itterations.json'))
-    else:
-        itterations, uniqueDict = createItterations(params)
-        with open('itterations.json', 'w') as outfile:
-            json.dump(itterations, outfile)
 
     listDict = {k:v for k,v in params.items()
                     if type(v) is list
                     if k != 'sensorZenith' if k != 'sensorAzimuth'}
 
     uniqueDict = {k:v for k,v in listDict.items() if len(v) > 1}
-    
+
     totalCpu = multiprocessing.cpu_count()
     if totalCpu == 8:
         cores = totalCpu - 2
@@ -655,10 +710,10 @@ if __name__ == "__main__":
     print()
 
     #for i in range(len(itterations)):
-    if jsonIndex > len(itterations): jsonIndex = 0
     totalStartTime = time.time()
-    while jsonIndex <= len(itterations):
-        print("Currently running itteration index {0}".format(jsonIndex))
+    jsonIndex = 0
+    while jsonIndex < len(itterations):
+        print("Currently running itteration index {0} on {1}".format(jsonIndex, os.uname()[1]))
         unique = {k:v for k,v in itterations[jsonIndex][0].items() if k in uniqueDict.keys()}
         print("Current Unique Itteration: ", unique)
         startTime = time.time()

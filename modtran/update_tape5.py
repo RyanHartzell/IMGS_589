@@ -22,7 +22,33 @@ def update_tape5(filename='tape5', modelAtmosphere=2,
                                    startingWavelength=0.30,
                                    endingWavelength=1.2,
                                    wavelengthIncrement=0.001,
-                                   fwhm=0.001):
+                                   fwhm=0.001,
+                                   dictionary=None):
+
+   if dictionary is not None:
+      filename = dictionary["filename"]
+      modelAtmosphere = dictionary["modelAtmosphere"]
+      pathType = dictionary["pathType"]
+      surfaceAlbedo = dictionary["surfaceAlbedo"]
+      surfaceTemperature = dictionary["surfaceTemperature"]
+      albedoFilename = dictionary["albedoFilename"]
+      targetLabel = dictionary["targetLabel"]
+      backgroundLabel = dictionary["backgroundLabel"]
+      visibility = dictionary["visibility"]
+      groundAltitude = dictionary["groundAltitude"]
+      sensorAltitude = dictionary["sensorAltitude"]
+      targetAltitude = dictionary["targetAltitude"]
+      sensorZenith = dictionary["sensorZenith"]
+      sensorAzimuth = dictionary["sensorAzimuth"]
+      dayNumber = dictionary["dayNumber"]
+      extraterrestrialSource = dictionary["extraterrestrialSource"]
+      latitude = dictionary["latitude"]
+      longitude = dictionary["longitude"]
+      timeUTC = dictionary["timeUTC"]
+      startingWavelength = dictionary["startingWavelength"]
+      endingWavelength = dictionary["endingWavelength"]
+      wavelengthIncrement = dictionary["wavelengthIncrement"]
+      fwhm = dictionary["fwhm"]
 
    """
    title::

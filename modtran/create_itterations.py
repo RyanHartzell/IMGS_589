@@ -21,9 +21,12 @@ def create_unique_itterations(parameters, uniqueDict, solarAngles):
     listCombo = list(dict(zip(uniqueDict, x))
                         for x in itertools.product(*uniqueDict.values()))
 
+    solZenith, solAzimuth = solarAngles['solarZenith'], solarAngles['solarAzimuth']
     dZ, dA = parameters['dZenith'], parameters['dAzimuth']
     zenithAngles = list(np.arange(0, 90 + dZ, dZ))
     azimuthAngles = list(np.arange(0, 360 + dA, dA))
+    zenithAngles = [z for z in zenithAngles if z > solZenith+5 or z < solZenith-5]
+    azimuthAngles = [a for a in azimuthAngles if a > solAzimuth+5 or a < solAzimuth-5]
     parameters['sensorZenith'] = zenithAngles
     parameters['sensorAzimuth'] = azimuthAngles
 
@@ -38,7 +41,7 @@ def create_unique_itterations(parameters, uniqueDict, solarAngles):
 
     angleCombo = list(dict(zip(angleDict,x)) for x in itertools.product(*angleDict.values()))
     angleCombo = [c for c in angleCombo if c['sensorZenith'] != 180 or c['sensorAzimuth'] == 0]
-    solZenith, solAzimuth = solarAngles['solarZenith'], solarAngles['solarAzimuth']
+
     angleCombo += [{'sensorZenith': solZenith, 'sensorAzimuth':solAzimuth}]
     listCombo = [list(dict(c,**n) for n in angleCombo) for c in listCombo]
     listCombo = [list(dict(parameters,**c) for c in u) for u in listCombo]
@@ -73,7 +76,7 @@ if __name__ == "__main__":
         'visibility':[5.0, 15.0, 23.0],
         'groundAltitude':0.168, 'sensorAltitude':[0.1686, 0.2137, 0.2372, 0.2600, 0.2823],
         'targetAltitude':0.168, 'sensorZenith':None, 'sensorAzimuth':None,
-        'dZenith': 10, 'dAzimuth':30,
+        'dZenith': 5, 'dAzimuth':10,
         'dayNumber':[172, 312],
         'extraterrestrialSource':0, 'latitude':43.041,
         'longitude':77.698, 'timeUTC':[15.0, 18.0],
@@ -82,8 +85,8 @@ if __name__ == "__main__":
 
     params['targetLabel'] = "healthy grass"
     params['backgroundLabel'] = "healthy grass"
-    params['dZenith'] = 45
-    params['dAzimuth'] = 180
+    #params['dZenith'] = 45
+    #params['dAzimuth'] = 180
     params['timeUTC'] = 16.0
     params['visibility'] = 15.0
     params['dayNumber'] = 312

@@ -232,10 +232,11 @@ def metadataGrabber(filename, RAW=False):
 
 if __name__ == '__main__':
     import metadataReader
-    filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
-    filename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1400/micasense/geoTiff/IMG_0272.tiff'
+    #filename = '/dirs/home/faculty/cnspci/micasense/rededge/20170726/0005SET/raw/000/IMG_0000_1.tif'
+    #filename = '/cis/otherstu/gvs6104/DIRS/20171102/Missions/1400/micasense/geoTiff/IMG_0272.tiff'
+    filename = '/research/imgs589/imageLibrary/DIRS/20171108/Missions/1330_375ft/micasense/processed/IMG_0123_5.tif'
     metadatadict = metadataReader.metadataGrabber(filename)
-
+    print(metadatadict['Xmp.Camera.BandName'])
     import time
     print(metadatadict['Xmp.DLS.TimeStamp'], type(metadatadict['Xmp.DLS.TimeStamp']) )
     print(metadatadict['timeStamp'], type(metadatadict['timeStamp']))

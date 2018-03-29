@@ -19,7 +19,7 @@ def executeModtran(currentParams):
     tape7 = read_tape7(outputPath +'/tape7.scn')
 
     if any(v.size for v in tape7.values()) == 0:
-        print("There was an error")
+        print("There was an error no tape7 values were found")
 
     return tape7, endTime
 
@@ -50,22 +50,31 @@ def processFunction(params):
 
     elif params['key'] == 'solar':
         solarIrradiance = tape7['total rad']
-        solarIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
-                            np.sin(np.radians(params['sensorZenith'])) * \
-                            np.radians(.5) * np.radians(.5)
+        # solarIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
+        #                     np.sin(np.radians(params['sensorZenith']))
         # solarIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
         #                     np.sin(np.radians(params['sensorZenith'])) * \
-        #                     .5 * .5
-        print("{0}: Target Altitude {1}, Zenith {2}, Azimuth: {3}".format(params['key'],tAlt, zen, azi))
+        #                     np.radians(1) * np.radians(1)
+        #solarIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
+        #                    np.sin(np.radians(params['sensorZenith'])) * \
+        #                    .5 * .5
+
+        solarIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
+                            .5 * .5
+        #                    np.sin(np.radians(params['sensorZenith'])) * \
+        #print("{0}: Target Altitude {1}, Zenith {2}, Azimuth: {3}".format(params['key'],tAlt, zen, azi))
 
 
     else:
         #skyIrradiance = tape7['sol scat']
         skyIrradiance = tape7['total rad']
+        # skyIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
+        #                 np.sin(np.radians(params['sensorZenith']))
+        #skyIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
+                        #    np.sin(np.radians(params['sensorZenith'])) * \
+        #                np.radians(params['dZenith']) * np.radians(params['dAzimuth'])
         skyIrradiance *= np.cos(np.radians(params['sensorZenith'])) *\
-                            np.sin(np.radians(params['sensorZenith'])) * \
                         np.radians(params['dZenith']) * np.radians(params['dAzimuth'])
-
 
     resultDict = {'wavelengths':wavelengths,'skyIrradiance':skyIrradiance,
                 'solarIrradiance':solarIrradiance,'targetRadiance':targetRadiance,
@@ -91,9 +100,11 @@ def modtran(paramList):
             elif 'targetRadiance' in resultDict.keys():
                 targetRadiance = resultDict['targetRadiance']
 
+        #skyIrradiance = np.array(sum(skyIrradiance)/len(skyIrradiance))
         skyIrradiance = np.array(sum(skyIrradiance))
         downwellingIrradiance = skyIrradiance + solarIrradiance
         downwellingRadiance = downwellingIrradiance / np.pi
+        #downwellingRadiance = downwellingIrradiance
         reflectance = targetRadiance/downwellingRadiance
         averageModtran = sum(modtranTime)/len(modtranTime)
 
@@ -113,7 +124,9 @@ if __name__ == "__main__":
     from find_solar_angles import find_solar_angles
     from matplotlib import pyplot as plt
     from runModtran4 import getAverageSVC
+    from band_effective import *
     from interp1 import interp1
+    from groundTruth import read_spec_alb
 
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
 
@@ -126,19 +139,31 @@ if __name__ == "__main__":
         'visibility':15.0,
         'groundAltitude':0.168, 'sensorAltitude':0.1686,
         'targetAltitude':0.168, 'sensorZenith':None, 'sensorAzimuth':None,
-        'dZenith': 5, 'dAzimuth':10,
+        'dZenith': 10, 'dAzimuth':30, 'solarIgnore':20,
         'dayNumber': 312,
         'extraterrestrialSource':0, 'latitude':43.041,
         'longitude':77.698, 'timeUTC':16.0,
-        'startingWavelength':0.33, 'endingWavelength':1.2,
+        'startingWavelength':0.30, 'endingWavelength':1.2,
         'wavelengthIncrement':0.001, 'fwhm':0.001}
 
+    cameraRSR = currentDirectory + '/camera_rsr.csv'
+    rsrDictionary = generate_rsr(cameraRSR)
+    rsrWl = rsrDictionary['Wavelength']
     uniqueDict = find_unique_itterations(params)
     solarAngles = find_solar_angles(params)
     itterate = create_unique_itterations(params, uniqueDict, solarAngles)
     for unique in itterate:
         startTime = time.time()
         radiances = modtran(unique)
+        modtranWl = radiances['wavelengths']
+        reflectance = radiances['reflectance']
+
+        bandIntegrated = integrated_bands(modtranWl, reflectance, rsrWl, rsrDictionary, modtranWl)
+        specArray = read_spec_alb(params['albedoFilename'], unique[0]['targetLabel'])
+        bandIntegratedSVC = integrated_bands(specArray[:,0],specArray[:,1], rsrWl, rsrDictionary, modtranWl)
+
+        print({key:bandIntegrated[key]-bandIntegratedSVC[key] for key in bandIntegrated.keys()})
+
         totalTime = time.time()-startTime
         print("This took {0}s to complete 1 run".format(totalTime))
         print("Average Modtran Run Time: {0}s".format(radiances['averageModtran']))
@@ -156,11 +181,11 @@ if __name__ == "__main__":
         plt.plot(radiances['wavelengths'], radiances['targetRadiance'], label="targetRadiance")
         plt.legend()
 
-        svcArray = getAverageSVC(params['albedoFilename'], params['targetLabel'])
-        truth = interp1(svcArray[:,0], svcArray[:,1], radiances['wavelengths'])
+        truth = interp1(specArray[:,0], specArray[:,1], radiances['wavelengths'])
         plt.figure()
         plt.title("Computed vs Average SVC Reflectances")
         plt.plot(radiances['wavelengths'], radiances['reflectance'], label="Computed")
         plt.plot(radiances['wavelengths'], truth, label="Truth")
+        plt.ylim(0,1)
         plt.legend()
         plt.show()

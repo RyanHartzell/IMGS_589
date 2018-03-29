@@ -16,7 +16,7 @@ def find_unique_itterations(parameters):
 
     return uniqueDict
 
-def create_unique_itterations(parameters, uniqueDict, solarAngles):
+def create_unique_itterations(parameters, uniqueDict, solarAngles,):
 
     listCombo = list(dict(zip(uniqueDict, x))
                         for x in itertools.product(*uniqueDict.values()))
@@ -42,8 +42,10 @@ def create_unique_itterations(parameters, uniqueDict, solarAngles):
     angleCombo = list(dict(zip(angleDict,x)) for x in itertools.product(*angleDict.values()))
 
     angleCombo = [c for c in angleCombo if c['sensorZenith'] != 180 or c['sensorAzimuth'] == 0]
-
-    angleCombo = [c for c in angleCombo if not solZenith-5 <= c['sensorZenith'] <= solZenith+5 and not solAzimuth-5 <= c['sensorAzimuth'] <= solAzimuth+5]
+    ignore = parameters['solarIgnore']
+    angleCombo = [c for c in angleCombo
+            if not solZenith-ignore <= c['sensorZenith'] <= solZenith+ignore
+            and not solAzimuth-ignore <= c['sensorAzimuth'] <= solAzimuth+ignore]
 
     angleCombo += [{'sensorZenith': solZenith, 'sensorAzimuth':solAzimuth}]
     listCombo = [list(dict(c,**n) for n in angleCombo) for c in listCombo]

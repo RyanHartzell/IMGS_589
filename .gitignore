@@ -1,5 +1,5 @@
 #ignore all created pycache files
 *.pyc
 __pycache__
-modtran*/
+
 
